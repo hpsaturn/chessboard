@@ -7,19 +7,30 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Check for SDL2
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(SDL2 REQUIRED sdl2)
+pkg_check_modules(SDL2 sdl2)
 
-# Add executable with SDL support
-add_executable(chessboard main.cpp)
-
+# Add definitions based on SDL2 availability
 if(SDL2_FOUND)
-    target_compile_definitions(chessboard PRIVATE HAS_SDL)
-    target_include_directories(chessboard PRIVATE ${SDL2_INCLUDE_DIRS})
-    target_link_libraries(chessboard ${SDL2_LIBRARIES})
-    message(STATUS "SDL2 found - building with graphical support")
+    add_definitions(-DHAS_SDL2)
+    message(STATUS "SDL2 found: ${SDL2_VERSION}")
 else()
-    message(WARNING "SDL2 not found - building ASCII version only")
+    message(WARNING "SDL2 not found - SDL2 mode will not be available")
 endif()
 
-# Installation
-install(TARGETS chessboard DESTINATION bin)
+# Create executable
+add_executable(chessboard
+    src/main.cpp
+    src/chessboard_chars.cpp
+    src/chessboard_sdl.cpp
+)
+
+# Link SDL2 if available
+if(SDL2_FOUND)
+    target_link_libraries(chessboard ${SDL2_LIBRARIES})
+    target_include_directories(chessboard PRIVATE ${SDL2_INCLUDE_DIRS})
+endif()
+
+# Set output directory
+set_target_properties(chessboard PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+)
