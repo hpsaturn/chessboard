@@ -1,24 +1,25 @@
 cmake_minimum_required(VERSION 3.10)
-project(SDLChessboard)
+project(Chessboard)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Try to find SDL2
-find_package(PkgConfig)
-if(PKG_CONFIG_FOUND)
-    pkg_check_modules(SDL2 sdl2)
-endif()
+# Check for SDL2
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(SDL2 REQUIRED sdl2)
 
-# Create both executables
-add_executable(chessboard_simple main_simple.cpp)
+# Add executable with SDL support
+add_executable(chessboard main.cpp)
 
 if(SDL2_FOUND)
-    message(STATUS "Found SDL2: ${SDL2_LIBRARIES}")
-    add_executable(sdl_chessboard main.cpp)
-    target_link_libraries(sdl_chessboard ${SDL2_LIBRARIES})
-    target_include_directories(sdl_chessboard PRIVATE ${SDL2_INCLUDE_DIRS})
+    target_compile_definitions(chessboard PRIVATE HAS_SDL)
+    target_include_directories(chessboard PRIVATE ${SDL2_INCLUDE_DIRS})
+    target_link_libraries(chessboard ${SDL2_LIBRARIES})
+    message(STATUS "SDL2 found - building with graphical support")
 else()
-    message(WARNING "SDL2 not found. Building only ASCII version.")
+    message(WARNING "SDL2 not found - building ASCII version only")
 endif()
+
+# Installation
+install(TARGETS chessboard DESTINATION bin)
