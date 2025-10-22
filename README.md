@@ -1,38 +1,55 @@
 # SDL2 Chessboard Project
 
-A simple SDL2 application that renders a chessboard using framebuffer techniques.
+A chessboard rendering project with both ASCII and SDL2 graphical versions.
 
-## Features
-- Uses SDL2 for graphics rendering
-- Implements framebuffer for pixel-level control
-- Renders an 8x8 chessboard pattern
-- Clean CMake build system
+## Project Structure
 
-## Dependencies
-- SDL2 development libraries
-- CMake (>= 3.10)
-- C++11 compatible compiler
-
-## Installation (Ubuntu/Debian)
-```bash
-sudo apt update
-sudo apt install libsdl2-dev cmake build-essential
-```
+- `main.cpp` - SDL2 graphical chessboard implementation
+- `main_simple.cpp` - ASCII chessboard implementation (fallback)
+- `CMakeLists.txt` - CMake build configuration
+- `build.sh` - Build script
 
 ## Building
+
+Run the build script:
 ```bash
 ./build.sh
 ```
 
+This will create:
+- `chessboard_simple` - ASCII version (always available)
+- `sdl_chessboard` - SDL2 graphical version (if SDL2 is available)
+
 ## Running
+
+### ASCII Version (Always Available)
 ```bash
-./build/sdl_chessboard
+./chessboard_simple
 ```
 
-## Controls
-- ESC or close window to exit
+### SDL2 Graphical Version
+```bash
+./sdl_chessboard
+```
 
-## Project Structure
-- `CMakeLists.txt` - CMake build configuration
-- `main.cpp` - Main application source code
-- `build.sh` - Build script
+## Features
+
+### ASCII Version
+- Renders a standard 8x8 chessboard in ASCII
+- Shows chess notation (a-h, 1-8)
+- Uses '#' for white squares and '.' for dark squares
+
+### SDL2 Version
+- Graphical chessboard using SDL2
+- Framebuffer-based rendering
+- Real-time display with event handling
+- Press ESC or close window to exit
+
+## Dependencies
+
+- **Required**: C++11 compiler, CMake 3.10+
+- **Optional**: SDL2 development libraries for graphical version
+
+## Development Notes
+
+The project is designed to work even when SDL2 is not available by providing a fallback ASCII version. The build system automatically detects SDL2 and builds the graphical version if possible.
