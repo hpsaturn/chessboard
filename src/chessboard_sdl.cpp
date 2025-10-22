@@ -1,7 +1,9 @@
-#ifdef HAS_SDL2
+// #ifdef HAS_SDL2
 #include <SDL2/SDL.h>
 #include <iostream>
 #include <string>
+
+#define BOARD_SIZE 320
 
 void renderChessboardSDL() {
     // Initialize SDL
@@ -15,8 +17,8 @@ void renderChessboardSDL() {
         "SDL Chessboard",
         SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED,
-        640,
-        640,
+        BOARD_SIZE,
+        BOARD_SIZE,
         SDL_WINDOW_SHOWN
     );
 
@@ -53,7 +55,7 @@ void renderChessboardSDL() {
         SDL_RenderClear(renderer);
 
         // Draw chessboard
-        int squareSize = 80;
+        int squareSize = BOARD_SIZE/8;
         for (int row = 0; row < 8; ++row) {
             for (int col = 0; col < 8; ++col) {
                 SDL_Rect square = {col * squareSize, row * squareSize, squareSize, squareSize};
@@ -81,9 +83,9 @@ void renderChessboardSDL() {
     SDL_DestroyWindow(window);
     SDL_Quit();
 }
-#else
-void renderChessboardSDL() {
-    std::cout << "SDL2 support not available in this build.\n";
-    std::cout << "Please install SDL2 development libraries and rebuild.\n";
-}
-#endif
+// #else
+// void renderChessboardSDL() {
+    // std::cout << "SDL2 support not available in this build.\n";
+    // std::cout << "Please install SDL2 development libraries and rebuild.\n";
+// }
+// #endif

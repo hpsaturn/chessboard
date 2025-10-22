@@ -1,4 +1,4 @@
-# Chessboard Project
+# Chessboard Frontend
 
 A C++ chessboard renderer with both ASCII and SDL2 graphical output modes.
 
