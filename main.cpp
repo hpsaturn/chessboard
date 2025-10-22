@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <cstdint>
+#include <cstring>
 
 const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 800;
