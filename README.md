@@ -84,6 +84,7 @@ sudo make install
 ```
 
 #### SDL2 Mode
+
 - Opens a 320x320 pixel window
 - Displays a colored chessboard
 - Press any key or close window to exit
@@ -119,16 +120,26 @@ sudo make install
 ## Troubleshooting
 
 ### SDL2 Not Found
+
 If SDL2 is not available, the program will automatically fall back to ASCII mode.
 
 ### Build Issues
+
 1. Ensure CMake and build tools are installed
 2. Check SDL2 development packages are installed for graphical mode
 3. Verify C++11 compiler support
 
 ### Runtime Issues
+
 - ASCII mode should work on any terminal
 - SDL2 mode requires X11/Wayland display server on Linux
+
+## TODO
+
+- [ ] Framebuffer support for Luckfox Lyra basic Linux buildroot image
+- [ ] Buildroot config files for Luckfox Lyra tests
+- [ ] Sprite pieces and its implementation
+- [ ] Intermediate class for join with different engines like GNU-Chess
 
 ## License
 
