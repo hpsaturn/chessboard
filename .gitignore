@@ -30,8 +30,7 @@ Makefile
 Thumbs.db
 
 # Executables
-chessboard_simple
-sdl_chessboard
+chessboard
 -e 
 .mongoai_server.log
 chat_history.json
