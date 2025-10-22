@@ -4,8 +4,8 @@
 #include <cstdint>
 #include <cstring>
 
-const int WINDOW_WIDTH = 800;
-const int WINDOW_HEIGHT = 800;
+const int WINDOW_WIDTH = 320;
+const int WINDOW_HEIGHT = 320;
 const int BOARD_SIZE = 8;
 
 class ChessboardRenderer {
