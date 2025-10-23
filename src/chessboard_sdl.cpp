@@ -4,7 +4,9 @@
 #include <string>
 #include "chess_pieces.h"
 
-#define BOARD_SIZE 640
+#define SCREEN_X  320
+#define SCREEN_Y  320
+#define BOARD_SIZE 220
 #define SQUARE_SIZE (BOARD_SIZE/8)
 
 // Function to render a chess piece using SDL primitives

@@ -28,6 +28,7 @@ Makefile
 # OS generated files
 .DS_Store
 Thumbs.db
+.bash_history
 
 # Executables
 chessboard
