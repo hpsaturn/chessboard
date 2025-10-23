@@ -158,6 +158,17 @@ void renderChessboardSDL() {
             if (e.type == SDL_QUIT) {
                 quit = true;
             }
+            else if (e.type == SDL_KEYDOWN) {
+                // Check if the pressed key was the 'Q' key
+                if (e.key.keysym.sym == SDLK_q) {
+                    std::cout << "The 'Q' key was pressed! Quitting..." << std::endl;
+                    quit = true; // Set quit to true to exit the main loop
+                }
+                // Optional: Check for other keys
+                else if (e.key.keysym.sym == SDLK_ESCAPE) {
+                    std::cout << "Escape key pressed." << std::endl;
+                }
+            }
         }
 
         // Clear screen
