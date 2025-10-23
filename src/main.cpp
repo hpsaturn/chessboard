@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include "chess_pieces.h"
 
 // Function declarations
 void renderChessboardChars();
@@ -9,10 +10,15 @@ void printHelp() {
     std::cout << "Chessboard Renderer\n";
     std::cout << "===================\n";
     std::cout << "Usage:\n";
-    std::cout << "  ./chessboard           - Render ASCII chessboard (default)\n";
-    std::cout << "  ./chessboard --chars   - Render ASCII chessboard\n";
-    std::cout << "  ./chessboard --sdl     - Render SDL2 chessboard\n";
-    std::cout << "  ./chessboard --help    - Show this help\n";
+    std::cout << "  chessboard [options]\n";
+    std::cout << "\n";
+    std::cout << "Options:\n";
+    std::cout << "  --chars    Render chessboard using ASCII characters (default)\n";
+    std::cout << "  --sdl      Render chessboard using SDL2 graphics\n";
+    std::cout << "  --help     Show this help message\n";
+    std::cout << "\n";
+    std::cout << "Controls (SDL mode):\n";
+    std::cout << "  Q or ESC   Quit the application\n";
     std::cout << "\n";
 }
 
@@ -20,28 +26,31 @@ int main(int argc, char* argv[]) {
     std::string mode = "chars";
     
     // Parse command line arguments
-    if (argc > 1) {
-        std::string arg = argv[1];
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        
         if (arg == "--sdl") {
             mode = "sdl";
         } else if (arg == "--chars") {
             mode = "chars";
-        } else if (arg == "--help" || arg == "-h") {
+        } else if (arg == "--help") {
             printHelp();
             return 0;
         } else {
-            std::cerr << "Unknown argument: " << arg << std::endl;
-            printHelp();
+            std::cout << "Unknown option: " << arg << "\n";
+            std::cout << "Use --help for usage information.\n";
             return 1;
         }
     }
-
-    // Execute selected mode
-    if (mode == "chars") {
-        renderChessboardChars();
-    } else if (mode == "sdl") {
+    
+    std::cout << "Chessboard with Pieces - " << mode << " mode\n";
+    std::cout << "========================\n";
+    
+    if (mode == "sdl") {
         renderChessboardSDL();
+    } else {
+        renderChessboardChars();
     }
-
+    
     return 0;
 }

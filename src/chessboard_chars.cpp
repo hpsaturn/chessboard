@@ -1,41 +1,39 @@
 #include <iostream>
 #include <string>
+#include "chess_pieces.h"
 
 void renderChessboardChars() {
     std::cout << "\n";
-    std::cout << "  ASCII Chessboard\n";
-    std::cout << "  a b c d e f g h\n";
+    std::cout << "  +---+---+---+---+---+---+---+---+\n";
     
-    for (int row = 8; row >= 1; --row) {
-        std::cout << row << " ";
-        for (int col = 1; col <= 8; ++col) {
-            // Determine piece based on position
-            char piece = ' ';
-            if (row == 1 || row == 8) {
-                // Back rank pieces
-                if (col == 1 || col == 8) piece = 'R';
-                else if (col == 2 || col == 7) piece = 'N';
-                else if (col == 3 || col == 6) piece = 'B';
-                else if (col == 4) piece = 'Q';
-                else if (col == 5) piece = 'K';
-            } else if (row == 2 || row == 7) {
-                // Pawns
-                piece = 'P';
-            }
+    for (int row = 0; row < 8; ++row) {
+        std::cout << 8 - row << " | ";
+        
+        for (int col = 0; col < 8; ++col) {
+            char pieceSymbol = getPieceSymbol(STANDARD_BOARD[row][col]);
             
-            // Color pieces based on side
-            if (row <= 2) piece = std::tolower(piece); // Black pieces (lowercase)
-            
-            // Print square with background
-            if ((row + col) % 2 == 0) {
-                std::cout << "\033[47m" << piece << " \033[0m"; // White background
+            // Add color formatting for better readability
+            if (STANDARD_BOARD[row][col].color == PieceColor::WHITE && !STANDARD_BOARD[row][col].isEmpty()) {
+                std::cout << "\033[1;37m" << pieceSymbol << "\033[0m"; // Bold white
+            } else if (STANDARD_BOARD[row][col].color == PieceColor::BLACK && !STANDARD_BOARD[row][col].isEmpty()) {
+                std::cout << "\033[1;30m" << pieceSymbol << "\033[0m"; // Bold black
             } else {
-                std::cout << "\033[40m" << piece << " \033[0m"; // Black background
+                std::cout << pieceSymbol;
             }
+            
+            std::cout << " | ";
         }
-        std::cout << " " << row << "\n";
+        
+        std::cout << "\n";
+        std::cout << "  +---+---+---+---+---+---+---+---+\n";
     }
     
-    std::cout << "  a b c d e f g h\n";
+    std::cout << "    a   b   c   d   e   f   g   h\n";
+    std::cout << "\n";
+    
+    // Display piece legend
+    std::cout << "Piece Legend:\n";
+    std::cout << "  White: P=Pawn, R=Rook, N=Knight, B=Bishop, Q=Queen, K=King\n";
+    std::cout << "  Black: p=Pawn, r=Rook, n=Knight, b=Bishop, q=Queen, k=King\n";
     std::cout << "\n";
 }
