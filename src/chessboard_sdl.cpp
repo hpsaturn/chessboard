@@ -42,7 +42,7 @@ void renderChessPiece(SDL_Renderer* renderer, int x, int y, const ChessPiece& pi
         255);
     
     switch (piece.type) {
-        case PieceType::PAWN:
+        case PieceType::PAWN: {
             // Simple pawn shape - small circle on top
             for (int w = 0; w < radius; w++) {
                 for (int h = 0; h < radius; h++) {
@@ -54,16 +54,18 @@ void renderChessPiece(SDL_Renderer* renderer, int x, int y, const ChessPiece& pi
                 }
             }
             break;
+        }
             
-        case PieceType::ROOK:
+        case PieceType::ROOK: {
             // Rook shape - castle-like
             SDL_Rect top = {centerX - radius/2, centerY - radius, radius, radius/3};
             SDL_RenderFillRect(renderer, &top);
             SDL_Rect base = {centerX - radius/2, centerY - radius/3, radius, radius/2};
             SDL_RenderFillRect(renderer, &base);
             break;
+        }
             
-        case PieceType::KNIGHT:
+        case PieceType::KNIGHT: {
             // Knight shape - horse head approximation
             for (int w = 0; w < radius; w++) {
                 for (int h = 0; h < radius; h++) {
@@ -73,8 +75,9 @@ void renderChessPiece(SDL_Renderer* renderer, int x, int y, const ChessPiece& pi
                 }
             }
             break;
+        }
             
-        case PieceType::BISHOP:
+        case PieceType::BISHOP: {
             // Bishop shape - pointed top
             for (int i = 0; i < radius; i++) {
                 SDL_RenderDrawLine(renderer, 
@@ -82,8 +85,9 @@ void renderChessPiece(SDL_Renderer* renderer, int x, int y, const ChessPiece& pi
                     centerX + i/2, centerY - radius + i);
             }
             break;
+        }
             
-        case PieceType::QUEEN:
+        case PieceType::QUEEN: {
             // Queen shape - crown
             for (int i = 0; i < 3; i++) {
                 SDL_RenderDrawLine(renderer, 
@@ -93,14 +97,16 @@ void renderChessPiece(SDL_Renderer* renderer, int x, int y, const ChessPiece& pi
             SDL_Rect base = {centerX - radius/2, centerY - radius/2, radius, radius/2};
             SDL_RenderFillRect(renderer, &base);
             break;
+        }
             
-        case PieceType::KING:
+        case PieceType::KING: {
             // King shape - cross on top
             SDL_RenderDrawLine(renderer, centerX, centerY - radius, centerX, centerY - radius/2);
             SDL_RenderDrawLine(renderer, centerX - radius/3, centerY - radius*2/3, centerX + radius/3, centerY - radius*2/3);
             SDL_Rect base = {centerX - radius/2, centerY - radius/2, radius, radius/2};
             SDL_RenderFillRect(renderer, &base);
             break;
+        }
             
         default:
             break;
@@ -124,7 +130,7 @@ void renderChessboardSDL() {
         SDL_WINDOW_SHOWN
     );
 
-    if (!window) {
+    if (window == nullptr) {
         std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
         SDL_Quit();
         return;
@@ -132,7 +138,7 @@ void renderChessboardSDL() {
 
     // Create renderer
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    if (!renderer) {
+    if (renderer == nullptr) {
         std::cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
         SDL_DestroyWindow(window);
         SDL_Quit();
@@ -150,45 +156,37 @@ void renderChessboardSDL() {
             if (e.type == SDL_QUIT) {
                 quit = true;
             }
-            else if (e.type == SDL_KEYDOWN) {
-                // Check if the pressed key was the 'Q' key
-                if (e.key.keysym.sym == SDLK_q) {
-                    std::cout << "The 'Q' key was pressed! Quitting..." << std::endl;
-                    quit = true; // Set quit to true to exit the main loop
-                }
-                // Optional: Check for other keys
-                else if (e.key.keysym.sym == SDLK_ESCAPE) {
-                    std::cout << "Escape key pressed." << std::endl;
-                }
-            }
         }
 
         // Clear screen
-        SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255);
+        SDL_SetRenderDrawColor(renderer, 240, 217, 181, 255); // Light square color
         SDL_RenderClear(renderer);
 
         // Draw chessboard
-        for (int row = 0; row < 8; ++row) {
-            for (int col = 0; col < 8; ++col) {
-                SDL_Rect square = {col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE};
-                
-                // Alternate colors
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                // Set square color
                 if ((row + col) % 2 == 0) {
                     SDL_SetRenderDrawColor(renderer, 240, 217, 181, 255); // Light squares
                 } else {
-                    SDL_SetRenderDrawColor(renderer, 181, 136, 99, 255);  // Dark squares
+                    SDL_SetRenderDrawColor(renderer, 181, 136, 99, 255); // Dark squares
                 }
                 
+                // Draw square
+                SDL_Rect square = {col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE};
                 SDL_RenderFillRect(renderer, &square);
-                
-                // Draw chess piece
-                renderChessPiece(renderer, col * SQUARE_SIZE, row * SQUARE_SIZE, STANDARD_BOARD[row][col]);
+
+                // Draw piece if present
+                const ChessPiece& piece = STANDARD_BOARD[row][col];
+                if (!piece.isEmpty()) {
+                    renderChessPiece(renderer, col * SQUARE_SIZE, row * SQUARE_SIZE, piece);
+                }
             }
         }
 
         // Update screen
         SDL_RenderPresent(renderer);
-        
+
         // Small delay to prevent high CPU usage
         SDL_Delay(16); // ~60 FPS
     }
@@ -198,8 +196,8 @@ void renderChessboardSDL() {
     SDL_DestroyWindow(window);
     SDL_Quit();
 }
+
 #else
-#include <iostream>
 void renderChessboardSDL() {
     std::cout << "SDL2 support not available in this build.\n";
     std::cout << "Please install SDL2 development libraries and rebuild.\n";
