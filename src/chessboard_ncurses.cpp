@@ -6,12 +6,10 @@
 // Color pairs for ncurses
 #define WHITE_PIECE 1
 #define BLACK_PIECE 2
-#define WHITE_SQUARE 3
-#define BLACK_SQUARE 4
-#define HIGHLIGHT 5
-#define BORDER_COLOR 6
-#define HISTORY_COLOR 7
-#define INPUT_COLOR 8
+#define HIGHLIGHT 3
+#define BORDER_COLOR 4
+#define HISTORY_COLOR 5
+#define INPUT_COLOR 6
 
 // Sample move history for demonstration
 static std::vector<std::string> moveHistory = {
@@ -34,10 +32,9 @@ static std::string input_buffer = "";
 void initNcursesColors() {
     if (has_colors()) {
         start_color();
+        // Use transparent background (COLOR_BLACK) for all elements
         init_pair(WHITE_PIECE, COLOR_WHITE, COLOR_BLACK);
         init_pair(BLACK_PIECE, COLOR_BLACK, COLOR_BLACK);
-        init_pair(WHITE_SQUARE, COLOR_BLACK, COLOR_WHITE);
-        init_pair(BLACK_SQUARE, COLOR_WHITE, COLOR_BLACK);
         init_pair(HIGHLIGHT, COLOR_BLACK, COLOR_YELLOW);
         init_pair(BORDER_COLOR, COLOR_CYAN, COLOR_BLACK);
         init_pair(HISTORY_COLOR, COLOR_GREEN, COLOR_BLACK);
@@ -91,7 +88,7 @@ void renderChessboardNcurses() {
         
         int input_start_y = board_start_y + board_height + 2;
         
-        // Draw chessboard with proper ncurses lines
+        // Draw chessboard with complete grid using ncurses lines
         attron(COLOR_PAIR(BORDER_COLOR));
         
         // Draw top border
@@ -101,7 +98,7 @@ void renderChessboardNcurses() {
         }
         mvaddch(board_start_y, board_start_x + board_width, ACS_URCORNER);
         
-        // Draw side borders and inner grid
+        // Draw side borders and complete grid
         for (int row = 1; row < board_height; row++) {
             // Left border
             if (row % 2 == 0) {
@@ -110,7 +107,7 @@ void renderChessboardNcurses() {
                 mvaddch(board_start_y + row, board_start_x, ACS_VLINE);
             }
             
-            // Inner grid
+            // Complete grid with both horizontal and vertical lines
             for (int col = 1; col < board_width; col++) {
                 if (row % 2 == 0) {
                     // Horizontal lines
@@ -141,35 +138,27 @@ void renderChessboardNcurses() {
         
         attroff(COLOR_PAIR(BORDER_COLOR));
         
-        // Draw chessboard squares and pieces
+        // Draw chessboard pieces with transparent background
         for (int row = 0; row < 8; ++row) {
             for (int col = 0; col < 8; ++col) {
                 int y = board_start_y + 1 + row * 2;
                 int x = board_start_x + 2 + col * 4;
                 
-                // Set square color
-                if ((row + col) % 2 == 0) {
-                    attron(COLOR_PAIR(WHITE_SQUARE));
-                } else {
-                    attron(COLOR_PAIR(BLACK_SQUARE));
-                }
-                
-                // Highlight selected square
+                // Highlight selected square (only highlight, no background color)
                 if (row == selected_row && col == selected_col) {
                     attron(COLOR_PAIR(HIGHLIGHT));
+                    // Clear the square area for highlight
+                    for (int i = 0; i < 3; i++) {
+                        mvaddch(y, x + i, ' ');
+                    }
                 }
                 
-                // Draw square background
-                for (int i = 0; i < 3; i++) {
-                    mvaddch(y, x + i, ' ');
-                }
-                
-                // Draw piece using letter symbols
+                // Draw piece using letter symbols with transparent background
                 ChessPiece piece = STANDARD_BOARD[row][col];
                 if (!piece.isEmpty()) {
                     char pieceSymbol = getNcursesPieceSymbol(piece);
                     
-                    // Set piece color
+                    // Set piece color with transparent background
                     if (piece.color == PieceColor::WHITE) {
                         attron(COLOR_PAIR(WHITE_PIECE) | A_BOLD);
                     } else {
@@ -183,60 +172,47 @@ void renderChessboardNcurses() {
                     attroff(COLOR_PAIR(WHITE_PIECE) | COLOR_PAIR(BLACK_PIECE) | A_BOLD);
                 }
                 
-                // Reset square attributes
-                attroff(COLOR_PAIR(WHITE_SQUARE) | COLOR_PAIR(BLACK_SQUARE) | COLOR_PAIR(HIGHLIGHT));
+                // Reset highlight attribute
+                if (row == selected_row && col == selected_col) {
+                    attroff(COLOR_PAIR(HIGHLIGHT));
+                }
             }
         }
         
-        // Draw coordinates
-        attron(A_BOLD);
-        for (int i = 0; i < 8; ++i) {
-            mvprintw(board_start_y + 1 + i * 2, board_start_x - 1, "%d", 8 - i);
-            mvprintw(board_start_y + board_height - 1, board_start_x + 2 + i * 4, "%c", 'a' + i);
-        }
-        attroff(A_BOLD);
+        // REMOVED: Coordinates labels (numbers and letters)
         
         // Draw move history panel
         attron(COLOR_PAIR(HISTORY_COLOR) | A_BOLD);
         mvprintw(board_start_y, history_start_x, "Move History");
-        attroff(COLOR_PAIR(HISTORY_COLOR) | A_BOLD);
+        attroff(A_BOLD);
         
         // Draw history entries
         int history_y = board_start_y + 1;
         for (size_t i = 0; i < moveHistory.size() && history_y < max_y - 5; i++) {
             mvprintw(history_y++, history_start_x, "%s", moveHistory[i].c_str());
         }
+        attroff(COLOR_PAIR(HISTORY_COLOR));
         
         // Draw input zone
         attron(COLOR_PAIR(INPUT_COLOR) | A_BOLD);
-        mvprintw(input_start_y, board_start_x, "Input: %s_", input_buffer.c_str());
-        attroff(COLOR_PAIR(INPUT_COLOR) | A_BOLD);
+        mvprintw(input_start_y, board_start_x, "Enter move: ");
+        attroff(A_BOLD);
         
-        // Draw piece information
+        // Show current input buffer
+        mvprintw(input_start_y, board_start_x + 12, "%s_", input_buffer.c_str());
+        
+        // Show instructions
+        mvprintw(input_start_y + 1, board_start_x, "Arrow keys: Navigate | Enter: Select | q: Quit");
+        
+        // Show selected piece info
         ChessPiece selected_piece = STANDARD_BOARD[selected_row][selected_col];
-        mvprintw(input_start_y + 2, board_start_x, "Selected: [%c%c] ", 
-                 'a' + selected_col, '8' - selected_row);
-        
         if (!selected_piece.isEmpty()) {
-            std::string piece_name;
-            switch (selected_piece.type) {
-                case PieceType::PAWN: piece_name = "Pawn"; break;
-                case PieceType::ROOK: piece_name = "Rook"; break;
-                case PieceType::KNIGHT: piece_name = "Knight"; break;
-                case PieceType::BISHOP: piece_name = "Bishop"; break;
-                case PieceType::QUEEN: piece_name = "Queen"; break;
-                case PieceType::KING: piece_name = "King"; break;
-                default: piece_name = "Unknown";
-            }
-            
-            std::string color_name = (selected_piece.color == PieceColor::WHITE) ? "White" : "Black";
-            printw("%s %s", color_name.c_str(), piece_name.c_str());
-        } else {
-            printw("Empty Square");
+            std::string piece_info = "Selected: " + std::string(1, getNcursesPieceSymbol(selected_piece));
+            piece_info += " (";
+            piece_info += (selected_piece.color == PieceColor::WHITE) ? "White" : "Black";
+            piece_info += ")";
+            mvprintw(input_start_y + 2, board_start_x, "%s", piece_info.c_str());
         }
-        
-        // Draw controls
-        mvprintw(input_start_y + 4, board_start_x, "Controls: Arrows-Move | Type-Input | Enter-Execute | Q-Quit");
         
         refresh();
         
@@ -260,8 +236,8 @@ void renderChessboardNcurses() {
                 if (selected_col < 7) selected_col++;
                 break;
             case '\n': // Enter key
+                // Add move to history (for demonstration)
                 if (!input_buffer.empty()) {
-                    // Add to history
                     moveHistory.push_back(input_buffer);
                     input_buffer.clear();
                 }
