@@ -27,42 +27,36 @@ static std::vector<std::string> moveHistory = {
     "10. d4 Nbd7"
 };
 
-void initColors() {
-    start_color();
-    init_pair(WHITE_PIECE, COLOR_WHITE, COLOR_BLACK);
-    init_pair(BLACK_PIECE, COLOR_BLACK, COLOR_WHITE);
-    init_pair(WHITE_SQUARE, COLOR_BLACK, COLOR_WHITE);
-    init_pair(BLACK_SQUARE, COLOR_WHITE, COLOR_BLACK);
-    init_pair(HIGHLIGHT, COLOR_YELLOW, COLOR_BLUE);
-    init_pair(BORDER_COLOR, COLOR_CYAN, COLOR_BLACK);
-    init_pair(HISTORY_COLOR, COLOR_GREEN, COLOR_BLACK);
-    init_pair(INPUT_COLOR, COLOR_YELLOW, COLOR_BLACK);
+static int selected_row = 0;
+static int selected_col = 0;
+static std::string input_buffer = "";
+
+void initNcursesColors() {
+    if (has_colors()) {
+        start_color();
+        init_pair(WHITE_PIECE, COLOR_WHITE, COLOR_BLACK);
+        init_pair(BLACK_PIECE, COLOR_BLACK, COLOR_BLACK);
+        init_pair(WHITE_SQUARE, COLOR_BLACK, COLOR_WHITE);
+        init_pair(BLACK_SQUARE, COLOR_WHITE, COLOR_BLACK);
+        init_pair(HIGHLIGHT, COLOR_BLACK, COLOR_YELLOW);
+        init_pair(BORDER_COLOR, COLOR_CYAN, COLOR_BLACK);
+        init_pair(HISTORY_COLOR, COLOR_GREEN, COLOR_BLACK);
+        init_pair(INPUT_COLOR, COLOR_YELLOW, COLOR_BLACK);
+    }
 }
 
-// Enhanced piece symbols using ASCII art
-std::string getEnhancedPieceSymbol(const ChessPiece& piece) {
-    if (piece.isEmpty()) return " ";
+// Use letter-based piece representation like character mode
+char getNcursesPieceSymbol(const ChessPiece& piece) {
+    if (piece.isEmpty()) return ' ';
     
-    if (piece.color == PieceColor::WHITE) {
-        switch (piece.type) {
-            case PieceType::PAWN:   return "♙";
-            case PieceType::ROOK:   return "♖";
-            case PieceType::KNIGHT: return "♘";
-            case PieceType::BISHOP: return "♗";
-            case PieceType::QUEEN:  return "♕";
-            case PieceType::KING:   return "♔";
-            default: return "?";
-        }
-    } else {
-        switch (piece.type) {
-            case PieceType::PAWN:   return "♟";
-            case PieceType::ROOK:   return "♜";
-            case PieceType::KNIGHT: return "♞";
-            case PieceType::BISHOP: return "♝";
-            case PieceType::QUEEN:  return "♛";
-            case PieceType::KING:   return "♚";
-            default: return "?";
-        }
+    switch (piece.type) {
+        case PieceType::PAWN:   return (piece.color == PieceColor::WHITE) ? 'P' : 'p';
+        case PieceType::ROOK:   return (piece.color == PieceColor::WHITE) ? 'R' : 'r';
+        case PieceType::KNIGHT: return (piece.color == PieceColor::WHITE) ? 'N' : 'n';
+        case PieceType::BISHOP: return (piece.color == PieceColor::WHITE) ? 'B' : 'b';
+        case PieceType::QUEEN:  return (piece.color == PieceColor::WHITE) ? 'Q' : 'q';
+        case PieceType::KING:   return (piece.color == PieceColor::WHITE) ? 'K' : 'k';
+        default: return ' ';
     }
 }
 
@@ -75,63 +69,74 @@ void renderChessboardNcurses() {
     curs_set(0);
     
     // Initialize colors if supported
-    if (has_colors()) {
-        initColors();
-    }
-    
-    // Get terminal dimensions
-    int max_y, max_x;
-    getmaxyx(stdscr, max_y, max_x);
-    
-    // Layout calculations
-    int board_width = 36;  // 8 squares * 4 chars + borders
-    int board_height = 18; // 8 squares * 2 lines + borders
-    int history_width = 20;
-    int input_height = 6;
-    
-    int board_start_y = (max_y - board_height) / 2;
-    int board_start_x = (max_x - board_width - history_width) / 2;
-    int history_start_x = board_start_x + board_width;
-    int input_start_y = board_start_y + board_height;
-    
-    // Selected position
-    int selected_row = 0;
-    int selected_col = 0;
-    std::string input_buffer = "";
+    initNcursesColors();
     
     bool quit = false;
     
     while (!quit) {
         clear();
         
-        // Draw title
-        attron(A_BOLD);
-        mvprintw(1, (max_x - 25) / 2, "Chessboard - NCurses Mode");
-        attroff(A_BOLD);
+        // Get terminal dimensions
+        int max_y, max_x;
+        getmaxyx(stdscr, max_y, max_x);
         
-        // Draw chessboard with borders
+        // Calculate layout
+        int board_width = 33;  // 8 squares * 4 chars + 1 border
+        int board_height = 17; // 8 squares * 2 + 1 border
+        int board_start_x = (max_x - board_width) / 2;
+        int board_start_y = 2;
+        
+        int history_start_x = board_start_x + board_width + 2;
+        int history_width = max_x - history_start_x - 2;
+        
+        int input_start_y = board_start_y + board_height + 2;
+        
+        // Draw chessboard with proper ncurses lines
         attron(COLOR_PAIR(BORDER_COLOR));
         
         // Draw top border
-        for (int x = board_start_x; x < board_start_x + board_width; x++) {
-            mvaddch(board_start_y, x, ACS_HLINE);
+        mvaddch(board_start_y, board_start_x, ACS_ULCORNER);
+        for (int i = 1; i < board_width; i++) {
+            mvaddch(board_start_y, board_start_x + i, ACS_HLINE);
+        }
+        mvaddch(board_start_y, board_start_x + board_width, ACS_URCORNER);
+        
+        // Draw side borders and inner grid
+        for (int row = 1; row < board_height; row++) {
+            // Left border
+            if (row % 2 == 0) {
+                mvaddch(board_start_y + row, board_start_x, ACS_LTEE);
+            } else {
+                mvaddch(board_start_y + row, board_start_x, ACS_VLINE);
+            }
+            
+            // Inner grid
+            for (int col = 1; col < board_width; col++) {
+                if (row % 2 == 0) {
+                    // Horizontal lines
+                    mvaddch(board_start_y + row, board_start_x + col, ACS_HLINE);
+                } else if (col % 4 == 0) {
+                    // Vertical lines
+                    mvaddch(board_start_y + row, board_start_x + col, ACS_VLINE);
+                } else if (row % 2 == 0 && col % 4 == 0) {
+                    // Cross intersections
+                    mvaddch(board_start_y + row, board_start_x + col, ACS_PLUS);
+                }
+            }
+            
+            // Right border
+            if (row % 2 == 0) {
+                mvaddch(board_start_y + row, board_start_x + board_width, ACS_RTEE);
+            } else {
+                mvaddch(board_start_y + row, board_start_x + board_width, ACS_VLINE);
+            }
         }
         
         // Draw bottom border
-        for (int x = board_start_x; x < board_start_x + board_width; x++) {
-            mvaddch(board_start_y + board_height, x, ACS_HLINE);
-        }
-        
-        // Draw side borders and corners
-        for (int y = board_start_y; y <= board_start_y + board_height; y++) {
-            mvaddch(y, board_start_x, ACS_VLINE);
-            mvaddch(y, board_start_x + board_width, ACS_VLINE);
-        }
-        
-        // Draw corners
-        mvaddch(board_start_y, board_start_x, ACS_ULCORNER);
-        mvaddch(board_start_y, board_start_x + board_width, ACS_URCORNER);
         mvaddch(board_start_y + board_height, board_start_x, ACS_LLCORNER);
+        for (int i = 1; i < board_width; i++) {
+            mvaddch(board_start_y + board_height, board_start_x + i, ACS_HLINE);
+        }
         mvaddch(board_start_y + board_height, board_start_x + board_width, ACS_LRCORNER);
         
         attroff(COLOR_PAIR(BORDER_COLOR));
@@ -159,10 +164,10 @@ void renderChessboardNcurses() {
                     mvaddch(y, x + i, ' ');
                 }
                 
-                // Draw piece using enhanced symbols
+                // Draw piece using letter symbols
                 ChessPiece piece = STANDARD_BOARD[row][col];
                 if (!piece.isEmpty()) {
-                    std::string pieceSymbol = getEnhancedPieceSymbol(piece);
+                    char pieceSymbol = getNcursesPieceSymbol(piece);
                     
                     // Set piece color
                     if (piece.color == PieceColor::WHITE) {
@@ -171,8 +176,8 @@ void renderChessboardNcurses() {
                         attron(COLOR_PAIR(BLACK_PIECE) | A_BOLD);
                     }
                     
-                    // Print the piece symbol (may be multi-byte UTF-8)
-                    mvprintw(y, x + 1, "%s", pieceSymbol.c_str());
+                    // Print the piece symbol
+                    mvaddch(y, x + 1, pieceSymbol);
                     
                     // Reset attributes
                     attroff(COLOR_PAIR(WHITE_PIECE) | COLOR_PAIR(BLACK_PIECE) | A_BOLD);
@@ -184,18 +189,22 @@ void renderChessboardNcurses() {
         }
         
         // Draw coordinates
+        attron(A_BOLD);
         for (int i = 0; i < 8; ++i) {
             mvprintw(board_start_y + 1 + i * 2, board_start_x - 1, "%d", 8 - i);
             mvprintw(board_start_y + board_height - 1, board_start_x + 2 + i * 4, "%c", 'a' + i);
         }
+        attroff(A_BOLD);
         
         // Draw move history panel
         attron(COLOR_PAIR(HISTORY_COLOR) | A_BOLD);
         mvprintw(board_start_y, history_start_x, "Move History");
         attroff(COLOR_PAIR(HISTORY_COLOR) | A_BOLD);
         
-        for (size_t i = 0; i < moveHistory.size() && i < 16; ++i) {
-            mvprintw(board_start_y + 2 + i, history_start_x, "%s", moveHistory[i].c_str());
+        // Draw history entries
+        int history_y = board_start_y + 1;
+        for (size_t i = 0; i < moveHistory.size() && history_y < max_y - 5; i++) {
+            mvprintw(history_y++, history_start_x, "%s", moveHistory[i].c_str());
         }
         
         // Draw input zone
@@ -250,17 +259,15 @@ void renderChessboardNcurses() {
             case KEY_RIGHT:
                 if (selected_col < 7) selected_col++;
                 break;
-            case '\n':
-            case KEY_ENTER:
+            case '\n': // Enter key
                 if (!input_buffer.empty()) {
-                    // Execute command (placeholder for future logic)
+                    // Add to history
                     moveHistory.push_back(input_buffer);
                     input_buffer.clear();
                 }
                 break;
             case KEY_BACKSPACE:
-            case 127:
-            case 8:
+            case 127: // Backspace
                 if (!input_buffer.empty()) {
                     input_buffer.pop_back();
                 }
