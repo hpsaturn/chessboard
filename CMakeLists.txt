@@ -1,25 +1,15 @@
 cmake_minimum_required(VERSION 3.10)
-project(Chessboard)
+project(chessboard)
 
-# Set C++ standard
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Check for SDL2
-find_package(PkgConfig)
+# Find SDL2
+find_package(SDL2 QUIET)
 
-if(PKG_CONFIG_FOUND)
-    pkg_check_modules(SDL2 sdl2)
-endif()
-
-if(SDL2_FOUND)
-    message(STATUS "SDL2 found: ${SDL2_VERSION}")
-    add_definitions(-DHAS_SDL2)
-    include_directories(${SDL2_INCLUDE_DIRS})
-    link_directories(${SDL2_LIBRARY_DIRS})
-else()
-    message(WARNING "SDL2 not found - SDL mode will not be available")
-endif()
+# Find ncurses
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(NCURSES REQUIRED ncurses)
 
 # Create executable
 add_executable(chessboard 
@@ -27,14 +17,16 @@ add_executable(chessboard
     src/chessboard_chars.cpp
     src/chessboard_sdl.cpp
     src/chess_pieces_sdl.cpp
+    src/chessboard_ncurses.cpp
 )
 
 # Link SDL2 if available
 if(SDL2_FOUND)
+    target_include_directories(chessboard PRIVATE ${SDL2_INCLUDE_DIRS})
     target_link_libraries(chessboard ${SDL2_LIBRARIES})
+    target_compile_definitions(chessboard PRIVATE HAS_SDL2)
 endif()
 
-# Set output directory
-set_target_properties(chessboard PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-)
+# Link ncurses
+target_include_directories(chessboard PRIVATE ${NCURSES_INCLUDE_DIRS})
+target_link_libraries(chessboard ${NCURSES_LIBRARIES})
