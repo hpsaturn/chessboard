@@ -26,6 +26,7 @@ add_executable(chessboard
     src/main.cpp
     src/chessboard_chars.cpp
     src/chessboard_sdl.cpp
+    src/chess_pieces_sdl.cpp
 )
 
 # Link SDL2 if available
