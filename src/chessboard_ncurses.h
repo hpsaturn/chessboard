@@ -3,4 +3,4 @@
 
 void renderChessboardNcurses();
 
-#endif // CHESSBOARD_NCURSES_H
+#endif
