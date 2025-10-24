@@ -34,7 +34,7 @@ void initNcursesColors() {
         start_color();
         // Use transparent background (COLOR_BLACK) for all elements
         init_pair(WHITE_PIECE, COLOR_WHITE, COLOR_BLACK);
-        init_pair(BLACK_PIECE, COLOR_BLACK, COLOR_BLACK);
+        init_pair(BLACK_PIECE, COLOR_CYAN, COLOR_BLACK);
         init_pair(HIGHLIGHT, COLOR_BLACK, COLOR_YELLOW);
         init_pair(BORDER_COLOR, COLOR_CYAN, COLOR_BLACK);
         init_pair(HISTORY_COLOR, COLOR_GREEN, COLOR_BLACK);

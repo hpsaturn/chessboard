@@ -1,11 +1,12 @@
 # Chessboard Frontend
 
-A C++ chessboard renderer with both ASCII and SDL2 graphical output modes.
+A C++ chessboard renderer with ASCII, SDL2 graphical, and NCurses terminal output modes.
 
 ## Features
 
 - **ASCII Mode**: Terminal-based chessboard display with Unicode pieces
 - **SDL2 Mode**: Graphical chessboard with smooth rendering
+- **NCurses Mode**: Interactive terminal interface with keyboard navigation
 - **Unified Binary**: Single executable with command-line options
 - **Cross-platform**: Works on Linux, Windows, and macOS
 
@@ -15,17 +16,19 @@ A C++ chessboard renderer with both ASCII and SDL2 graphical output modes.
 - CMake (>= 3.10)
 - C++11 compatible compiler
 - SDL2 development libraries (optional, for graphical mode)
+- NCurses development libraries (optional, for interactive terminal mode)
 
 ### Runtime Dependencies
 - SDL2 runtime libraries (for graphical mode)
+- NCurses runtime libraries (for interactive terminal mode)
 
 ## Installation
 
 ### Linux (Ubuntu/Debian)
 ```bash
-# Install SDL2 development libraries
+# Install development libraries
 sudo apt update
-sudo apt install cmake build-essential libsdl2-dev
+sudo apt install cmake build-essential libsdl2-dev libncurses-dev
 
 # Build the project
 ./build.sh
@@ -52,6 +55,9 @@ sudo make install
 # Graphical SDL2 mode
 ./chessboard --sdl
 
+# Interactive NCurses mode
+./chessboard --ncurses
+
 # Explicit ASCII mode
 ./chessboard --chars
 
@@ -64,6 +70,7 @@ sudo make install
 | Option | Description |
 |--------|-------------|
 | `--sdl` | Display chessboard using SDL2 (graphical) |
+| `--ncurses` | Display chessboard using NCurses (interactive terminal) |
 | `--chars` | Display chessboard using ASCII characters (default) |
 | `--help` | Show help message |
 
@@ -85,20 +92,29 @@ sudo make install
 
 #### SDL2 Mode
 
-- Opens a 320x320 pixel window
-- Displays a colored chessboard
-- Press any key or close window to exit
+- Opens a graphical window with three zones: chessboard, history panel, and input zone
+- Displays a colored chessboard with piece sprites
+- Press 'q' key or close window to exit
+
+#### NCurses Mode
+
+- Interactive terminal interface with keyboard navigation
+- Three-zone layout: chessboard, history panel, and input zone
+- Arrow key navigation for piece selection
+- Transparent background respecting user terminal settings
+- Complete grid lines with proper ACS characters
+- Press 'q' key to exit
 
 ## Piece Notation
 
-| Piece | ASCII | Description |
-|-------|-------|-------------|
-| ♔ ♚ | K k | King |
-| ♕ ♛ | Q q | Queen |
-| ♗ ♝ | B b | Bishop |
-| ♘ ♞ | N n | Knight |
-| ♖ ♜ | R r | Rook |
-| ♙ ♟ | P p | Pawn |
+| Piece | ASCII | NCurses | Description |
+|-------|-------|---------|-------------|
+| ♔ ♚ | K k | K k | King |
+| ♕ ♛ | Q q | Q q | Queen |
+| ♗ ♝ | B b | B b | Bishop |
+| ♘ ♞ | N n | N n | Knight |
+| ♖ ♜ | R r | R r | Rook |
+| ♙ ♟ | P p | P p | Pawn |
 
 **Note**: Uppercase letters represent black pieces, lowercase represent white pieces.
 
@@ -110,11 +126,18 @@ sudo make install
 ## Project Structure
 
 ```
-├── main.cpp          # Unified chessboard implementation
-├── CMakeLists.txt    # CMake build configuration
-├── build.sh          # Build automation script
-├── test_project.sh   # Test verification script
-└── README.md         # This documentation
+├── src/
+│   ├── main.cpp                 # Unified chessboard implementation
+│   ├── chessboard_sdl.cpp       # SDL2 graphical implementation
+│   ├── chessboard_sdl.h         # SDL2 header
+│   ├── chessboard_ncurses.cpp   # NCurses terminal implementation
+│   ├── chessboard_ncurses.h     # NCurses header
+│   ├── chess_pieces_sdl.cpp     # SDL2 chess piece rendering
+│   └── chess_pieces_sdl.h       # SDL2 chess piece header
+├── CMakeLists.txt               # CMake build configuration
+├── build.sh                     # Build automation script
+├── test_project.sh              # Test verification script
+└── README.md                    # This documentation
 ```
 
 ## Troubleshooting
@@ -123,16 +146,22 @@ sudo make install
 
 If SDL2 is not available, the program will automatically fall back to ASCII mode.
 
+### NCurses Not Found
+
+If NCurses is not available, the program will automatically fall back to ASCII mode.
+
 ### Build Issues
 
 1. Ensure CMake and build tools are installed
 2. Check SDL2 development packages are installed for graphical mode
-3. Verify C++11 compiler support
+3. Check NCurses development packages are installed for interactive terminal mode
+4. Verify C++11 compiler support
 
 ### Runtime Issues
 
 - ASCII mode should work on any terminal
 - SDL2 mode requires X11/Wayland display server on Linux
+- NCurses mode requires a terminal that supports NCurses
 
 ## TODO
 
@@ -150,5 +179,5 @@ This project is open source. Feel free to modify and distribute.
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Test both ASCII and SDL2 modes
+4. Test all modes (ASCII, SDL2, NCurses)
 5. Submit a pull request
