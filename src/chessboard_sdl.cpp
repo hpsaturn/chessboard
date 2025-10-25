@@ -1,5 +1,5 @@
 // Main SDL Chessboard Logic
-#ifdef HAS_SDL2
+#ifdef HAVE_SDL2
 #include <SDL2/SDL.h>
 #include <iostream>
 #include <string>
@@ -9,23 +9,23 @@
 
 #define SCREEN_WIDTH  320
 #define SCREEN_HEIGHT 320
-#define BOARD_SIZE 220
+#define BOARD_SIZE 260
 #define SQUARE_SIZE (BOARD_SIZE/8)
-#define HISTORY_WIDTH 100
+#define HISTORY_WIDTH 60
 #define INPUT_HEIGHT 100
 
 // Sample move history for demonstration
 std::vector<std::string> moveHistory = {
-    "1. e4 e5",
-    "2. Nf3 Nc6", 
-    "3. Bb5 a6",
-    "4. Ba4 Nf6",
-    "5. O-O Be7",
-    "6. Re1 b5",
-    "7. Bb3 d6",
-    "8. c3 O-O",
-    "9. h3 Nb8",
-    "10. d4 Nbd7"
+    "e4 e5",
+    "Nf3 Nc6", 
+    "Bb5 a6",
+    "Ba4 Nf6",
+    "O-O Be7",
+    "Re1 b5",
+    "Bb3 d6",
+    "c3 O-O",
+    "h3 Nb8",
+    "d4 Nbd7"
 };
 
 void renderChessboardSDL() {
@@ -60,51 +60,75 @@ void renderChessboardSDL() {
         return;
     }
 
-    // Main loop flag
+    // Initialize chess piece textures
+    if (!initChessPieceTextures(renderer)) {
+        std::cerr << "Failed to initialize chess piece textures!" << std::endl;
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return;
+    }
+
+    // Sample chessboard state
+    ChessPiece board[8][8] = {
+        // Rank 8 (black pieces)
+        {ChessPiece(PieceType::ROOK, PieceColor::BLACK), ChessPiece(PieceType::KNIGHT, PieceColor::BLACK), 
+         ChessPiece(PieceType::BISHOP, PieceColor::BLACK), ChessPiece(PieceType::QUEEN, PieceColor::BLACK),
+         ChessPiece(PieceType::KING, PieceColor::BLACK), ChessPiece(PieceType::BISHOP, PieceColor::BLACK),
+         ChessPiece(PieceType::KNIGHT, PieceColor::BLACK), ChessPiece(PieceType::ROOK, PieceColor::BLACK)},
+        // Rank 7 (black pawns)
+        {ChessPiece(PieceType::PAWN, PieceColor::BLACK), ChessPiece(PieceType::PAWN, PieceColor::BLACK),
+         ChessPiece(PieceType::PAWN, PieceColor::BLACK), ChessPiece(PieceType::PAWN, PieceColor::BLACK),
+         ChessPiece(PieceType::PAWN, PieceColor::BLACK), ChessPiece(PieceType::PAWN, PieceColor::BLACK),
+         ChessPiece(PieceType::PAWN, PieceColor::BLACK), ChessPiece(PieceType::PAWN, PieceColor::BLACK)},
+        // Ranks 6-3 (empty)
+        {ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece()},
+        {ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece()},
+        {ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece()},
+        {ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece()},
+        // Rank 2 (white pawns)
+        {ChessPiece(PieceType::PAWN, PieceColor::WHITE), ChessPiece(PieceType::PAWN, PieceColor::WHITE),
+         ChessPiece(PieceType::PAWN, PieceColor::WHITE), ChessPiece(PieceType::PAWN, PieceColor::WHITE),
+         ChessPiece(PieceType::PAWN, PieceColor::WHITE), ChessPiece(PieceType::PAWN, PieceColor::WHITE),
+         ChessPiece(PieceType::PAWN, PieceColor::WHITE), ChessPiece(PieceType::PAWN, PieceColor::WHITE)},
+        // Rank 1 (white pieces)
+        {ChessPiece(PieceType::ROOK, PieceColor::WHITE), ChessPiece(PieceType::KNIGHT, PieceColor::WHITE), 
+         ChessPiece(PieceType::BISHOP, PieceColor::WHITE), ChessPiece(PieceType::QUEEN, PieceColor::WHITE),
+         ChessPiece(PieceType::KING, PieceColor::WHITE), ChessPiece(PieceType::BISHOP, PieceColor::WHITE),
+         ChessPiece(PieceType::KNIGHT, PieceColor::WHITE), ChessPiece(PieceType::ROOK, PieceColor::WHITE)}
+    };
+
     bool quit = false;
     SDL_Event e;
 
-    // Main loop
     while (!quit) {
-        // Handle events
         while (SDL_PollEvent(&e) != 0) {
             if (e.type == SDL_QUIT) {
                 quit = true;
             }
-            else if (e.type == SDL_KEYDOWN) {
-                // Check if the pressed key was the 'Q' key
-                if (e.key.keysym.sym == SDLK_q || e.key.keysym.sym == SDLK_ESCAPE) {
-                    std::cout << "Quitting..." << std::endl;
-                    quit = true;
-                }
-            }
         }
 
-        // Clear screen with dark background
-        SDL_SetRenderDrawColor(renderer, 40, 40, 40, 255); // Dark gray background
+        // Clear screen
+        SDL_SetRenderDrawColor(renderer, 60, 60, 60, 255); // Dark gray background
         SDL_RenderClear(renderer);
 
-        // ===== CHESSBOARD AREA (220x220 - top-left) =====
-        SDL_Rect boardArea = {0, 0, BOARD_SIZE, BOARD_SIZE};
-        SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255); // Dark border
-        SDL_RenderFillRect(renderer, &boardArea);
-
+        // ===== CHESSBOARD (220x220 - top-left) =====
         // Draw chessboard squares
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
-                // Set square color
+                SDL_Rect square = {col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE};
+                
+                // Alternate square colors
                 if ((row + col) % 2 == 0) {
                     SDL_SetRenderDrawColor(renderer, 240, 217, 181, 255); // Light squares
                 } else {
                     SDL_SetRenderDrawColor(renderer, 181, 136, 99, 255); // Dark squares
                 }
                 
-                // Draw square
-                SDL_Rect square = {col * SQUARE_SIZE + 2, row * SQUARE_SIZE + 2, SQUARE_SIZE - 4, SQUARE_SIZE - 4};
                 SDL_RenderFillRect(renderer, &square);
-
-                // Draw piece if present
-                const ChessPiece& piece = STANDARD_BOARD[row][col];
+                
+                // Draw chess piece
+                ChessPiece piece = board[row][col];
                 if (!piece.isEmpty()) {
                     renderChessPiece(renderer, col * SQUARE_SIZE + 2, row * SQUARE_SIZE + 2, piece);
                 }
@@ -122,7 +146,7 @@ void renderChessboardSDL() {
         SDL_RenderFillRect(renderer, &historyBorder);
 
         // Draw history title
-        renderText(renderer, "MOVE HISTORY", BOARD_SIZE + 10, 15, 1);
+        renderText(renderer, "HISTORY", BOARD_SIZE + 10, 15, 0);
 
         // Draw move history
         int historyY = 40;
@@ -141,40 +165,27 @@ void renderChessboardSDL() {
         SDL_Rect inputBorder = {0, BOARD_SIZE, BOARD_SIZE, 2};
         SDL_RenderFillRect(renderer, &inputBorder);
 
-        // Draw input prompt
-        renderText(renderer, "Enter move:", 10, BOARD_SIZE + 15, 1);
-        
-        // Draw input field (simulated)
-        SDL_Rect inputField = {10, BOARD_SIZE + 35, BOARD_SIZE - 20, 30};
-        SDL_SetRenderDrawColor(renderer, 70, 70, 70, 255); // Input field background
-        SDL_RenderFillRect(renderer, &inputField);
-        
-        // Draw cursor
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White cursor
-        SDL_Rect cursor = {15, BOARD_SIZE + 40, 2, 20};
-        SDL_RenderFillRect(renderer, &cursor);
-
-        // Draw placeholder text
-        renderText(renderer, "e2-e4", 20, BOARD_SIZE + 45, 1);
+        // Draw input title
+        renderText(renderer, "INPUT ZONE", 10, BOARD_SIZE + 15, 1);
+        renderText(renderer, "Click to select pieces", 10, BOARD_SIZE + 35, 1);
 
         // Update screen
         SDL_RenderPresent(renderer);
 
-        // Small delay to prevent high CPU usage
+        // Cap the frame rate
         SDL_Delay(16); // ~60 FPS
     }
 
     // Cleanup
+    cleanupChessPieceTextures();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
 }
 
 #else
-// Stub implementation when SDL2 is not available
 #include <iostream>
 void renderChessboardSDL() {
-    std::cout << "SDL2 support not available in this build.\n";
-    std::cout << "Please install SDL2 development libraries and rebuild.\n";
+    std::cout << "SDL2 support not compiled in this build" << std::endl;
 }
 #endif

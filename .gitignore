@@ -32,6 +32,7 @@ Thumbs.db
 
 # Executables
 chessboard
+chess
 -e 
 .mongoai_server.log
 chat_history.json

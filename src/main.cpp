@@ -1,11 +1,10 @@
 #include <iostream>
 #include <string>
-#include "chess_pieces.h"
 
-// Function declarations
 void renderChessboardChars();
 void renderChessboardSDL();
 void renderChessboardNcurses();
+void renderChessboardCharsEngine();
 
 void printHelp() {
     std::cout << "Chessboard Renderer\n";
@@ -17,6 +16,7 @@ void printHelp() {
     std::cout << "  --chars     Render chessboard using ASCII characters (default)\n";
     std::cout << "  --sdl       Render chessboard using SDL2 graphics\n";
     std::cout << "  --ncurses   Render chessboard using interactive ncurses interface\n";
+    std::cout << "  --engine    Test GNUChess engine integration with character mode\n";
     std::cout << "  --help      Show this help message\n";
     std::cout << "\n";
     std::cout << "Controls (SDL mode):\n";
@@ -42,6 +42,8 @@ int main(int argc, char* argv[]) {
             mode = "chars";
         } else if (arg == "--ncurses") {
             mode = "ncurses";
+        } else if (arg == "--engine") {
+            mode = "engine";
         } else if (arg == "--help") {
             printHelp();
             return 0;
@@ -59,6 +61,8 @@ int main(int argc, char* argv[]) {
         renderChessboardSDL();
     } else if (mode == "ncurses") {
         renderChessboardNcurses();
+    } else if (mode == "engine") {
+        renderChessboardCharsEngine();
     } else {
         renderChessboardChars();
     }
