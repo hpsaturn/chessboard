@@ -12,7 +12,7 @@
 #define BOARD_SIZE 260
 #define SQUARE_SIZE (BOARD_SIZE/8)
 #define HISTORY_WIDTH 60
-#define INPUT_HEIGHT 100
+#define INPUT_HEIGHT 60
 
 // Game state variables
 ChessPiece board[8][8];
@@ -278,7 +278,7 @@ void renderChessboardSDL() {
         SDL_RenderFillRect(renderer, &historyBorder);
 
         // Draw history title
-        renderText(renderer, "HISTORY", BOARD_SIZE + 10, 15, 0);
+        renderText(renderer, "HISTORY", BOARD_SIZE + 2, 15, 0);
 
         // Draw move history
         int historyY = 40;
