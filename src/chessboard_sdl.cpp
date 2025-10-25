@@ -324,36 +324,48 @@ void renderChessboardSDL() {
         }
 
         // ===== HISTORY PANEL (right side) =====
-        SDL_Rect historyPanel = {BOARD_SIZE, 0, HISTORY_WIDTH, SCREEN_HEIGHT};
-        SDL_SetRenderDrawColor(renderer, 40, 40, 40, 255); // Dark background
-        SDL_RenderFillRect(renderer, &historyPanel);
+        SDL_Rect historyArea = {BOARD_SIZE, 0, HISTORY_WIDTH, SCREEN_HEIGHT};
+        SDL_SetRenderDrawColor(renderer, 30, 30, 50, 255); // Dark blue background
+        SDL_RenderFillRect(renderer, &historyArea);
+
+        // Draw history title
+        renderText(renderer, "HISTORY", BOARD_SIZE + 10, 15, 0);
 
         // Draw move history
-        int yPos = 10;
-        for (const auto& move : moveHistory) {
-            // Simple text rendering (you could use SDL_ttf for better text)
-            // For now, we'll just draw rectangles representing moves
-            SDL_Rect moveRect = {BOARD_SIZE + 5, yPos, 50, 15};
-            SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
-            SDL_RenderFillRect(renderer, &moveRect);
-            yPos += 20;
+        int historyY = 40;
+        for (size_t i = 0; i < moveHistory.size() && historyY < SCREEN_HEIGHT - 20; i++) {
+            renderText(renderer, moveHistory[i], BOARD_SIZE + 10, historyY, 1);
+            historyY += 20;
         }
 
         // ===== INPUT PANEL (bottom) =====
-        SDL_Rect inputPanel = {0, BOARD_SIZE, SCREEN_WIDTH, INPUT_HEIGHT};
-        SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255); // Dark background
-        SDL_RenderFillRect(renderer, &inputPanel);
+        SDL_Rect inputArea = {0, BOARD_SIZE, BOARD_SIZE, INPUT_HEIGHT};
+        SDL_SetRenderDrawColor(renderer, 50, 30, 30, 255); // Dark red background
+        SDL_RenderFillRect(renderer, &inputArea);
 
-        // Display current turn and selection status
-        SDL_Rect statusRect = {10, BOARD_SIZE + 10, 200, 20};
-        SDL_SetRenderDrawColor(renderer, 150, 150, 150, 255);
-        SDL_RenderFillRect(renderer, &statusRect);
+        // Draw input border
+        SDL_SetRenderDrawColor(renderer, 150, 100, 100, 255); // Light red border
+        SDL_Rect inputBorder = {0, BOARD_SIZE, BOARD_SIZE, 2};
+        SDL_RenderFillRect(renderer, &inputBorder);
+
+        // Draw input title
+        renderText(renderer, "INPUT ZONE", 10, BOARD_SIZE + 15, 1);
+        
+        // Display current turn
+        std::string turnText = "Turn: " + std::string(whiteTurn ? "WHITE" : "BLACK");
+        renderText(renderer, turnText.c_str(), 10, BOARD_SIZE + 35, 1);
+        
+        // Display selection status
+        if (pieceSelected) {
+            std::string selectedText = "Selected: " + toChessNotation(selectedRow, selectedCol);
+            renderText(renderer, selectedText.c_str(), 10, BOARD_SIZE + 55, 1);
+        } else {
+            renderText(renderer, "Click to select piece", 10, BOARD_SIZE + 55, 1);
+        }
 
         // Display cursor position
-        SDL_Rect cursorRect = {10, BOARD_SIZE + 35, 200, 15};
-        SDL_SetRenderDrawColor(renderer, 120, 120, 120, 255);
-        SDL_RenderFillRect(renderer, &cursorRect);
-
+        std::string cursorText = "Cursor: " + toChessNotation(cursorRow, cursorCol);
+        renderText(renderer, cursorText.c_str(), 10, BOARD_SIZE + 75, 1);
         // Update screen
         SDL_RenderPresent(renderer);
     }
