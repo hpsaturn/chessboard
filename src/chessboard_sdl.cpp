@@ -276,6 +276,9 @@ void renderChessboardSDL() {
     bool quit = false;
     SDL_Event e;
 
+    // Frame rate limiting
+    const int FPS = 60;
+    const int frameDelay = 1000 / FPS;
     while (!quit) {
         while (SDL_PollEvent(&e) != 0) {
             if (e.type == SDL_QUIT) {
@@ -368,6 +371,9 @@ void renderChessboardSDL() {
         renderText(renderer, cursorText.c_str(), 10, BOARD_SIZE + 75, 1);
         // Update screen
         SDL_RenderPresent(renderer);
+        
+        // Frame rate limiting to reduce CPU usage
+        SDL_Delay(frameDelay);
     }
 
     // Cleanup
