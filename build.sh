@@ -37,9 +37,6 @@ fi
 echo ""
 echo "Build complete!"
 echo "Available executable:"
-echo "  ./chessboard - Unified chessboard with ASCII and SDL2 modes"
-
-# Copy executable to project root for easy access
-cp chessboard ../
+echo "  ./chess - Unified chessboard with ASCII and SDL2 modes"
 
 cd ..
