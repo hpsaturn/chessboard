@@ -27,6 +27,7 @@ fi
 echo "Building executable..."
 if make -j$(nproc); then
     echo "Build successful!"
+    cp chess ..
 else
     echo "Build failed"
     exit 1
