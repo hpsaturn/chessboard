@@ -47,7 +47,7 @@ bool GNUChessAdapter::initialize() {
         close(outputPipeFd[1]);
         
         // Execute GNUChess
-        execl("/usr/games/gnuchess", "gnuchess", nullptr);
+        execl("/usr/games/gnuchess", "nice -n -10 gnuchess -q --memory 8", nullptr);
         
         // If we get here, exec failed
         std::cerr << "Failed to execute GNUChess" << std::endl;
@@ -65,7 +65,7 @@ bool GNUChessAdapter::initialize() {
         fcntl(outputPipe, F_SETFL, O_NONBLOCK);
         
         // Wait for GNUChess to initialize
-        usleep(500000); // 500ms
+        usleep(5000000); // 5000ms
         
         // Send initialization commands
         sendCommand("xboard\n");
@@ -79,6 +79,8 @@ bool GNUChessAdapter::initialize() {
 void GNUChessAdapter::shutdown() {
     if (engineProcess != -1) {
         sendCommand("quit\n");
+
+        usleep(500000); // 500ms
         
         // Wait for process to terminate
         int status;
