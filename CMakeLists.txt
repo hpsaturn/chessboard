@@ -29,6 +29,8 @@ endif()
 set(CHESS_SOURCES
     src/main.cpp
     src/chessboard_chars.cpp
+    src/chessboard_chars_engine.cpp
+    src/engine/gnuchess_adapter.cpp
     src/chess_pieces.h
     src/chess_pieces_ncurses.cpp
     src/chess_pieces_sdl.cpp
