@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(ChessProject)
 
+# Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -14,6 +15,24 @@ if(SDL2_FOUND)
     add_definitions(-DHAVE_SDL2)
 else()
     message(WARNING "SDL2 not found - SDL mode will be disabled")
+endif()
+
+# Check for SDL2_image
+pkg_check_modules(SDL2_IMAGE QUIET SDL2_image)
+if(SDL2_IMAGE_FOUND)
+    message(STATUS "SDL2_image found: ${SDL2_IMAGE_VERSION}")
+    add_definitions(-DHAVE_SDL2_IMAGE)
+else()
+    message(WARNING "SDL2_image not found - image loading will be disabled")
+endif()
+
+# Check for SDL2_ttf
+pkg_check_modules(SDL2_TTF QUIET SDL2_ttf)
+if(SDL2_TTF_FOUND)
+    message(STATUS "SDL2_ttf found: ${SDL2_TTF_VERSION}")
+    add_definitions(-DHAVE_SDL2_TTF)
+else()
+    message(WARNING "SDL2_ttf not found - text rendering will use fallback")
 endif()
 
 # Check for ncurses
@@ -32,7 +51,9 @@ set(CHESS_SOURCES
     src/chessboard_chars_engine.cpp
     src/engine/gnuchess_adapter.cpp
     src/chess_pieces.h
+    src/chess_pieces_ncurses.h
     src/chess_pieces_ncurses.cpp
+    src/chess_pieces_sdl.h
     src/chess_pieces_sdl.cpp
 )
 
@@ -53,10 +74,9 @@ endif()
 # Add engine sources
 list(APPEND CHESS_SOURCES
     src/engine/gnuchess_adapter.cpp
+    src/engine/gnuchess_adapter.h
+    src/engine/chess_engine.h
 )
-
-# Include directories
-include_directories(src)
 
 # Create main chess executable
 add_executable(chess ${CHESS_SOURCES})
@@ -64,6 +84,12 @@ add_executable(chess ${CHESS_SOURCES})
 # Link libraries for main chess executable
 if(SDL2_FOUND)
     target_link_libraries(chess ${SDL2_LIBRARIES})
+    if(SDL2_IMAGE_FOUND)
+        target_link_libraries(chess ${SDL2_IMAGE_LIBRARIES})
+    endif()
+    if(SDL2_TTF_FOUND)
+        target_link_libraries(chess ${SDL2_TTF_LIBRARIES})
+    endif()
 endif()
 
 if(CURSES_FOUND)
