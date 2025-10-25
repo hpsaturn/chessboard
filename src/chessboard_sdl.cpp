@@ -20,6 +20,8 @@ std::vector<std::string> moveHistory;
 bool pieceSelected = false;
 int selectedRow = -1;
 int selectedCol = -1;
+int cursorRow = 0;    // Cursor position for keyboard navigation
+int cursorCol = 0;    // Cursor position for keyboard navigation
 bool whiteTurn = true;
 
 // Convert board coordinates to chess notation
@@ -98,16 +100,12 @@ bool movePiece(int fromRow, int fromCol, int toRow, int toCol) {
     }
     
     // Record the move in chess notation
-    std::string fromNotation = toChessNotation(fromRow, fromCol);
-    std::string toNotation = toChessNotation(toRow, toCol);
-    std::string move = fromNotation + toNotation;
-    
-    // Add to history
+    std::string move = toChessNotation(fromRow, fromCol) + toChessNotation(toRow, toCol);
     moveHistory.push_back(move);
     
     // Perform the move
     board[toRow][toCol] = board[fromRow][fromCol];
-    board[fromRow][fromCol] = ChessPiece();
+    board[fromRow][fromCol] = ChessPiece(); // Empty square
     
     // Switch turns
     whiteTurn = !whiteTurn;
@@ -115,7 +113,75 @@ bool movePiece(int fromRow, int fromCol, int toRow, int toCol) {
     return true;
 }
 
-// Handle mouse click for piece selection and movement
+// Handle keyboard input for piece selection and movement
+void handleKeyboardInput(SDL_Keycode key) {
+    switch (key) {
+        case SDLK_UP:
+            if (cursorRow > 0) cursorRow--;
+            break;
+        case SDLK_DOWN:
+            if (cursorRow < 7) cursorRow++;
+            break;
+        case SDLK_LEFT:
+            if (cursorCol > 0) cursorCol--;
+            break;
+        case SDLK_RIGHT:
+            if (cursorCol < 7) cursorCol++;
+            break;
+        case SDLK_SPACE:
+            // Select/deselect piece at cursor position
+            if (!pieceSelected) {
+                // Select a piece
+                ChessPiece piece = board[cursorRow][cursorCol];
+                if (!piece.isEmpty() && ((whiteTurn && piece.color == PieceColor::WHITE) || 
+                                         (!whiteTurn && piece.color == PieceColor::BLACK))) {
+                    selectedRow = cursorRow;
+                    selectedCol = cursorCol;
+                    pieceSelected = true;
+                }
+            } else {
+                // Deselect piece
+                pieceSelected = false;
+                selectedRow = -1;
+                selectedCol = -1;
+            }
+            break;
+        case SDLK_RETURN:
+            // Move selected piece to cursor position
+            if (pieceSelected) {
+                if (movePiece(selectedRow, selectedCol, cursorRow, cursorCol)) {
+                    // Move successful
+                    pieceSelected = false;
+                    selectedRow = -1;
+                    selectedCol = -1;
+                }
+            }
+            break;
+        case SDLK_q:
+            // Quit the game
+            SDL_Quit();
+            exit(0);
+            break;
+        case SDLK_ESCAPE:
+            // Deselect piece
+            pieceSelected = false;
+            selectedRow = -1;
+            selectedCol = -1;
+            break;
+        case SDLK_r:
+            // Reset board
+            initializeBoard();
+            moveHistory.clear();
+            pieceSelected = false;
+            selectedRow = -1;
+            selectedCol = -1;
+            cursorRow = 0;
+            cursorCol = 0;
+            whiteTurn = true;
+            break;
+    }
+}
+
 void handleMouseClick(int mouseX, int mouseY) {
     // Check if click is within chessboard
     if (mouseX < 0 || mouseX >= BOARD_SIZE || mouseY < 0 || mouseY >= BOARD_SIZE) {
@@ -124,6 +190,10 @@ void handleMouseClick(int mouseX, int mouseY) {
     
     int col = mouseX / SQUARE_SIZE;
     int row = mouseY / SQUARE_SIZE;
+    
+    // Update cursor position to match mouse click
+    cursorRow = row;
+    cursorCol = col;
     
     if (!pieceSelected) {
         // Select a piece
@@ -190,9 +260,9 @@ void renderChessboardSDL() {
         return;
     }
 
-    // Initialize chess piece textures
+    // Initialize chess pieces
     if (!initChessPieceTextures(renderer)) {
-        std::cerr << "Failed to initialize chess piece textures!" << std::endl;
+        std::cerr << "Failed to initialize chess pieces!" << std::endl;
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
         SDL_Quit();
@@ -215,24 +285,7 @@ void renderChessboardSDL() {
                     handleMouseClick(e.button.x, e.button.y);
                 }
             } else if (e.type == SDL_KEYDOWN) {
-                // Handle keyboard input for piece selection/movement
-                switch (e.key.keysym.sym) {
-                    case SDLK_ESCAPE:
-                        // Deselect piece
-                        pieceSelected = false;
-                        selectedRow = -1;
-                        selectedCol = -1;
-                        break;
-                    case SDLK_r:
-                        // Reset board
-                        initializeBoard();
-                        moveHistory.clear();
-                        pieceSelected = false;
-                        selectedRow = -1;
-                        selectedCol = -1;
-                        whiteTurn = true;
-                        break;
-                }
+                handleKeyboardInput(e.key.keysym.sym);
             }
         }
 
@@ -248,9 +301,13 @@ void renderChessboardSDL() {
                 
                 // Highlight selected square
                 if (pieceSelected && row == selectedRow && col == selectedCol) {
-                    SDL_SetRenderDrawColor(renderer, 100, 200, 100, 255); // Green highlight
+                    SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255); // Green for selected
                 }
-                // Alternate square colors
+                // Highlight cursor position
+                else if (row == cursorRow && col == cursorCol) {
+                    SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255); // Yellow for cursor
+                }
+                // Normal square colors
                 else if ((row + col) % 2 == 0) {
                     SDL_SetRenderDrawColor(renderer, 240, 217, 181, 255); // Light squares
                 } else {
@@ -259,64 +316,46 @@ void renderChessboardSDL() {
                 
                 SDL_RenderFillRect(renderer, &square);
                 
-                // Draw chess piece
-                ChessPiece piece = board[row][col];
-                if (!piece.isEmpty()) {
-                    renderChessPiece(renderer, col * SQUARE_SIZE + 2, row * SQUARE_SIZE + 2, piece);
+                // Draw piece if present
+                if (!board[row][col].isEmpty()) {
+                    renderChessPiece(renderer, col * SQUARE_SIZE, row * SQUARE_SIZE, board[row][col]);
                 }
             }
         }
 
-        // ===== HISTORY PANEL (100x320 - right side) =====
-        SDL_Rect historyArea = {BOARD_SIZE, 0, HISTORY_WIDTH, SCREEN_HEIGHT};
-        SDL_SetRenderDrawColor(renderer, 30, 30, 50, 255); // Dark blue background
-        SDL_RenderFillRect(renderer, &historyArea);
-
-        // Draw history border
-        SDL_SetRenderDrawColor(renderer, 100, 100, 150, 255); // Light blue border
-        SDL_Rect historyBorder = {BOARD_SIZE, 0, 2, SCREEN_HEIGHT};
-        SDL_RenderFillRect(renderer, &historyBorder);
-
-        // Draw history title
-        renderText(renderer, "HISTORY", BOARD_SIZE + 2, 15, 0);
+        // ===== HISTORY PANEL (right side) =====
+        SDL_Rect historyPanel = {BOARD_SIZE, 0, HISTORY_WIDTH, SCREEN_HEIGHT};
+        SDL_SetRenderDrawColor(renderer, 40, 40, 40, 255); // Dark background
+        SDL_RenderFillRect(renderer, &historyPanel);
 
         // Draw move history
-        int historyY = 40;
-        for (size_t i = 0; i < moveHistory.size() && historyY < SCREEN_HEIGHT - 20; i++) {
-            renderText(renderer, moveHistory[i], BOARD_SIZE + 10, historyY, 1);
-            historyY += 20;
+        int yPos = 10;
+        for (const auto& move : moveHistory) {
+            // Simple text rendering (you could use SDL_ttf for better text)
+            // For now, we'll just draw rectangles representing moves
+            SDL_Rect moveRect = {BOARD_SIZE + 5, yPos, 50, 15};
+            SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
+            SDL_RenderFillRect(renderer, &moveRect);
+            yPos += 20;
         }
 
-        // ===== INPUT ZONE (220x100 - bottom-left) =====
-        SDL_Rect inputArea = {0, BOARD_SIZE, BOARD_SIZE, INPUT_HEIGHT};
-        SDL_SetRenderDrawColor(renderer, 50, 30, 30, 255); // Dark red background
-        SDL_RenderFillRect(renderer, &inputArea);
+        // ===== INPUT PANEL (bottom) =====
+        SDL_Rect inputPanel = {0, BOARD_SIZE, SCREEN_WIDTH, INPUT_HEIGHT};
+        SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255); // Dark background
+        SDL_RenderFillRect(renderer, &inputPanel);
 
-        // Draw input border
-        SDL_SetRenderDrawColor(renderer, 150, 100, 100, 255); // Light red border
-        SDL_Rect inputBorder = {0, BOARD_SIZE, BOARD_SIZE, 2};
-        SDL_RenderFillRect(renderer, &inputBorder);
+        // Display current turn and selection status
+        SDL_Rect statusRect = {10, BOARD_SIZE + 10, 200, 20};
+        SDL_SetRenderDrawColor(renderer, 150, 150, 150, 255);
+        SDL_RenderFillRect(renderer, &statusRect);
 
-        // Draw input title
-        renderText(renderer, "INPUT ZONE", 10, BOARD_SIZE + 15, 1);
-        
-        // Display current turn
-        std::string turnText = "Turn: " + std::string(whiteTurn ? "WHITE" : "BLACK");
-        renderText(renderer, turnText.c_str(), 10, BOARD_SIZE + 35, 1);
-        
-        // Display selection status
-        if (pieceSelected) {
-            std::string selectedText = "Selected: " + toChessNotation(selectedRow, selectedCol);
-            renderText(renderer, selectedText.c_str(), 10, BOARD_SIZE + 55, 1);
-        } else {
-            renderText(renderer, "Click to select piece", 10, BOARD_SIZE + 55, 1);
-        }
+        // Display cursor position
+        SDL_Rect cursorRect = {10, BOARD_SIZE + 35, 200, 15};
+        SDL_SetRenderDrawColor(renderer, 120, 120, 120, 255);
+        SDL_RenderFillRect(renderer, &cursorRect);
 
         // Update screen
         SDL_RenderPresent(renderer);
-
-        // Cap the frame rate
-        SDL_Delay(16); // ~60 FPS
     }
 
     // Cleanup
@@ -326,9 +365,4 @@ void renderChessboardSDL() {
     SDL_Quit();
 }
 
-#else
-#include <iostream>
-void renderChessboardSDL() {
-    std::cout << "SDL2 support not compiled in this build" << std::endl;
-}
-#endif
+#endif // HAVE_SDL2
