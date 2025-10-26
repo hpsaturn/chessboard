@@ -1,6 +1,6 @@
-# Chessboard Frontend
+# GNUChess Frontend
 
-A C++ chessboard renderer with ASCII, SDL2 graphical, and NCurses terminal output modes.
+A C++ chessboard renderer with ASCII, SDL2, and NCurses terminal output modes, on the top GNUChess UCI protocol.
 
 ## Features
 
@@ -66,10 +66,6 @@ sudo apt install gnuchess cmake build-essential libsdl2-dev libsdl2-ttf-dev libs
 - [ ] Buildroot config files for Luckfox Lyra tests
 - [ ] Sprite pieces and its implementation
 
-## License
-
-This project is GPLv3. Some assets they are licensed under CC BY-SA 3.0. See assets directory for details.
-
 ## Contributing
 
 1. Fork the repository
@@ -82,3 +78,7 @@ This project is GPLv3. Some assets they are licensed under CC BY-SA 3.0. See ass
 
 - Thanks to [@lunokjod](https://github.com/lunokjod) for his MongoIA assistant
 - Thanks to [Chess SDL project](https://gitlab.com/fortysixandtwo/SDL-Chess) for its CC by SA image assets.
+
+## License
+
+This project is GPLv3. Some assets they are licensed under CC BY-SA 3.0. See assets directory for details.
