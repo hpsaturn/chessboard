@@ -136,7 +136,7 @@ void UCIEngine::processEngineOutput(const char* data, std::string& partial_line)
     if (isImportantResponse(line)) {
       storeImportantResponse(line);
     }
-    // std::cout << "Engine: " << line << std::endl;
+    std::cout << "Engine: " << line << std::endl;
   }
 }
 
