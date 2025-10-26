@@ -46,6 +46,21 @@ bool fromChessNotation(const std::string& notation, int& row, int& col) {
     return (col >= 0 && col < 8 && row >= 0 && row < 8);
 }
 
+
+// Convert chess move notation (e.g., "d2e2") to board coordinates
+bool fromChessMoveNotation(const std::string& moveNotation, int& fromRow, int& fromCol, int& toRow, int& toCol) {
+    if (moveNotation.length() != 4) return false;
+    
+    // Extract source and destination notations
+    std::string fromNotation = moveNotation.substr(0, 2);
+    std::string toNotation = moveNotation.substr(2, 2);
+    
+    // Convert using existing fromChessNotation function
+    if (!fromChessNotation(fromNotation, fromRow, fromCol)) return false;
+    if (!fromChessNotation(toNotation, toRow, toCol)) return false;
+    
+    return true;
+}
 // Initialize the chessboard with standard starting position
 void initializeBoard() {
     // Copy standard board
