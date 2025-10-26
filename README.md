@@ -1,3 +1,5 @@
+[![CMake](https://github.com/hpsaturn/chessboard/actions/workflows/build.yml/badge.svg)](https://github.com/hpsaturn/chessboard/actions/workflows/build.yml)
+
 # GNUChess Frontend
 
 C++ chessboard renderer with SDL2, ASCII, and NCurses on the top of GNUChess UCI server protocol.
