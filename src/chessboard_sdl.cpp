@@ -398,9 +398,9 @@ void renderChessboardSDL() {
         SDL_Delay(frameDelay);
 
         if (!pending_move.empty()) {
-          pending_move.clear();
           std::string engine_move = engine.sendMove(pending_move);
           std::cout << "Engine responded: " << engine_move << std::endl;
+          pending_move.clear();
         }
     }
 
