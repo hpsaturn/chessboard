@@ -13,8 +13,8 @@ void printHelp() {
     std::cout << "  chessboard [options]\n";
     std::cout << "\n";
     std::cout << "Options:\n";
-    std::cout << "  --chars     Render chessboard using ASCII characters (default)\n";
-    std::cout << "  --sdl       Render chessboard using SDL2 graphics\n";
+    std::cout << "              Render chessboard using SDL2 graphics (default)\n";
+    std::cout << "  --chars     Render chessboard using ASCII characters\n";
     std::cout << "  --ncurses   Render chessboard using interactive ncurses interface\n";
     std::cout << "  --engine    Test GNUChess engine integration with character mode\n";
     std::cout << "  --help      Show this help message\n";
@@ -30,15 +30,13 @@ void printHelp() {
 }
 
 int main(int argc, char* argv[]) {
-    std::string mode = "chars";
+    std::string mode = "";
     
     // Parse command line arguments
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         
-        if (arg == "--sdl") {
-            mode = "sdl";
-        } else if (arg == "--chars") {
+        if (arg == "--chars") {
             mode = "chars";
         } else if (arg == "--ncurses") {
             mode = "ncurses";
@@ -57,14 +55,14 @@ int main(int argc, char* argv[]) {
     std::cout << "Chessboard with Pieces - " << mode << " mode\n";
     std::cout << "========================\n";
     
-    if (mode == "sdl") {
-        renderChessboardSDL();
-    } else if (mode == "ncurses") {
+    if (mode == "ncurses") {
         renderChessboardNcurses();
+    } else if (mode == "chars") {
+        renderChessboardChars();
     } else if (mode == "engine") {
         renderChessboardCharsEngine();
     } else {
-        renderChessboardChars();
+        renderChessboardSDL();
     }
     
     return 0;

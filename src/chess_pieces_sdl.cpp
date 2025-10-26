@@ -1,5 +1,4 @@
 // Chess Pieces SDL Implementation
-#ifdef HAVE_SDL2
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
@@ -184,34 +183,3 @@ void renderText(SDL_Renderer* renderer, const std::string& text, int x, int y, i
         }
     }
 }
-
-#else
-// Stub implementations when SDL2 is not available
-#include "chess_pieces.h"
-#include <string>
-#include <map>
-
-// Forward declarations for SDL types when not available
-typedef void* SDL_Renderer;
-
-struct PieceTextures {
-    void* white;
-    void* black;
-};
-
-bool initChessPieceTextures(SDL_Renderer* renderer) {
-    return false;
-}
-
-void cleanupChessPieceTextures() {
-    // No-op when SDL2 is not available
-}
-
-void renderChessPiece(SDL_Renderer* renderer, int x, int y, const ChessPiece& piece) {
-    // No-op when SDL2 is not available
-}
-
-void renderText(SDL_Renderer* renderer, const std::string& text, int x, int y, int size) {
-    // No-op when SDL2 is not available
-}
-#endif

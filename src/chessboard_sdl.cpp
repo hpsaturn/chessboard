@@ -1,6 +1,4 @@
 // Main SDL Chessboard Logic
-#define HAVE_SDL2
-#ifdef HAVE_SDL2
 #include <SDL2/SDL.h>
 #include <iostream>
 #include <string>
@@ -107,6 +105,10 @@ bool isValidMove(int fromRow, int fromCol, int toRow, int toCol) {
             return true;
         }
     }
+
+    if (fromPiece.type == PieceType::KING) {
+      
+    }
     
     // For other pieces, allow any move (basic implementation)
     return true;
@@ -200,6 +202,7 @@ void handleKeyboardInput(SDL_Keycode key) {
             cursorRow = 0;
             cursorCol = 0;
             whiteTurn = true;
+            pending_move.clear();
             break;
     }
 }
@@ -430,5 +433,3 @@ void renderChessboardSDL() {
     SDL_DestroyWindow(window);
     SDL_Quit();
 }
-
-#endif // HAVE_SDL2

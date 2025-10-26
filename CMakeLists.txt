@@ -13,30 +13,27 @@ find_package(Threads REQUIRED)
 pkg_check_modules(SDL2 QUIET sdl2)
 if(SDL2_FOUND)
     message(STATUS "SDL2 found: ${SDL2_VERSION}")
-    add_definitions(-DHAVE_SDL2)
     include_directories(${SDL2_INCLUDE_DIRS})
 else()
-    message(WARNING "SDL2 not found - SDL mode will be disabled")
+    message(ERROR "SDL2 not found! Please install libsdl2-dev")
 endif()
 
 # Check for SDL2_image
 pkg_check_modules(SDL2_IMAGE QUIET SDL2_image)
 if(SDL2_IMAGE_FOUND)
     message(STATUS "SDL2_image found: ${SDL2_IMAGE_VERSION}")
-    add_definitions(-DHAVE_SDL2_IMAGE)
     include_directories(${SDL2_IMAGE_INCLUDE_DIRS})
 else()
-    message(WARNING "SDL2_image not found - image loading will be disabled")
+    message(ERROR "SDL2_image not found Please install libsdl2-image-dev")
 endif()
 
 # Check for SDL2_ttf
 pkg_check_modules(SDL2_TTF QUIET SDL2_ttf)
 if(SDL2_TTF_FOUND)
     message(STATUS "SDL2_ttf found: ${SDL2_TTF_VERSION}")
-    add_definitions(-DHAVE_SDL2_TTF)
     include_directories(${SDL2_TTF_INCLUDE_DIRS})
 else()
-    message(WARNING "SDL2_ttf not found - text rendering will use fallback")
+    message(ERROR "SDL2_ttf not found - Please install libsdl2-ttf-dev")
 endif()
 
 # Check for ncurses
@@ -100,11 +97,6 @@ endif()
 if(EXISTS "${CMAKE_SOURCE_DIR}/src/engine_test.cpp")
     add_executable(engine_test src/engine_test.cpp)
     target_include_directories(engine_test PRIVATE src)
-endif()
-
-if(EXISTS "${CMAKE_SOURCE_DIR}/src/engine_test_simple.cpp")
-    add_executable(engine_test_simple src/engine_test_simple.cpp)
-    target_include_directories(engine_test_simple PRIVATE src)
 endif()
 
 # Install target
