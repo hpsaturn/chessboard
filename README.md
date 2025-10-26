@@ -1,6 +1,6 @@
 # GNUChess Frontend
 
-A C++ chessboard renderer with ASCII, SDL2, and NCurses terminal output modes, on the top GNUChess UCI protocol.
+C++ chessboard renderer with SDL2, ASCII, and NCurses on the top of GNUChess UCI server protocol.
 
 ## Features
 
