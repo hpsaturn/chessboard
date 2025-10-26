@@ -1,4 +1,5 @@
 // Main SDL Chessboard Logic
+#define HAVE_SDL2
 #ifdef HAVE_SDL2
 #include <SDL2/SDL.h>
 #include <iostream>
@@ -6,6 +7,7 @@
 #include <vector>
 #include "chess_pieces.h"
 #include "chess_pieces_sdl.h"
+#include "engine/uci_engine.h"
 
 #define SCREEN_WIDTH  320
 #define SCREEN_HEIGHT 320
@@ -23,6 +25,8 @@ int selectedCol = -1;
 int cursorRow = 0;    // Cursor position for keyboard navigation
 int cursorCol = 0;    // Cursor position for keyboard navigation
 bool whiteTurn = true;
+UCIEngine engine;
+std::string pending_move = "";
 
 // Convert board coordinates to chess notation
 std::string toChessNotation(int row, int col) {
@@ -42,6 +46,21 @@ bool fromChessNotation(const std::string& notation, int& row, int& col) {
     return (col >= 0 && col < 8 && row >= 0 && row < 8);
 }
 
+
+// Convert chess move notation (e.g., "d2e2") to board coordinates
+bool fromChessMoveNotation(const std::string& moveNotation, int& fromRow, int& fromCol, int& toRow, int& toCol) {
+    if (moveNotation.length() != 4) return false;
+    
+    // Extract source and destination notations
+    std::string fromNotation = moveNotation.substr(0, 2);
+    std::string toNotation = moveNotation.substr(2, 2);
+    
+    // Convert using existing fromChessNotation function
+    if (!fromChessNotation(fromNotation, fromRow, fromCol)) return false;
+    if (!fromChessNotation(toNotation, toRow, toCol)) return false;
+    
+    return true;
+}
 // Initialize the chessboard with standard starting position
 void initializeBoard() {
     // Copy standard board
@@ -101,12 +120,15 @@ bool movePiece(int fromRow, int fromCol, int toRow, int toCol) {
     
     // Record the move in chess notation
     std::string move = toChessNotation(fromRow, fromCol) + toChessNotation(toRow, toCol);
-    moveHistory.push_back(move);
     
     // Perform the move
     board[toRow][toCol] = board[fromRow][fromCol];
     board[fromRow][fromCol] = ChessPiece(); // Empty square
-    
+   
+    moveHistory.push_back(move);
+    if (whiteTurn) {
+      pending_move = move;
+    }
     // Switch turns
     whiteTurn = !whiteTurn;
     
@@ -273,9 +295,27 @@ void renderChessboardSDL() {
     initializeBoard();
     moveHistory.clear();
 
+    if (engine.startEngine()) {
+      // Initialize UCI protocol
+      engine.sendCommand("uci");
+      if (engine.waitForResponse("uciok")) {
+        std::cout << "Engine is UCI compatible!" << std::endl;
+      }
+
+      engine.sendCommand("isready");
+      if (engine.waitForResponse("readyok")) {
+        std::cout << "Engine is ready!" << std::endl;
+      }
+
+      engine.newGame();
+    }
+
     bool quit = false;
     SDL_Event e;
 
+    // Frame rate limiting
+    const int FPS = 30;
+    const int frameDelay = 1000 / FPS;
     while (!quit) {
         while (SDL_PollEvent(&e) != 0) {
             if (e.type == SDL_QUIT) {
@@ -368,6 +408,20 @@ void renderChessboardSDL() {
         renderText(renderer, cursorText.c_str(), 10, BOARD_SIZE + 75, 1);
         // Update screen
         SDL_RenderPresent(renderer);
+        
+        // Frame rate limiting to reduce CPU usage
+        SDL_Delay(frameDelay);
+
+        if (!pending_move.empty()) {
+          std::string engine_move = engine.sendMove(pending_move);
+          std::cout << "Engine responded: " << engine_move << std::endl;
+          engine.addMoveToHistory(engine_move);
+          int fromRow, fromCol, toRow, toCol;
+          fromChessMoveNotation(engine_move,fromRow,fromCol,toRow,toCol);
+          movePiece(fromRow,fromCol,toRow,toCol);
+          pending_move.clear();
+          engine_move.clear();
+        }
     }
 
     // Cleanup

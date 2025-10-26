@@ -4,11 +4,10 @@
 #include <thread>
 #include <chrono>
 #include "chess_pieces.h"
-#include "engine/gnuchess_adapter.h"
 
 class CharEngineInterface {
 private:
-    GNUChessAdapter engine;
+    // GNUChessAdapter engine;
     std::vector<std::string> moveHistory;
     std::string lastMove;
     std::string engineFeedback;
@@ -23,15 +22,15 @@ public:
             }
         }
         
-        if (!engine.initialize()) {
-            engineFeedback = "ERROR: Failed to initialize GNUChess engine";
-        } else {
-            engineFeedback = "GNUChess engine ready. Enter moves (e.g., e2e4)";
-        }
+        // if (!engine.initialize()) {
+        //     engineFeedback = "ERROR: Failed to initialize GNUChess engine";
+        // } else {
+        //     engineFeedback = "GNUChess engine ready. Enter moves (e.g., e2e4)";
+        // }
     }
     
     ~CharEngineInterface() {
-        engine.shutdown();
+        // engine.shutdown();
     }
     
     void renderChessboard() {
@@ -122,19 +121,19 @@ public:
             animateMove(move);
             
             // Send move to engine
-            engine.makeMove(move);
-            moveHistory.push_back(move);
-            engineFeedback = "Move accepted: " + move;
+            // engine.makeMove(move);
+            // moveHistory.push_back(move);
+            // engineFeedback = "Move accepted: " + move;
             
-            // Get engine's response
-            std::string engineMove = engine.getBestMove();
-            if (!engineMove.empty() && engineMove != "(none)") {
-                // Animate engine's move
-                animateMove(engineMove);
-                moveHistory.push_back("Engine: " + engineMove);
-                engineFeedback = "Engine played: " + engineMove;
-                lastMove = "Black: " + engineMove;
-            }
+            // // Get engine's response
+            // std::string engineMove = engine.getBestMove();
+            // if (!engineMove.empty() && engineMove != "(none)") {
+            //     // Animate engine's move
+            //     animateMove(engineMove);
+            //     moveHistory.push_back("Engine: " + engineMove);
+            //     engineFeedback = "Engine played: " + engineMove;
+            //     lastMove = "Black: " + engineMove;
+            // }
             return true;
         } catch (const std::exception& e) {
             engineFeedback = "Invalid move: " + move + " (" + e.what() + ")";
