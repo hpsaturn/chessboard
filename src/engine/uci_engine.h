@@ -52,6 +52,7 @@ public:
 
     std::string sendMove(const std::string& move);
     std::string getMovesHistory();
+    void addMoveToHistory(const std::string& move);
     void newGame();
 
 private:

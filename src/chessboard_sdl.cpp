@@ -415,7 +415,12 @@ void renderChessboardSDL() {
         if (!pending_move.empty()) {
           std::string engine_move = engine.sendMove(pending_move);
           std::cout << "Engine responded: " << engine_move << std::endl;
+          engine.addMoveToHistory(engine_move);
+          int fromRow, fromCol, toRow, toCol;
+          fromChessMoveNotation(engine_move,fromRow,fromCol,toRow,toCol);
+          movePiece(fromRow,fromCol,toRow,toCol);
           pending_move.clear();
+          engine_move.clear();
         }
     }
 

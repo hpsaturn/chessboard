@@ -136,7 +136,7 @@ void UCIEngine::processEngineOutput(const char* data, std::string& partial_line)
     if (isImportantResponse(line)) {
       storeImportantResponse(line);
     }
-    std::cout << "Engine: " << line << std::endl;
+    // std::cout << "Engine: " << line << std::endl;
   }
 }
 
@@ -218,6 +218,10 @@ std::string UCIEngine::getMovesHistory() {
   return moves_history; 
 }
 
+void UCIEngine::addMoveToHistory(const std::string& move) {
+  moves_history = moves_history + " " + move;
+}
+
 void UCIEngine::newGame() {
   sendCommand("ucinewgame");
 }
@@ -237,3 +241,5 @@ std::string UCIEngine::sendMove(const std::string& move) {
   else
     return "";
 }
+
+
