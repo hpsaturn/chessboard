@@ -10,18 +10,22 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/cache@v3
-      - uses: libsdl-org/setup-sdl@main
-        id: sdl
-        with:
-          install-linux-dependencies: true
-          version: 2-latest
-          version-sdl-image: 2-latest
-          
-      - name: 'Configure and build your project'
+      
+      - name: Install SDL2 dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libsdl2-dev \
+            libsdl2-image-dev \
+            libsdl2-ttf-dev \
+            libncurses-dev \
+            cmake \
+            build-essential
+            
+      - name: Configure and build project
         run: |
           cmake -S . -B build
           cmake --build build --verbose
