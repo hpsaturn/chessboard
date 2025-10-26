@@ -23,5 +23,5 @@ jobs:
           
       - name: 'Configure and build your project'
         run: |
-          cmake -S .. -B build
+          cmake -S . -B build
           cmake --build build --verbose
