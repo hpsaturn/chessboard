@@ -11,10 +11,6 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
-    strategy:
-      max-parallel: 1
-      matrix:
-        os: [ubuntu-latest]
 
     strategy:
       # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
@@ -27,7 +23,7 @@ jobs:
       #
       # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
         build_type: [Release]
         c_compiler: [gcc, clang, cl]
         include:
