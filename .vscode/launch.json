@@ -6,7 +6,6 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/chess",
-            "args": ["--sdl"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [
