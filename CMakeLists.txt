@@ -64,7 +64,7 @@ set(CHESS_SOURCES
 # Add SDL sources if available
 if(SDL2_FOUND)
     list(APPEND CHESS_SOURCES
-        src/chessboard_sdl.cpp
+        src/chessboard_sdl_refactored.cpp src/chess_game_logic.cpp
     )
 endif()
 
