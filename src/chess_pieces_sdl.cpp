@@ -48,7 +48,7 @@ bool initChessPieceTextures(SDL_Renderer* renderer) {
     }
     
     // Load font
-    font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 12);
+    font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 10);
     if (font == nullptr) {
         std::cerr << "Failed to load font! SDL_ttf Error: " << TTF_GetError() << std::endl;
         // Continue without font - text rendering will fall back to primitive method

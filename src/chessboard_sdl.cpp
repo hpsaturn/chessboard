@@ -18,10 +18,10 @@
 ChessPiece board[8][8];
 std::vector<std::string> moveHistory;
 bool pieceSelected = false;
-int selectedRow = -1;
-int selectedCol = -1;
-int cursorRow = 0;    // Cursor position for keyboard navigation
-int cursorCol = 0;    // Cursor position for keyboard navigation
+uint8_t selectedRow = -1;
+uint8_t selectedCol = -1;
+uint8_t cursorRow = 0;    // Cursor position for keyboard navigation
+uint8_t cursorCol = 0;    // Cursor position for keyboard navigation
 bool whiteTurn = true;
 UCIEngine engine;
 std::string pending_move = "";
@@ -203,6 +203,7 @@ void handleKeyboardInput(SDL_Keycode key) {
             cursorCol = 0;
             whiteTurn = true;
             pending_move.clear();
+            engine.newGame();
             break;
     }
 }
@@ -327,7 +328,7 @@ void renderChessboardSDL() {
                 if (e.button.button == SDL_BUTTON_LEFT) {
                     handleMouseClick(e.button.x, e.button.y);
                 }
-            } else if (e.type == SDL_KEYDOWN) {
+            } else if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
                 handleKeyboardInput(e.key.keysym.sym);
             }
         }
@@ -372,12 +373,12 @@ void renderChessboardSDL() {
         SDL_RenderFillRect(renderer, &historyArea);
 
         // Draw history title
-        renderText(renderer, "HISTORY", BOARD_SIZE + 10, 15, 0);
+        renderText(renderer, "HISTORY", BOARD_SIZE + 2, 15, 0);
 
         // Draw move history
         int historyY = 40;
         for (size_t i = 0; i < moveHistory.size() && historyY < SCREEN_HEIGHT - 20; i++) {
-            renderText(renderer, moveHistory[i], BOARD_SIZE + 10, historyY, 1);
+            renderText(renderer, moveHistory[i], BOARD_SIZE + 2, historyY, 2);
             historyY += 20;
         }
 
