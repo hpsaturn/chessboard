@@ -107,11 +107,93 @@ bool isValidMove(int fromRow, int fromCol, int toRow, int toCol) {
     }
 
     if (fromPiece.type == PieceType::KING) {
-      
+        std::cout << "[KEY] King move.." << std::endl;
+        // Check for castling - king moves two squares horizontally
+        if (fromRow == toRow && abs(fromCol - toCol) == 2) {
+            // Castling conditions:
+            // 1. King must not have moved before
+            // 2. Rook must not have moved before
+            // 3. No pieces between king and rook
+            // 4. King must not be in check
+            // 5. King must not pass through check
+            // 6. King must not end up in check
+            
+            // Determine if kingside or queenside castling
+            bool isKingside = (toCol > fromCol);
+            int rookCol = isKingside ? 7 : 0;
+            int direction = isKingside ? 1 : -1;
+            
+            // Check if king and rook are in starting positions
+            if (fromPiece.hasMoved) return false;
+            std::cout << "[KEY] King never moved.." << std::endl;
+            
+            ChessPiece rook = board[fromRow][rookCol];
+            if (rook.isEmpty() || rook.type != PieceType::ROOK || rook.hasMoved || rook.color != fromPiece.color) {
+                return false;
+            }
+            std::cout << "[KEY] Rook castelling never moved.." << std::endl;
+            
+            // Check that squares between king and rook are empty
+            for (int col = fromCol + direction; col != rookCol; col += direction) {
+                if (!board[fromRow][col].isEmpty()) {
+                    return false;
+                }
+            }
+            std::cout << "[KEY] Castelling line is free.." << std::endl;
+            std::cout << "[KEY] Castelling Approved" << std::endl;
+            
+            // Check that king is not currently in check
+            // if (isInCheck(fromPiece.color)) {
+                // return false;
+            // }
+            
+            // Check that king doesn't pass through check (square king moves over)
+            // int intermediateCol = fromCol + direction;
+            // if (wouldBeInCheck(fromRow, intermediateCol, fromPiece.color)) {
+                // return false;
+            // }
+            
+            // Check that king doesn't end up in check
+            // if (wouldBeInCheck(toRow, toCol, fromPiece.color)) {
+                // return false;
+            // }
+
+            fromPiece.castelling = direction;
+            board[fromRow][fromCol] = fromPiece; // save king state
+            
+            return true;
+        }
+        
+        // Regular king move (one square in any direction)
+        if (abs(fromRow - toRow) <= 1 && abs(fromCol - toCol) <= 1) {
+            fromPiece.hasMoved = true;
+            board[fromRow][fromCol] = fromPiece;
+            return true;
+        }
+        
+        return false;
     }
     
     // For other pieces, allow any move (basic implementation)
     return true;
+}
+
+void castelling(int &fromRow, int &fromCol, int &toRow, int &toCol) {
+    ChessPiece fromPiece = board[fromRow][fromCol];
+    if (fromPiece.type == PieceType::KING) std::cout << "[KEY] isKing " << std::endl;
+    if (fromPiece.castelling != 0) std::cout << "[KEY] has direction " << std::endl;
+    if (fromPiece.type == PieceType::KING && fromPiece.castelling != 0) {
+      if (fromPiece.castelling > 0) { // castelling king side
+        board[toRow][toCol - 1] = board[fromRow][toCol + 1]; // move rook king
+        board[fromRow][toCol + 1] = ChessPiece();
+      }
+      if (fromPiece.castelling < 0) { // castelling king side
+        board[toRow][toCol + 1] = board[fromRow][toCol - 2]; // move rook queen
+        board[fromRow][toCol - 2] = ChessPiece();
+      }
+      fromPiece.castelling = 0; // reset casteling
+      board[fromRow][fromCol] = fromPiece; // save king state
+    }
 }
 
 // Move a piece and record the move
@@ -122,6 +204,8 @@ bool movePiece(int fromRow, int fromCol, int toRow, int toCol) {
     
     // Record the move in chess notation
     std::string move = toChessNotation(fromRow, fromCol) + toChessNotation(toRow, toCol);
+
+    castelling(fromRow, fromCol, toRow, toCol);
     
     // Perform the move
     board[toRow][toCol] = board[fromRow][fromCol];
