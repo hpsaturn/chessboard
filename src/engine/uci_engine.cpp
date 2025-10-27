@@ -1,6 +1,7 @@
 #include "uci_engine.h"
 
-bool UCIEngine::startEngine(const std::string& enginePath) {
+bool UCIEngine::startEngine(const std::string& enginePath, bool debug) {
+  this->debug = debug;
   if (pipe(engine_stdin) != 0 || pipe(engine_stdout) != 0) {
     std::cerr << "Failed to create pipes" << std::endl;
     return false;
@@ -136,7 +137,7 @@ void UCIEngine::processEngineOutput(const char* data, std::string& partial_line)
     if (isImportantResponse(line)) {
       storeImportantResponse(line);
     }
-    // std::cout << "Engine: " << line << std::endl;
+    if (debug) std::cout << "Engine: " << line << std::endl;
   }
 }
 
@@ -223,14 +224,15 @@ void UCIEngine::addMoveToHistory(const std::string& move) {
 }
 
 void UCIEngine::newGame() {
+  moves_history.clear();
   sendCommand("ucinewgame");
 }
 
 std::string UCIEngine::sendMove(const std::string& move) {
   moves_history = moves_history + " " + move;
   std::string moves = "position startpos moves" + moves_history;
-  sendCommand(moves);
-  sendCommand("go movetime 3000");
+  sendCommand(moves, debug);
+  sendCommand("go movetime 3000", debug);
   // Wait for bestmove asynchronously
   if (waitForResponse("bestmove", 20000)) {
     std::string lastMove = getLastImportantResponse();

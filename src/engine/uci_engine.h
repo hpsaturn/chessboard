@@ -31,6 +31,7 @@ private:
     std::mutex response_mutex;
     std::string moves_history = "";
     static const size_t MAX_RESPONSES = 50;
+    bool debug = true;
 
 public:
     UCIEngine() : engine_pid(-1), is_running(false) {
@@ -42,7 +43,7 @@ public:
         shutdown();
     }
 
-    bool startEngine(const std::string& enginePath = "/usr/games/gnuchess");
+    bool startEngine(const std::string& enginePath = "/usr/games/gnuchess", bool debug = false);
     void sendCommand(const std::string& command, bool silent = true);
     std::vector<std::string> getImportantResponses();
     std::string getLastImportantResponse();

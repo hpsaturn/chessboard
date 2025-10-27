@@ -27,6 +27,8 @@ enum class PieceColor {
 struct ChessPiece {
     PieceType type;
     PieceColor color;
+    bool hasMoved = false;
+    int castelling = 0;  // 0 not catelling, 1 right , -1 left
     
     ChessPiece(PieceType t = PieceType::NONE, PieceColor c = PieceColor::WHITE) 
         : type(t), color(c) {}
