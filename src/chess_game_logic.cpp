@@ -72,8 +72,8 @@ bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRo
     
     // Pawn move validation
     if (fromPiece.type == PieceType::PAWN) {
-        int direction = (fromPiece.color == PieceColor::WHITE) ? 1 : -1;
-        int startRow = (fromPiece.color == PieceColor::WHITE) ? 1 : 6;
+        int direction = (fromPiece.color == PieceColor::WHITE) ? -1 : 1;
+        int startRow = (fromPiece.color == PieceColor::WHITE) ? 6 : 1;
         
         // Forward move (1 square)
         if (fromCol == toCol && toRow == fromRow + direction && toPiece.isEmpty()) {
