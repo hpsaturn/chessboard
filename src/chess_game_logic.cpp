@@ -208,6 +208,44 @@ bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRo
         
         return false;
     }
+    // Queen move validation
+    if (fromPiece.type == PieceType::QUEEN) {
+        int rowDiff = abs(fromRow - toRow);
+        int colDiff = abs(fromCol - toCol);
+        
+        // Queen moves like a rook (straight lines) or bishop (diagonals)
+        bool isStraightMove = (fromRow == toRow || fromCol == toCol);
+        bool isDiagonalMove = (rowDiff == colDiff && rowDiff > 0);
+        
+        if (!isStraightMove && !isDiagonalMove) {
+            return false;
+        }
+        
+        // Check for pieces blocking the path
+        int rowStep = 0;
+        int colStep = 0;
+        
+        if (fromRow != toRow) {
+            rowStep = (toRow > fromRow) ? 1 : -1;
+        }
+        if (fromCol != toCol) {
+            colStep = (toCol > fromCol) ? 1 : -1;
+        }
+        
+        int currentRow = fromRow + rowStep;
+        int currentCol = fromCol + colStep;
+        
+        // Check all squares along the path
+        while (currentRow != toRow || currentCol != toCol) {
+            if (board[currentRow][currentCol].type != PieceType::NONE) {
+                return false; // Path is blocked
+            }
+            currentRow += rowStep;
+            currentCol += colStep;
+        }
+        
+        return true;
+    }
     // For other pieces, allow any move (basic implementation)
     return true;
 }
@@ -270,3 +308,4 @@ void ChessGame::resetGame() {
     moveHistory.clear();
     whiteTurn = true;
 }
+
