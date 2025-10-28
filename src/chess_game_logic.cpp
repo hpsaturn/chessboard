@@ -70,27 +70,31 @@ bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRo
     // Can't capture own pieces
     if (!toPiece.isEmpty() && fromPiece.color == toPiece.color) return false;
     
-    // Basic pawn movement (can be enhanced with proper chess rules)
+    // Pawn move validation
     if (fromPiece.type == PieceType::PAWN) {
         int direction = (fromPiece.color == PieceColor::WHITE) ? -1 : 1;
+        int startRow = (fromPiece.color == PieceColor::WHITE) ? 6 : 1;
         
-        // Forward move
+        // Forward move (1 square)
         if (fromCol == toCol && toRow == fromRow + direction && toPiece.isEmpty()) {
             return true;
         }
         
-        // Initial double move
-        if (fromCol == toCol && 
-            ((fromPiece.color == PieceColor::WHITE && fromRow == 6 && toRow == 4) ||
-             (fromPiece.color == PieceColor::BLACK && fromRow == 1 && toRow == 3)) &&
-            toPiece.isEmpty() && board[fromRow + direction][fromCol].isEmpty()) {
+        // Initial double move (2 squares)
+        if (fromCol == toCol && fromRow == startRow && 
+            toRow == fromRow + 2 * direction && toPiece.isEmpty() && 
+            board[fromRow + direction][fromCol].isEmpty()) {
             return true;
         }
         
-        // Capture
-        if (abs(fromCol - toCol) == 1 && toRow == fromRow + direction && !toPiece.isEmpty()) {
+        // Capture (diagonal)
+        if (abs(fromCol - toCol) == 1 && toRow == fromRow + direction && 
+            !toPiece.isEmpty() && toPiece.color != fromPiece.color) {
             return true;
         }
+        
+        // TODO: Add en passant and promotion logic
+        return false;
     }
 
     if (fromPiece.type == PieceType::KING) {
@@ -161,6 +165,121 @@ bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRo
         return false;
     }
     
+    // Knight move validation
+    if (fromPiece.type == PieceType::KNIGHT) {
+        // Knight moves in L-shape: 2 squares in one direction, 1 square perpendicular
+        int rowDiff = abs(fromRow - toRow);
+        int colDiff = abs(fromCol - toCol);
+        
+        // Valid knight moves: (2,1) or (1,2)
+        if ((rowDiff == 2 && colDiff == 1) || (rowDiff == 1 && colDiff == 2)) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    // Bishop move validation
+    if (fromPiece.type == PieceType::BISHOP) {
+        // Bishop moves diagonally - row and column differences must be equal
+        int rowDiff = abs(fromRow - toRow);
+        int colDiff = abs(fromCol - toCol);
+        
+        // Valid bishop moves: same absolute difference in rows and columns
+        if (rowDiff == colDiff && rowDiff > 0) {
+            // Check for pieces blocking the diagonal path
+            int rowStep = (toRow > fromRow) ? 1 : -1;
+            int colStep = (toCol > fromCol) ? 1 : -1;
+            
+            int currentRow = fromRow + rowStep;
+            int currentCol = fromCol + colStep;
+            
+            // Check all squares along the diagonal path
+            while (currentRow != toRow && currentCol != toCol) {
+                if (board[currentRow][currentCol].type != PieceType::NONE) {
+                    return false; // Path is blocked
+                }
+                currentRow += rowStep;
+                currentCol += colStep;
+            }
+            
+            return true;
+        }
+        
+        return false;
+    }
+    // Rook move validation
+    if (fromPiece.type == PieceType::ROOK) {
+        // Rook moves in straight lines only
+        bool isHorizontalMove = (fromRow == toRow && fromCol != toCol);
+        bool isVerticalMove = (fromCol == toCol && fromRow != toRow);
+        
+        if (!isHorizontalMove && !isVerticalMove) {
+            return false;
+        }
+        
+        // Check for pieces blocking the path
+        int rowStep = 0;
+        int colStep = 0;
+        
+        if (fromRow != toRow) {
+            rowStep = (toRow > fromRow) ? 1 : -1;
+        }
+        if (fromCol != toCol) {
+            colStep = (toCol > fromCol) ? 1 : -1;
+        }
+        
+        int currentRow = fromRow + rowStep;
+        int currentCol = fromCol + colStep;
+        
+        // Check all squares along the path
+        while (currentRow != toRow || currentCol != toCol) {
+            if (board[currentRow][currentCol].type != PieceType::NONE) {
+                return false; // Path is blocked
+            }
+            currentRow += rowStep;
+            currentCol += colStep;
+        }
+        
+        return true;
+    }
+    if (fromPiece.type == PieceType::QUEEN) {
+        int rowDiff = abs(fromRow - toRow);
+        int colDiff = abs(fromCol - toCol);
+        
+        // Queen moves like a rook (straight lines) or bishop (diagonals)
+        bool isStraightMove = (fromRow == toRow || fromCol == toCol);
+        bool isDiagonalMove = (rowDiff == colDiff && rowDiff > 0);
+        
+        if (!isStraightMove && !isDiagonalMove) {
+            return false;
+        }
+        
+        // Check for pieces blocking the path
+        int rowStep = 0;
+        int colStep = 0;
+        
+        if (fromRow != toRow) {
+            rowStep = (toRow > fromRow) ? 1 : -1;
+        }
+        if (fromCol != toCol) {
+            colStep = (toCol > fromCol) ? 1 : -1;
+        }
+        
+        int currentRow = fromRow + rowStep;
+        int currentCol = fromCol + colStep;
+        
+        // Check all squares along the path
+        while (currentRow != toRow || currentCol != toCol) {
+            if (board[currentRow][currentCol].type != PieceType::NONE) {
+                return false; // Path is blocked
+            }
+            currentRow += rowStep;
+            currentCol += colStep;
+        }
+        
+        return true;
+    }
     // For other pieces, allow any move (basic implementation)
     return true;
 }
@@ -223,3 +342,4 @@ void ChessGame::resetGame() {
     moveHistory.clear();
     whiteTurn = true;
 }
+

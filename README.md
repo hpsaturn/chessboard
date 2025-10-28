@@ -10,7 +10,7 @@ C++ chessboard renderer with SDL2, ASCII, and NCurses on the top of GNUChess UCI
 - [x] **GNUChess UCI**: protocol integration
 - [x] **Unified Binary**: Single executable with command-line options
 - [x] **Cross-platform**: Works on Linux, Windows, and macOS
-- [ ] **Picocalc Luckfox Lyra** full support (in progress)
+- [x] **Picocalc Luckfox Lyra**: SDL and keyboard issues are fixed 
 - [ ] **NCurses Mode**: Terminal interface with keyboard navigation (in progress)
 - [ ] **ASCII Mode**: Terminal interface with Unicode pieces (inprogress)
 
@@ -47,6 +47,19 @@ sudo apt install gnuchess cmake build-essential libsdl2-dev libsdl2-ttf-dev libs
 
 ![Installation Preview](res/screenshots/preview.jpg)
 
+## TODO
+
+- [x] Framebuffer support for Luckfox Lyra basic Linux buildroot image
+- [x] Adapter class for join with GNU-Chess using UCI protocol
+- [x] Picocalc keyboard issues (fixed)
+- [ ] Castelling full validations
+- [ ] Dead pieces count in each side
+- [ ] Points from the user (positive/negative)
+- [ ] Settings modal window
+- [ ] Chronometers
+- [ ] Buildroot config files for Luckfox Lyra tests
+- [ ] Sprite pieces improvement 
+
 ### Ncurses/Chars Board Piece Notation
 
 | Piece | ASCII | NCurses | Description |
@@ -59,14 +72,6 @@ sudo apt install gnuchess cmake build-essential libsdl2-dev libsdl2-ttf-dev libs
 | ♙ ♟ | P p | P p | Pawn |
 
 **Note**: Uppercase letters represent black pieces, lowercase represent white pieces.
-
-## TODO
-
-- [x] Framebuffer support for Luckfox Lyra basic Linux buildroot image
-- [x] Intermediate class for join with different engines like GNU-Chess
-- [ ] Picocalc keyboard issues (in progress)
-- [ ] Buildroot config files for Luckfox Lyra tests
-- [ ] Sprite pieces and its implementation
 
 ## Contributing
 
