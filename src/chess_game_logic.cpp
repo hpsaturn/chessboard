@@ -70,27 +70,31 @@ bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRo
     // Can't capture own pieces
     if (!toPiece.isEmpty() && fromPiece.color == toPiece.color) return false;
     
-    // Basic pawn movement (can be enhanced with proper chess rules)
+    // Pawn move validation
     if (fromPiece.type == PieceType::PAWN) {
-        int direction = (fromPiece.color == PieceColor::WHITE) ? -1 : 1;
+        int direction = (fromPiece.color == PieceColor::WHITE) ? 1 : -1;
+        int startRow = (fromPiece.color == PieceColor::WHITE) ? 1 : 6;
         
-        // Forward move
+        // Forward move (1 square)
         if (fromCol == toCol && toRow == fromRow + direction && toPiece.isEmpty()) {
             return true;
         }
         
-        // Initial double move
-        if (fromCol == toCol && 
-            ((fromPiece.color == PieceColor::WHITE && fromRow == 6 && toRow == 4) ||
-             (fromPiece.color == PieceColor::BLACK && fromRow == 1 && toRow == 3)) &&
-            toPiece.isEmpty() && board[fromRow + direction][fromCol].isEmpty()) {
+        // Initial double move (2 squares)
+        if (fromCol == toCol && fromRow == startRow && 
+            toRow == fromRow + 2 * direction && toPiece.isEmpty() && 
+            board[fromRow + direction][fromCol].isEmpty()) {
             return true;
         }
         
-        // Capture
-        if (abs(fromCol - toCol) == 1 && toRow == fromRow + direction && !toPiece.isEmpty()) {
+        // Capture (diagonal)
+        if (abs(fromCol - toCol) == 1 && toRow == fromRow + direction && 
+            !toPiece.isEmpty() && toPiece.color != fromPiece.color) {
             return true;
         }
+        
+        // TODO: Add en passant and promotion logic
+        return false;
     }
 
     if (fromPiece.type == PieceType::KING) {
