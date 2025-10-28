@@ -161,6 +161,20 @@ bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRo
         return false;
     }
     
+    // Knight move validation
+    if (fromPiece.type == PieceType::KNIGHT) {
+        // Knight moves in L-shape: 2 squares in one direction, 1 square perpendicular
+        int rowDiff = abs(fromRow - toRow);
+        int colDiff = abs(fromCol - toCol);
+        
+        // Valid knight moves: (2,1) or (1,2)
+        if ((rowDiff == 2 && colDiff == 1) || (rowDiff == 1 && colDiff == 2)) {
+            return true;
+        }
+        
+        return false;
+    }
+    
     // For other pieces, allow any move (basic implementation)
     return true;
 }
