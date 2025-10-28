@@ -19,6 +19,7 @@ public:
     const ChessPiece& getPiece(int row, int col) const;
     bool isWhiteTurn() const;
     const std::vector<std::string>& getMoveHistory() const;
+    std::string pending_move = "";
     
     // Coordinate conversion
     std::string toChessNotation(int row, int col) const;

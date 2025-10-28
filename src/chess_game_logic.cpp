@@ -208,6 +208,9 @@ bool ChessGame::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
     board[fromRow][fromCol] = ChessPiece(); // Empty square
    
     moveHistory.push_back(move);
+    if (whiteTurn) {
+      pending_move = move;
+    }
     
     // Switch turns
     whiteTurn = !whiteTurn;

@@ -23,7 +23,7 @@ uint8_t selectedCol = -1;
 uint8_t cursorRow = 0;    // Cursor position for keyboard navigation
 uint8_t cursorCol = 0;    // Cursor position for keyboard navigation
 bool whiteTurn = true;
-UCIEngine engine;
+UCIEngine engine(true);
 std::string pending_move = "";
 
 // Convert board coordinates to chess notation
@@ -180,8 +180,6 @@ bool isValidMove(int fromRow, int fromCol, int toRow, int toCol) {
 
 void castelling(int &fromRow, int &fromCol, int &toRow, int &toCol) {
     ChessPiece fromPiece = board[fromRow][fromCol];
-    if (fromPiece.type == PieceType::KING) std::cout << "[KEY] isKing " << std::endl;
-    if (fromPiece.castelling != 0) std::cout << "[KEY] has direction " << std::endl;
     if (fromPiece.type == PieceType::KING && fromPiece.castelling != 0) {
       if (fromPiece.castelling > 0) { // castelling king side
         board[toRow][toCol - 1] = board[fromRow][toCol + 1]; // move rook king

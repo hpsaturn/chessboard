@@ -22,7 +22,6 @@ uint8_t selectedCol = -1;
 uint8_t cursorRow = 0;    // Cursor position for keyboard navigation
 uint8_t cursorCol = 0;    // Cursor position for keyboard navigation
 UCIEngine engine(true);
-std::string pending_move = "";
 
 // Handle keyboard input for piece selection and movement
 void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
@@ -87,7 +86,7 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
             selectedCol = -1;
             cursorRow = 0;
             cursorCol = 0;
-            pending_move.clear();
+            chessGame.pending_move.clear();
             engine.newGame();
             break;
     }
@@ -315,14 +314,14 @@ void renderChessboardSDL() {
         SDL_Delay(frameDelay);
 
         // Handle engine moves
-        if (!pending_move.empty()) {
-          std::string engine_move = engine.sendMove(pending_move);
+        if (!chessGame.pending_move.empty()) {
+          std::string engine_move = engine.sendMove(chessGame.pending_move);
           std::cout << "Engine responded: " << engine_move << std::endl;
           engine.addMoveToHistory(engine_move);
           int fromRow, fromCol, toRow, toCol;
           chessGame.fromChessMoveNotation(engine_move, fromRow, fromCol, toRow, toCol);
           chessGame.movePiece(fromRow, fromCol, toRow, toCol);
-          pending_move.clear();
+          chessGame.pending_move.clear();
           engine_move.clear();
         }
     }
