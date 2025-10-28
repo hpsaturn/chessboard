@@ -208,7 +208,41 @@ bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRo
         
         return false;
     }
-    // Queen move validation
+    // Rook move validation
+    if (fromPiece.type == PieceType::ROOK) {
+        // Rook moves in straight lines only
+        bool isHorizontalMove = (fromRow == toRow && fromCol != toCol);
+        bool isVerticalMove = (fromCol == toCol && fromRow != toRow);
+        
+        if (!isHorizontalMove && !isVerticalMove) {
+            return false;
+        }
+        
+        // Check for pieces blocking the path
+        int rowStep = 0;
+        int colStep = 0;
+        
+        if (fromRow != toRow) {
+            rowStep = (toRow > fromRow) ? 1 : -1;
+        }
+        if (fromCol != toCol) {
+            colStep = (toCol > fromCol) ? 1 : -1;
+        }
+        
+        int currentRow = fromRow + rowStep;
+        int currentCol = fromCol + colStep;
+        
+        // Check all squares along the path
+        while (currentRow != toRow || currentCol != toCol) {
+            if (board[currentRow][currentCol].type != PieceType::NONE) {
+                return false; // Path is blocked
+            }
+            currentRow += rowStep;
+            currentCol += colStep;
+        }
+        
+        return true;
+    }
     if (fromPiece.type == PieceType::QUEEN) {
         int rowDiff = abs(fromRow - toRow);
         int colDiff = abs(fromCol - toCol);
