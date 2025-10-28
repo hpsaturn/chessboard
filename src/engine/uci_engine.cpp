@@ -1,7 +1,6 @@
 #include "uci_engine.h"
 
-bool UCIEngine::startEngine(const std::string& enginePath, bool debug) {
-  this->debug = debug;
+bool UCIEngine::startEngine(const std::string& enginePath) {
   if (pipe(engine_stdin) != 0 || pipe(engine_stdout) != 0) {
     std::cerr << "Failed to create pipes" << std::endl;
     return false;

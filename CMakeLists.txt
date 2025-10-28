@@ -59,12 +59,13 @@ set(CHESS_SOURCES
     src/chess_pieces_sdl.cpp
     src/engine/uci_engine.cpp
     src/engine/uci_engine.h
+    src/chess_game_logic.cpp
 )
 
 # Add SDL sources if available
 if(SDL2_FOUND)
     list(APPEND CHESS_SOURCES
-        src/chessboard_sdl.cpp
+        src/chessboard_sdl.cpp 
     )
 endif()
 

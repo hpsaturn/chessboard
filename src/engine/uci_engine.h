@@ -34,7 +34,7 @@ private:
     bool debug = true;
 
 public:
-    UCIEngine() : engine_pid(-1), is_running(false) {
+    UCIEngine(bool debug = false) : engine_pid(-1), is_running(false),debug(debug) {
         engine_stdin[0] = engine_stdin[1] = -1;
         engine_stdout[0] = engine_stdout[1] = -1;
     }
@@ -43,7 +43,7 @@ public:
         shutdown();
     }
 
-    bool startEngine(const std::string& enginePath = "/usr/games/gnuchess", bool debug = false);
+    bool startEngine(const std::string& enginePath = "/usr/games/gnuchess");
     void sendCommand(const std::string& command, bool silent = true);
     std::vector<std::string> getImportantResponses();
     std::string getLastImportantResponse();
