@@ -57,7 +57,7 @@ void ChessGame::initializeBoard() {
     }
 }
 
-bool ChessGame::isValidMove(int fromRow, int fromCol, int toRow, int toCol) const {
+bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRow, int toCol) const {
     // Can't move to the same square
     if (fromRow == toRow && fromCol == toCol) return false;
     
@@ -148,6 +148,7 @@ bool ChessGame::isValidMove(int fromRow, int fromCol, int toRow, int toCol) cons
             // Mark castling in the piece (this will be handled in movePiece)
             // Note: We need to modify the piece, but this is a const method
             // We'll handle this in movePiece instead
+            isCastling = true;
             return true;
         }
         
@@ -165,33 +166,32 @@ bool ChessGame::isValidMove(int fromRow, int fromCol, int toRow, int toCol) cons
 }
 
 void ChessGame::handleCastling(int fromRow, int fromCol, int toRow, int toCol) {
-    ChessPiece& fromPiece = board[fromRow][fromCol];
-    if (fromPiece.type == PieceType::KING && fromRow == toRow && abs(fromCol - toCol) == 2) {
-        // Determine castling direction
-        bool isKingside = (toCol > fromCol);
-        int rookCol = isKingside ? 7 : 0;
-        int direction = isKingside ? 1 : -1;
-        
-        // Move the rook
-        if (isKingside) {
-            board[toRow][toCol - 1] = board[fromRow][rookCol]; // move rook king side
-            board[fromRow][rookCol] = ChessPiece();
-        } else {
-            board[toRow][toCol + 1] = board[fromRow][rookCol - 3]; // move rook queen side
-            board[fromRow][rookCol] = ChessPiece();
-        }
-    }
+  ChessPiece& fromPiece = board[fromRow][fromCol];
+  // Determine castling direction
+  bool isKingside = (toCol > fromCol);
+  int rookCol = isKingside ? 7 : 0;
+  int direction = isKingside ? 1 : -1;
+
+  // Move the rook
+  if (isKingside) {
+    board[toRow][toCol - 1] = board[fromRow][toCol+1];  // move rook king side
+    board[fromRow][toCol + 1] = ChessPiece();
+  } else {
+    board[toRow][toCol + 1] = board[fromRow][toCol - 2];  // move rook queen side
+    board[fromRow][toCol - 2] = ChessPiece();
+  }
 }
 
 bool ChessGame::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
-    if (!isValidMove(fromRow, fromCol, toRow, toCol)) {
+    bool isCastling = false;
+    if (!isValidMove(isCastling, fromRow, fromCol, toRow, toCol)) {
         return false;
     }
     
     ChessPiece& fromPiece = board[fromRow][fromCol];
     
     // Handle castling
-    if (fromPiece.type == PieceType::KING && fromRow == toRow && abs(fromCol - toCol) == 2) {
+    if (fromPiece.type == PieceType::KING && isCastling) {
         handleCastling(fromRow, fromCol, toRow, toCol);
     }
     

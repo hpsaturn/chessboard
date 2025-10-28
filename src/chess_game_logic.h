@@ -28,7 +28,7 @@ public:
     
     // Game logic
     void initializeBoard();
-    bool isValidMove(int fromRow, int fromCol, int toRow, int toCol) const;
+    bool isValidMove(bool& isCastling, int fromRow, int fromCol, int toRow, int toCol) const;
     void handleCastling(int fromRow, int fromCol, int toRow, int toCol);
     bool movePiece(int fromRow, int fromCol, int toRow, int toCol);
     void resetGame();

@@ -1,10 +1,11 @@
-// Main SDL Chessboard Logic
+// Refactored SDL Chessboard - Separated Game Logic from SDL Rendering
 #include <SDL2/SDL.h>
 #include <iostream>
 #include <string>
 #include <vector>
 #include "chess_pieces.h"
 #include "chess_pieces_sdl.h"
+#include "chess_game_logic.h"
 #include "engine/uci_engine.h"
 
 #define SCREEN_WIDTH  320
@@ -14,213 +15,16 @@
 #define HISTORY_WIDTH 60
 #define INPUT_HEIGHT 60
 
-// Game state variables
-ChessPiece board[8][8];
-std::vector<std::string> moveHistory;
+// UI state variables
 bool pieceSelected = false;
 uint8_t selectedRow = -1;
 uint8_t selectedCol = -1;
 uint8_t cursorRow = 0;    // Cursor position for keyboard navigation
 uint8_t cursorCol = 0;    // Cursor position for keyboard navigation
-bool whiteTurn = true;
 UCIEngine engine(true);
-std::string pending_move = "";
-
-// Convert board coordinates to chess notation
-std::string toChessNotation(int row, int col) {
-    std::string notation;
-    notation += 'a' + col;
-    notation += '8' - row;
-    return notation;
-}
-
-// Convert chess notation to board coordinates
-bool fromChessNotation(const std::string& notation, int& row, int& col) {
-    if (notation.length() != 2) return false;
-    
-    col = notation[0] - 'a';
-    row = '8' - notation[1];
-    
-    return (col >= 0 && col < 8 && row >= 0 && row < 8);
-}
-
-
-// Convert chess move notation (e.g., "d2e2") to board coordinates
-bool fromChessMoveNotation(const std::string& moveNotation, int& fromRow, int& fromCol, int& toRow, int& toCol) {
-    if (moveNotation.length() != 4) return false;
-    
-    // Extract source and destination notations
-    std::string fromNotation = moveNotation.substr(0, 2);
-    std::string toNotation = moveNotation.substr(2, 2);
-    
-    // Convert using existing fromChessNotation function
-    if (!fromChessNotation(fromNotation, fromRow, fromCol)) return false;
-    if (!fromChessNotation(toNotation, toRow, toCol)) return false;
-    
-    return true;
-}
-// Initialize the chessboard with standard starting position
-void initializeBoard() {
-    // Copy standard board
-    for (int row = 0; row < 8; row++) {
-        for (int col = 0; col < 8; col++) {
-            board[row][col] = STANDARD_BOARD[row][col];
-        }
-    }
-}
-
-// Check if a move is valid (basic validation - can be enhanced later)
-bool isValidMove(int fromRow, int fromCol, int toRow, int toCol) {
-    // Can't move to the same square
-    if (fromRow == toRow && fromCol == toCol) return false;
-    
-    ChessPiece fromPiece = board[fromRow][fromCol];
-    ChessPiece toPiece = board[toRow][toCol];
-    
-    // Can't move empty squares
-    if (fromPiece.isEmpty()) return false;
-    
-    // Can't capture own pieces
-    if (!toPiece.isEmpty() && fromPiece.color == toPiece.color) return false;
-    
-    // Basic pawn movement (can be enhanced with proper chess rules)
-    if (fromPiece.type == PieceType::PAWN) {
-        int direction = (fromPiece.color == PieceColor::WHITE) ? -1 : 1;
-        
-        // Forward move
-        if (fromCol == toCol && toRow == fromRow + direction && toPiece.isEmpty()) {
-            return true;
-        }
-        
-        // Initial double move
-        if (fromCol == toCol && 
-            ((fromPiece.color == PieceColor::WHITE && fromRow == 6 && toRow == 4) ||
-             (fromPiece.color == PieceColor::BLACK && fromRow == 1 && toRow == 3)) &&
-            toPiece.isEmpty() && board[fromRow + direction][fromCol].isEmpty()) {
-            return true;
-        }
-        
-        // Capture
-        if (abs(fromCol - toCol) == 1 && toRow == fromRow + direction && !toPiece.isEmpty()) {
-            return true;
-        }
-    }
-
-    if (fromPiece.type == PieceType::KING) {
-        std::cout << "[KEY] King move.." << std::endl;
-        // Check for castling - king moves two squares horizontally
-        if (fromRow == toRow && abs(fromCol - toCol) == 2) {
-            // Castling conditions:
-            // 1. King must not have moved before
-            // 2. Rook must not have moved before
-            // 3. No pieces between king and rook
-            // 4. King must not be in check
-            // 5. King must not pass through check
-            // 6. King must not end up in check
-            
-            // Determine if kingside or queenside castling
-            bool isKingside = (toCol > fromCol);
-            int rookCol = isKingside ? 7 : 0;
-            int direction = isKingside ? 1 : -1;
-            
-            // Check if king and rook are in starting positions
-            if (fromPiece.hasMoved) return false;
-            std::cout << "[KEY] King never moved.." << std::endl;
-            
-            ChessPiece rook = board[fromRow][rookCol];
-            if (rook.isEmpty() || rook.type != PieceType::ROOK || rook.hasMoved || rook.color != fromPiece.color) {
-                return false;
-            }
-            std::cout << "[KEY] Rook castelling never moved.." << std::endl;
-            
-            // Check that squares between king and rook are empty
-            for (int col = fromCol + direction; col != rookCol; col += direction) {
-                if (!board[fromRow][col].isEmpty()) {
-                    return false;
-                }
-            }
-            std::cout << "[KEY] Castelling line is free.." << std::endl;
-            std::cout << "[KEY] Castelling Approved" << std::endl;
-            
-            // Check that king is not currently in check
-            // if (isInCheck(fromPiece.color)) {
-                // return false;
-            // }
-            
-            // Check that king doesn't pass through check (square king moves over)
-            // int intermediateCol = fromCol + direction;
-            // if (wouldBeInCheck(fromRow, intermediateCol, fromPiece.color)) {
-                // return false;
-            // }
-            
-            // Check that king doesn't end up in check
-            // if (wouldBeInCheck(toRow, toCol, fromPiece.color)) {
-                // return false;
-            // }
-
-            fromPiece.castelling = direction;
-            board[fromRow][fromCol] = fromPiece; // save king state
-            
-            return true;
-        }
-        
-        // Regular king move (one square in any direction)
-        if (abs(fromRow - toRow) <= 1 && abs(fromCol - toCol) <= 1) {
-            fromPiece.hasMoved = true;
-            board[fromRow][fromCol] = fromPiece;
-            return true;
-        }
-        
-        return false;
-    }
-    
-    // For other pieces, allow any move (basic implementation)
-    return true;
-}
-
-void castelling(int &fromRow, int &fromCol, int &toRow, int &toCol) {
-    ChessPiece fromPiece = board[fromRow][fromCol];
-    if (fromPiece.type == PieceType::KING && fromPiece.castelling != 0) {
-      if (fromPiece.castelling > 0) { // castelling king side
-        board[toRow][toCol - 1] = board[fromRow][toCol + 1]; // move rook king
-        board[fromRow][toCol + 1] = ChessPiece();
-      }
-      if (fromPiece.castelling < 0) { // castelling king side
-        board[toRow][toCol + 1] = board[fromRow][toCol - 2]; // move rook queen
-        board[fromRow][toCol - 2] = ChessPiece();
-      }
-      fromPiece.castelling = 0; // reset casteling
-      board[fromRow][fromCol] = fromPiece; // save king state
-    }
-}
-
-// Move a piece and record the move
-bool movePiece(int fromRow, int fromCol, int toRow, int toCol) {
-    if (!isValidMove(fromRow, fromCol, toRow, toCol)) {
-        return false;
-    }
-    
-    // Record the move in chess notation
-    std::string move = toChessNotation(fromRow, fromCol) + toChessNotation(toRow, toCol);
-
-    castelling(fromRow, fromCol, toRow, toCol);
-    
-    // Perform the move
-    board[toRow][toCol] = board[fromRow][fromCol];
-    board[fromRow][fromCol] = ChessPiece(); // Empty square
-   
-    moveHistory.push_back(move);
-    if (whiteTurn) {
-      pending_move = move;
-    }
-    // Switch turns
-    whiteTurn = !whiteTurn;
-    
-    return true;
-}
 
 // Handle keyboard input for piece selection and movement
-void handleKeyboardInput(SDL_Keycode key) {
+void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
     switch (key) {
         case SDLK_UP:
             if (cursorRow > 0) cursorRow--;
@@ -238,9 +42,9 @@ void handleKeyboardInput(SDL_Keycode key) {
             // Select/deselect piece at cursor position
             if (!pieceSelected) {
                 // Select a piece
-                ChessPiece piece = board[cursorRow][cursorCol];
-                if (!piece.isEmpty() && ((whiteTurn && piece.color == PieceColor::WHITE) || 
-                                         (!whiteTurn && piece.color == PieceColor::BLACK))) {
+                ChessPiece piece = chessGame.getPiece(cursorRow, cursorCol);
+                if (!piece.isEmpty() && ((chessGame.isWhiteTurn() && piece.color == PieceColor::WHITE) || 
+                                         (!chessGame.isWhiteTurn() && piece.color == PieceColor::BLACK))) {
                     selectedRow = cursorRow;
                     selectedCol = cursorCol;
                     pieceSelected = true;
@@ -255,7 +59,7 @@ void handleKeyboardInput(SDL_Keycode key) {
         case SDLK_RETURN:
             // Move selected piece to cursor position
             if (pieceSelected) {
-                if (movePiece(selectedRow, selectedCol, cursorRow, cursorCol)) {
+                if (chessGame.movePiece(selectedRow, selectedCol, cursorRow, cursorCol)) {
                     // Move successful
                     pieceSelected = false;
                     selectedRow = -1;
@@ -276,21 +80,19 @@ void handleKeyboardInput(SDL_Keycode key) {
             break;
         case SDLK_r:
             // Reset board
-            initializeBoard();
-            moveHistory.clear();
+            chessGame.resetGame();
             pieceSelected = false;
             selectedRow = -1;
             selectedCol = -1;
             cursorRow = 0;
             cursorCol = 0;
-            whiteTurn = true;
-            pending_move.clear();
+            chessGame.pending_move.clear();
             engine.newGame();
             break;
     }
 }
 
-void handleMouseClick(int mouseX, int mouseY) {
+void handleMouseClick(int mouseX, int mouseY, ChessGame& chessGame) {
     // Check if click is within chessboard
     if (mouseX < 0 || mouseX >= BOARD_SIZE || mouseY < 0 || mouseY >= BOARD_SIZE) {
         return;
@@ -305,25 +107,25 @@ void handleMouseClick(int mouseX, int mouseY) {
     
     if (!pieceSelected) {
         // Select a piece
-        ChessPiece piece = board[row][col];
-        if (!piece.isEmpty() && ((whiteTurn && piece.color == PieceColor::WHITE) || 
-                                 (!whiteTurn && piece.color == PieceColor::BLACK))) {
+        ChessPiece piece = chessGame.getPiece(row, col);
+        if (!piece.isEmpty() && ((chessGame.isWhiteTurn() && piece.color == PieceColor::WHITE) || 
+                                 (!chessGame.isWhiteTurn() && piece.color == PieceColor::BLACK))) {
             selectedRow = row;
             selectedCol = col;
             pieceSelected = true;
         }
     } else {
         // Move the selected piece
-        if (movePiece(selectedRow, selectedCol, row, col)) {
+        if (chessGame.movePiece(selectedRow, selectedCol, row, col)) {
             // Move successful
             pieceSelected = false;
             selectedRow = -1;
             selectedCol = -1;
         } else {
             // Invalid move - try to select a different piece
-            ChessPiece piece = board[row][col];
-            if (!piece.isEmpty() && ((whiteTurn && piece.color == PieceColor::WHITE) || 
-                                     (!whiteTurn && piece.color == PieceColor::BLACK))) {
+            ChessPiece piece = chessGame.getPiece(row, col);
+            if (!piece.isEmpty() && ((chessGame.isWhiteTurn() && piece.color == PieceColor::WHITE) || 
+                                     (!chessGame.isWhiteTurn() && piece.color == PieceColor::BLACK))) {
                 selectedRow = row;
                 selectedCol = col;
             } else {
@@ -337,37 +139,37 @@ void handleMouseClick(int mouseX, int mouseY) {
 }
 
 void renderChessboardSDL() {
+    // Create ChessGame instance inside main to avoid global initialization issues
+    ChessGame chessGame;
+    
     // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
         return;
     }
-
+    
     // Create window
-    SDL_Window* window = SDL_CreateWindow(
-        "SDL Chessboard with Interactive Pieces",
-        SDL_WINDOWPOS_UNDEFINED,
-        SDL_WINDOWPOS_UNDEFINED,
-        SCREEN_WIDTH,
-        SCREEN_HEIGHT,
-        SDL_WINDOW_SHOWN
-    );
-
-    if (window == nullptr) {
+    SDL_Window* window = SDL_CreateWindow("Chessboard with Pieces",
+                                          SDL_WINDOWPOS_UNDEFINED,
+                                          SDL_WINDOWPOS_UNDEFINED,
+                                          SCREEN_WIDTH,
+                                          SCREEN_HEIGHT,
+                                          SDL_WINDOW_SHOWN);
+    if (!window) {
         std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
         SDL_Quit();
         return;
     }
-
+    
     // Create renderer
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    if (renderer == nullptr) {
+    if (!renderer) {
         std::cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
         SDL_DestroyWindow(window);
         SDL_Quit();
         return;
     }
-
+    
     // Initialize chess pieces
     if (!initChessPieceTextures(renderer)) {
         std::cerr << "Failed to initialize chess pieces!" << std::endl;
@@ -377,10 +179,7 @@ void renderChessboardSDL() {
         return;
     }
 
-    // Initialize the board
-    initializeBoard();
-    moveHistory.clear();
-
+    // Initialize engine
     if (engine.startEngine()) {
       // Initialize UCI protocol
       engine.sendCommand("uci");
@@ -392,34 +191,47 @@ void renderChessboardSDL() {
       if (engine.waitForResponse("readyok")) {
         std::cout << "Engine is ready!" << std::endl;
       }
-
-      engine.newGame();
     }
 
+    // Main loop flag
     bool quit = false;
+    
+    // Event handler
     SDL_Event e;
-
+    
     // Frame rate limiting
-    const int FPS = 30;
+    const int FPS = 60;
     const int frameDelay = 1000 / FPS;
+    Uint32 frameStart;
+    int frameTime;
+    
+    // Main game loop
     while (!quit) {
+        frameStart = SDL_GetTicks();
+        
+        // Handle events on queue
         while (SDL_PollEvent(&e) != 0) {
+            // User requests quit
             if (e.type == SDL_QUIT) {
                 quit = true;
-            } else if (e.type == SDL_MOUSEBUTTONDOWN) {
-                if (e.button.button == SDL_BUTTON_LEFT) {
-                    handleMouseClick(e.button.x, e.button.y);
-                }
-            } else if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
-                handleKeyboardInput(e.key.keysym.sym);
+            }
+            // Handle keyboard input
+            else if (e.type == SDL_KEYDOWN) {
+                handleKeyboardInput(e.key.keysym.sym, chessGame);
+            }
+            // Handle mouse click
+            else if (e.type == SDL_MOUSEBUTTONDOWN) {
+                int mouseX, mouseY;
+                SDL_GetMouseState(&mouseX, &mouseY);
+                handleMouseClick(mouseX, mouseY, chessGame);
             }
         }
-
+        
         // Clear screen
-        SDL_SetRenderDrawColor(renderer, 60, 60, 60, 255); // Dark gray background
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Black background
         SDL_RenderClear(renderer);
-
-        // ===== CHESSBOARD (220x220 - top-left) =====
+        
+        // ===== CHESSBOARD =====
         // Draw chessboard squares
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
@@ -443,8 +255,9 @@ void renderChessboardSDL() {
                 SDL_RenderFillRect(renderer, &square);
                 
                 // Draw piece if present
-                if (!board[row][col].isEmpty()) {
-                    renderChessPiece(renderer, col * SQUARE_SIZE, row * SQUARE_SIZE, board[row][col]);
+                ChessPiece piece = chessGame.getPiece(row, col);
+                if (!piece.isEmpty()) {
+                    renderChessPiece(renderer, col * SQUARE_SIZE, row * SQUARE_SIZE, piece);
                 }
             }
         }
@@ -458,6 +271,7 @@ void renderChessboardSDL() {
         renderText(renderer, "HISTORY", BOARD_SIZE + 2, 15, 0);
 
         // Draw move history
+        const std::vector<std::string>& moveHistory = chessGame.getMoveHistory();
         int historyY = 40;
         for (size_t i = 0; i < moveHistory.size() && historyY < SCREEN_HEIGHT - 20; i++) {
             renderText(renderer, moveHistory[i], BOARD_SIZE + 2, historyY, 2);
@@ -478,34 +292,36 @@ void renderChessboardSDL() {
         renderText(renderer, "INPUT ZONE", 10, BOARD_SIZE + 15, 1);
         
         // Display current turn
-        std::string turnText = "Turn: " + std::string(whiteTurn ? "WHITE" : "BLACK");
+        std::string turnText = "Turn: " + std::string(chessGame.isWhiteTurn() ? "WHITE" : "BLACK");
         renderText(renderer, turnText.c_str(), 10, BOARD_SIZE + 35, 1);
         
         // Display selection status
         if (pieceSelected) {
-            std::string selectedText = "Selected: " + toChessNotation(selectedRow, selectedCol);
+            std::string selectedText = "Selected: " + chessGame.toChessNotation(selectedRow, selectedCol);
             renderText(renderer, selectedText.c_str(), 10, BOARD_SIZE + 55, 1);
         } else {
             renderText(renderer, "Click to select piece", 10, BOARD_SIZE + 55, 1);
         }
 
         // Display cursor position
-        std::string cursorText = "Cursor: " + toChessNotation(cursorRow, cursorCol);
+        std::string cursorText = "Cursor: " + chessGame.toChessNotation(cursorRow, cursorCol);
         renderText(renderer, cursorText.c_str(), 10, BOARD_SIZE + 75, 1);
+        
         // Update screen
         SDL_RenderPresent(renderer);
         
         // Frame rate limiting to reduce CPU usage
         SDL_Delay(frameDelay);
 
-        if (!pending_move.empty()) {
-          std::string engine_move = engine.sendMove(pending_move);
+        // Handle engine moves
+        if (!chessGame.pending_move.empty()) {
+          std::string engine_move = engine.sendMove(chessGame.pending_move);
           std::cout << "Engine responded: " << engine_move << std::endl;
           engine.addMoveToHistory(engine_move);
           int fromRow, fromCol, toRow, toCol;
-          fromChessMoveNotation(engine_move,fromRow,fromCol,toRow,toCol);
-          movePiece(fromRow,fromCol,toRow,toCol);
-          pending_move.clear();
+          chessGame.fromChessMoveNotation(engine_move, fromRow, fromCol, toRow, toCol);
+          chessGame.movePiece(fromRow, fromCol, toRow, toCol);
+          chessGame.pending_move.clear();
           engine_move.clear();
         }
     }
