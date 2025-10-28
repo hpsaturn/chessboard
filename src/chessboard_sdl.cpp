@@ -216,7 +216,7 @@ void renderChessboardSDL() {
                 quit = true;
             }
             // Handle keyboard input
-            else if (e.type == SDL_KEYDOWN) {
+            else if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
                 handleKeyboardInput(e.key.keysym.sym, chessGame);
             }
             // Handle mouse click
