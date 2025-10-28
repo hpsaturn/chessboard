@@ -175,6 +175,35 @@ bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRo
         return false;
     }
     
+    // Bishop move validation
+    if (fromPiece.type == PieceType::BISHOP) {
+        // Bishop moves diagonally - row and column differences must be equal
+        int rowDiff = abs(fromRow - toRow);
+        int colDiff = abs(fromCol - toCol);
+        
+        // Valid bishop moves: same absolute difference in rows and columns
+        if (rowDiff == colDiff && rowDiff > 0) {
+            // Check for pieces blocking the diagonal path
+            int rowStep = (toRow > fromRow) ? 1 : -1;
+            int colStep = (toCol > fromCol) ? 1 : -1;
+            
+            int currentRow = fromRow + rowStep;
+            int currentCol = fromCol + colStep;
+            
+            // Check all squares along the diagonal path
+            while (currentRow != toRow && currentCol != toCol) {
+                if (board[currentRow][currentCol].type != PieceType::NONE) {
+                    return false; // Path is blocked
+                }
+                currentRow += rowStep;
+                currentCol += colStep;
+            }
+            
+            return true;
+        }
+        
+        return false;
+    }
     // For other pieces, allow any move (basic implementation)
     return true;
 }
