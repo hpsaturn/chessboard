@@ -32,6 +32,8 @@ private:
     std::string moves_history = "";
     static const size_t MAX_RESPONSES = 50;
     bool debug = true;
+    int difficult = 1;
+    uint16_t move_time = 2;
 
 public:
     UCIEngine(bool debug = false) : engine_pid(-1), is_running(false),debug(debug) {
@@ -55,6 +57,8 @@ public:
     void addMoveToHistory(const std::string& move);
     void newGame();
     void shutdown();
+    void setDifficult(int difficult);
+    void setMoveTime(uint32_t move_time);
 
 private:
     void observerLoop();

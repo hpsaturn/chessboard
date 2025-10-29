@@ -30,10 +30,10 @@ public:
     
     // Settings structure
     struct Settings {
-        int depthDifficulty;      // 1-10
-        int maxTimePerMove;       // seconds (0-300)
-        int matchTime;            // minutes (0-60)
-        bool soundEnabled;
+        int depthDifficulty = 1;      // 1-10
+        int maxTimePerMove = 2;       // seconds (0-300)
+        int matchTime = 10;            // minutes (0-60)
+        bool soundEnabled = false;
     };
     
     // Get current settings

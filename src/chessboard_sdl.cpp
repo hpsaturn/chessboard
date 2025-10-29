@@ -197,11 +197,11 @@ void renderChessboardSDL() {
         std::cout << "[SDLG] Settings updated:" << std::endl;
         std::cout << "[SDLG]   Sound: " << (settings.soundEnabled ? "Enabled" : "Disabled") << std::endl;
         std::cout << "[SDLG]   Depth Difficulty: " << settings.depthDifficulty << std::endl;
-        std::cout << "[SDLG]   Max Time Per Move: " << (settings.maxTimePerMove ? "Yes" : "No") << std::endl;
+        std::cout << "[SDLG]   Max Time Per Move: " << settings.maxTimePerMove  << std::endl;
         std::cout << "[SDLG]   Match Time: " << settings.matchTime << std::endl;
-        
-        // Apply settings to game logic here if needed
-        // For example: chessGame.setShowLegalMoves(settings.showLegalMoves);
+
+        engine.setDifficult(settingsModal->getSettings().depthDifficulty);
+        engine.setMoveTime(settingsModal->getSettings().maxTimePerMove);
     });
 
     // Initialize engine
@@ -215,6 +215,8 @@ void renderChessboardSDL() {
       engine.sendCommand("isready");
       if (engine.waitForResponse("readyok")) {
         std::cout << "[SDLG] Engine is ready!" << std::endl;
+        engine.setDifficult(settingsModal->getSettings().depthDifficulty);
+        engine.setMoveTime(settingsModal->getSettings().maxTimePerMove);
       }
     }
 

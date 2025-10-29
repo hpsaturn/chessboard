@@ -19,10 +19,10 @@ SettingsModal::SettingsModal(SDL_Renderer* renderer, int screenWidth, int screen
     }
     
     // Initialize default settings
-    currentSettings.depthDifficulty = 3;
-    currentSettings.maxTimePerMove = 30;
-    currentSettings.matchTime = 10;
-    currentSettings.soundEnabled = true;
+    // currentSettings.depthDifficulty = 1;
+    // currentSettings.maxTimePerMove = 30;
+    // currentSettings.matchTime = 10;
+    // currentSettings.soundEnabled = true;
     
     // Calculate modal position and size
     modalWidth = 250;
@@ -59,10 +59,10 @@ void SettingsModal::initializeUI() {
     depthSlider.label = "Depth Difficulty: " + std::to_string(currentSettings.depthDifficulty);
     depthSlider.value = &currentSettings.depthDifficulty;
     depthSlider.minValue = 1;
-    depthSlider.maxValue = 10;
+    depthSlider.maxValue = 15;
     depthSlider.dragging = false;
     sliders.push_back(depthSlider);
-    currentY += elementHeight + 15;
+    currentY += elementHeight + 18;
     
     // Max time per move slider
     Slider timePerMoveSlider;
@@ -74,7 +74,7 @@ void SettingsModal::initializeUI() {
     timePerMoveSlider.maxValue = 300;
     timePerMoveSlider.dragging = false;
     sliders.push_back(timePerMoveSlider);
-    currentY += elementHeight + 15;
+    currentY += elementHeight + 18;
     
     // Match time slider
     Slider matchTimeSlider;
@@ -86,7 +86,7 @@ void SettingsModal::initializeUI() {
     matchTimeSlider.maxValue = 60;
     matchTimeSlider.dragging = false;
     sliders.push_back(matchTimeSlider);
-    currentY += elementHeight + 15;
+    currentY += elementHeight + 18;
     
     // Sound checkbox
     Checkbox soundCheckbox;
@@ -187,13 +187,13 @@ bool SettingsModal::handleEvent(const SDL_Event& e) {
             }
             
             // Keyboard navigation
-            if (e.key.keysym.sym == SDLK_TAB || e.key.keysym.sym == SDLK_DOWN) {
+            if (e.key.keysym.sym == SDLK_DOWN && e.key.repeat == 0) {
                 // Move focus to next element
                 focusedElement = (focusedElement + 1) % (sliders.size() + checkboxes.size());
                 return true;
             }
             
-            if (e.key.keysym.sym == SDLK_UP) {
+            if (e.key.keysym.sym == SDLK_UP  && e.key.repeat == 0) {
                 // Move focus to previous element
                 focusedElement = (focusedElement - 1 + (sliders.size() + checkboxes.size())) % (sliders.size() + checkboxes.size());
                 return true;
@@ -205,7 +205,7 @@ bool SettingsModal::handleEvent(const SDL_Event& e) {
                 if (focusedElement < static_cast<int>(sliders.size())) {
                     auto& slider = sliders[focusedElement];
                     
-                    if (e.key.keysym.sym == SDLK_LEFT || e.key.keysym.sym == SDLK_KP_MINUS) {
+                    if (e.key.keysym.sym == SDLK_LEFT && e.key.repeat == 0) {
                         // Decrease slider value
                         *slider.value = std::max(slider.minValue, *slider.value - 1);
                         if (onSettingsChanged) {
@@ -214,7 +214,7 @@ bool SettingsModal::handleEvent(const SDL_Event& e) {
                         return true;
                     }
                     
-                    if (e.key.keysym.sym == SDLK_RIGHT || e.key.keysym.sym == SDLK_KP_PLUS) {
+                    if (e.key.keysym.sym == SDLK_RIGHT && e.key.repeat == 0) {
                         // Increase slider value
                         *slider.value = std::min(slider.maxValue, *slider.value + 1);
                         if (onSettingsChanged) {
@@ -246,7 +246,7 @@ bool SettingsModal::handleEvent(const SDL_Event& e) {
                          focusedElement < static_cast<int>(sliders.size() + checkboxes.size())) {
                     int checkboxIndex = focusedElement - sliders.size();
                     
-                    if (e.key.keysym.sym == SDLK_SPACE || e.key.keysym.sym == SDLK_RETURN) {
+                    if (e.key.keysym.sym == SDLK_SPACE && e.key.repeat == 0) {
                         // Toggle checkbox
                         auto& checkbox = checkboxes[checkboxIndex];
                         *checkbox.value = !(*checkbox.value);

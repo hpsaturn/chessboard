@@ -193,6 +193,14 @@ void UCIEngine::shutdown() {
   }
 }
 
+void UCIEngine::setDifficult(int difficult) {
+  this->difficult = difficult;
+}
+
+void UCIEngine::setMoveTime(uint32_t move_time) {
+  this->move_time = move_time;
+}
+
 // Helper method to wait for specific response
 bool UCIEngine::waitForResponse(const std::string& target, int timeout_ms) {
   auto start = std::chrono::steady_clock::now();
@@ -253,9 +261,9 @@ std::string UCIEngine::sendMove(const std::string& move) {
   std::string moves = "position startpos moves" + moves_history;
   sendCommand(moves, debug);
   // sendCommand("go movetime 3000", debug);
-  searchWithDepthAndTimeout(2, 1000);
+  searchWithDepthAndTimeout(difficult, move_time * 1000);
   // Wait for bestmove asynchronously
-  if (waitForResponse("bestmove", 20000)) {
+  if (waitForResponse("bestmove", move_time * 1000 * 10)) {
     std::string lastMove = getLastCommand();
     commands.clear();
     std::string response = lastMove.substr(9, 4);
