@@ -79,7 +79,6 @@
       "type": "shell",
       "command": "./build/chess",
       "args": [
-        "--sdl"
       ],
       "group": "test",
       "presentation": {

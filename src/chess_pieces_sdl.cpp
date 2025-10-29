@@ -41,7 +41,7 @@ SDL_Texture* loadTexture(SDL_Renderer* renderer, const std::string& path) {
     SDL_Surface* surface = IMG_Load(actualPath.c_str());
     
     if (surface == nullptr) {
-        std::cerr << "Unable to load image " << actualPath << ": " << IMG_GetError() << std::endl;
+        std::cerr << "[SDLG] Unable to load image " << actualPath << ": " << IMG_GetError() << std::endl;
         return nullptr;
     }
     
@@ -49,7 +49,7 @@ SDL_Texture* loadTexture(SDL_Renderer* renderer, const std::string& path) {
     SDL_FreeSurface(surface);
     
     if (texture == nullptr) {
-        std::cerr << "Unable to create texture from " << actualPath << ": " << SDL_GetError() << std::endl;
+        std::cerr << "[SDLG] Unable to create texture from " << actualPath << ": " << SDL_GetError() << std::endl;
     }
     
     return texture;
@@ -59,20 +59,20 @@ SDL_Texture* loadTexture(SDL_Renderer* renderer, const std::string& path) {
 bool initChessPieceTextures(SDL_Renderer* renderer) {
     // Initialize SDL_image
     if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
-        std::cerr << "SDL_image could not initialize! SDL_image Error: " << IMG_GetError() << std::endl;
+        std::cerr << "[SDLG] SDL_image could not initialize! SDL_image Error: " << IMG_GetError() << std::endl;
         return false;
     }
     
     // Initialize SDL_ttf
     if (TTF_Init() == -1) {
-        std::cerr << "SDL_ttf could not initialize! SDL_ttf Error: " << TTF_GetError() << std::endl;
+        std::cerr << "[SDLG] SDL_ttf could not initialize! SDL_ttf Error: " << TTF_GetError() << std::endl;
         return false;
     }
     
     // Load font
     font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 10);
     if (font == nullptr) {
-        std::cerr << "Failed to load font! SDL_ttf Error: " << TTF_GetError() << std::endl;
+        std::cerr << "[SDLG] Failed to load font! SDL_ttf Error: " << TTF_GetError() << std::endl;
         // Continue without font - text rendering will fall back to primitive method
     }
     
@@ -110,12 +110,12 @@ bool initChessPieceTextures(SDL_Renderer* renderer) {
     // Check if all textures loaded successfully
     for (const auto& pair : pieceTextures) {
         if (pair.second.white == nullptr || pair.second.black == nullptr) {
-            std::cerr << "Failed to load textures for piece type: " << static_cast<int>(pair.first) << std::endl;
+            std::cerr << "[SDLG] Failed to load textures for piece type: " << static_cast<int>(pair.first) << std::endl;
             return false;
         }
     }
     
-    std::cout << "Successfully loaded all chess piece textures" << std::endl;
+    std::cout << "[SDLG] Successfully loaded all chess piece textures" << std::endl;
     return true;
 }
 
@@ -142,13 +142,13 @@ void renderChessPiece(SDL_Renderer* renderer, int x, int y, const ChessPiece& pi
     
     auto it = pieceTextures.find(piece.type);
     if (it == pieceTextures.end()) {
-        std::cerr << "Texture not found for piece type: " << static_cast<int>(piece.type) << std::endl;
+        std::cerr << "[SDLG] Texture not found for piece type: " << static_cast<int>(piece.type) << std::endl;
         return;
     }
     
     SDL_Texture* texture = (piece.color == PieceColor::WHITE) ? it->second.white : it->second.black;
     if (texture == nullptr) {
-        std::cerr << "Texture is null for piece type: " << static_cast<int>(piece.type) << std::endl;
+        std::cerr << "[SDLG] Texture is null for piece type: " << static_cast<int>(piece.type) << std::endl;
         return;
     }
     

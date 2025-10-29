@@ -37,3 +37,4 @@ chess
 .mongoai_server.log
 chat_history.json
 .gitconfig
+.history
