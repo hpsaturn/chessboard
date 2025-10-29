@@ -72,6 +72,8 @@ set(CHESS_SOURCES
 if(SDL2_FOUND)
     list(APPEND CHESS_SOURCES
         src/chessboard_sdl.cpp 
+src/settings_modal.cpp
+    src/settings_modal.h
     )
 endif()
 
