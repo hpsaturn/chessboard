@@ -46,6 +46,12 @@ else()
     message(WARNING "ncurses not found - ncurses mode will be disabled")
 endif()
 
+# Define resource paths
+# Development path: relative to executable in build directory
+# Installation path: /usr/local/share/chess (or custom prefix)
+set(RESOURCE_PATH_DEVELOPMENT "res")
+set(RESOURCE_PATH_INSTALLED "${CMAKE_INSTALL_PREFIX}/share/chess")
+
 # Source files for main chess application
 set(CHESS_SOURCES
     src/main.cpp
@@ -78,6 +84,12 @@ endif()
 
 # Create main chess executable
 add_executable(chess ${CHESS_SOURCES})
+
+# Define resource path for development
+target_compile_definitions(chess PRIVATE 
+    RESOURCE_PATH_DEVELOPMENT="${RESOURCE_PATH_DEVELOPMENT}"
+    RESOURCE_PATH_INSTALLED="${RESOURCE_PATH_INSTALLED}"
+)
 
 # Link libraries for main chess executable
 if(SDL2_FOUND)
