@@ -12,7 +12,7 @@ SettingsModal::SettingsModal(SDL_Renderer* renderer, int screenWidth, int screen
         std::cerr << "TTF_Init failed: " << TTF_GetError() << std::endl;
     } else {
         // Load DejaVu Sans font (commonly available on Linux)
-        font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 14);
+        font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 13);
         if (!font) {
             std::cerr << "Failed to load font: " << TTF_GetError() << std::endl;
         }
@@ -25,8 +25,8 @@ SettingsModal::SettingsModal(SDL_Renderer* renderer, int screenWidth, int screen
     currentSettings.soundEnabled = true;
     
     // Calculate modal position and size
-    modalWidth = 320;
-    modalHeight = 200;
+    modalWidth = 250;
+    modalHeight = 220;
     modalX = (screenWidth - modalWidth) / 2;
     modalY = (screenHeight - modalHeight) / 2;
     
@@ -47,10 +47,10 @@ void SettingsModal::initializeUI() {
     sliders.clear();
     
     // Calculate positions for UI elements
-    int padding = 20;
+    int padding = 25;
     int elementWidth = modalWidth - 2 * padding;
-    int elementHeight = 25;
-    int currentY = modalY + padding;
+    int elementHeight = 20;
+    int currentY = modalY + padding + 30;
     
     // Depth difficulty slider
     Slider depthSlider;
@@ -90,7 +90,7 @@ void SettingsModal::initializeUI() {
     
     // Sound checkbox
     Checkbox soundCheckbox;
-    soundCheckbox.rect = {modalX + padding, currentY, elementWidth, elementHeight};
+    soundCheckbox.rect = {modalX + padding, currentY, elementWidth, elementHeight+10};
     soundCheckbox.label = "Sound: " + std::string(currentSettings.soundEnabled ? "ON" : "OFF");
     soundCheckbox.value = &currentSettings.soundEnabled;
     soundCheckbox.hovered = false;
