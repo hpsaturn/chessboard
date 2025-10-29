@@ -38,3 +38,4 @@ chess
 chat_history.json
 .gitconfig
 .history
+.cache

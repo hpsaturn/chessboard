@@ -20,8 +20,9 @@
 bool pieceSelected = false;
 uint8_t selectedRow = -1;
 uint8_t selectedCol = -1;
-uint8_t cursorRow = 0;    // Cursor position for keyboard navigation
-uint8_t cursorCol = 0;    // Cursor position for keyboard navigation
+uint8_t cursorRow = 6;    // Cursor position for keyboard navigation
+uint8_t cursorCol = 4;    // Cursor position for keyboard navigation
+bool mouseUsed = false;   // Flag for deselect cursor if Mouse is used
 UCIEngine engine(true);
 
 // Settings modal
@@ -29,6 +30,7 @@ SettingsModal* settingsModal = nullptr;
 
 // Handle keyboard input for piece selection and movement
 void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
+    mouseUsed = false;
     switch (key) {
         case SDLK_UP:
             if (cursorRow > 0) cursorRow--;
@@ -96,8 +98,8 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
             pieceSelected = false;
             selectedRow = -1;
             selectedCol = -1;
-            cursorRow = 0;
-            cursorCol = 0;
+            cursorRow = 6;
+            cursorCol = 4;
             chessGame.pending_move.clear();
             engine.newGame();
             break;
@@ -107,6 +109,7 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
 void handleMouseClick(int mouseX, int mouseY, ChessGame& chessGame) {
     // Check if click is within chessboard bounds
     if (mouseX >= 0 && mouseX < BOARD_SIZE && mouseY >= 0 && mouseY < BOARD_SIZE) {
+        mouseUsed = true;
         int row = mouseY / SQUARE_SIZE;
         int col = mouseX / SQUARE_SIZE;
         
@@ -189,13 +192,13 @@ void renderChessboardSDL() {
     
     // Set settings change callback
     settingsModal->setOnSettingsChanged([&chessGame](const SettingsModal::Settings& settings) {
-        std::cout << "Settings updated:" << std::endl;
-        std::cout << "  Sound: " << (settings.soundEnabled ? "Enabled" : "Disabled") << std::endl;
-        std::cout << "  Show Legal Moves: " << (settings.showLegalMoves ? "Yes" : "No") << std::endl;
-        std::cout << "  Highlight Last Move: " << (settings.highlightLastMove ? "Yes" : "No") << std::endl;
-        std::cout << "  Difficulty Level: " << settings.difficultyLevel << std::endl;
-        std::cout << "  Board Theme: " << settings.boardTheme << std::endl;
-        std::cout << "  Piece Set: " << settings.pieceSet << std::endl;
+        std::cout << "[SDLG] Settings updated:" << std::endl;
+        std::cout << "[SDLG]   Sound: " << (settings.soundEnabled ? "Enabled" : "Disabled") << std::endl;
+        std::cout << "[SDLG]   Show Legal Moves: " << (settings.showLegalMoves ? "Yes" : "No") << std::endl;
+        std::cout << "[SDLG]   Highlight Last Move: " << (settings.highlightLastMove ? "Yes" : "No") << std::endl;
+        std::cout << "[SDLG]   Difficulty Level: " << settings.difficultyLevel << std::endl;
+        std::cout << "[SDLG]   Board Theme: " << settings.boardTheme << std::endl;
+        std::cout << "[SDLG]   Piece Set: " << settings.pieceSet << std::endl;
         
         // Apply settings to game logic here if needed
         // For example: chessGame.setShowLegalMoves(settings.showLegalMoves);
@@ -206,12 +209,12 @@ void renderChessboardSDL() {
       // Initialize UCI protocol
       engine.sendCommand("uci");
       if (engine.waitForResponse("uciok")) {
-        std::cout << "Engine is UCI compatible!" << std::endl;
+        std::cout << "[SDLG] Engine is UCI compatible!" << std::endl;
       }
 
       engine.sendCommand("isready");
       if (engine.waitForResponse("readyok")) {
-        std::cout << "Engine is ready!" << std::endl;
+        std::cout << "[SDLG] Engine is ready!" << std::endl;
       }
     }
 
@@ -271,7 +274,7 @@ void renderChessboardSDL() {
                     SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255); // Green for selected
                 }
                 // Highlight cursor position
-                else if (row == cursorRow && col == cursorCol) {
+                else if (row == cursorRow && col == cursorCol && !mouseUsed) {
                     SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255); // Yellow for cursor
                 }
                 // Normal square colors
