@@ -108,5 +108,11 @@ add_custom_command(TARGET chess POST_BUILD
     COMMENT "Copying resources to build directory"
 )
 
-# Install target
+# Install targets
 install(TARGETS chess DESTINATION bin)
+
+# Install resources directory
+install(DIRECTORY res/
+        DESTINATION share/chess
+        PATTERN ".gitkeep" EXCLUDE
+)
