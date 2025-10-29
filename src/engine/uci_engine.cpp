@@ -43,7 +43,7 @@ bool UCIEngine::startEngine(const std::string& enginePath) {
     is_running = true;
     observer_thread = std::make_unique<std::thread>(&UCIEngine::observerLoop, this);
 
-    std::cout << "Engine started with PID: " << engine_pid << std::endl;
+    std::cout << "[GNUC] Engine started with PID: " << engine_pid << std::endl;
     return true;
   }
 }
@@ -55,23 +55,23 @@ void UCIEngine::sendCommand(const std::string& command, bool silent) {
   write(engine_stdin[1], full_command.c_str(), full_command.length());
   fsync(engine_stdin[1]);
 
-  if (!silent) std::cout << "Sent: " << command << std::endl;
+  if (!silent) std::cout << "[GNUC] Sent: " << command << std::endl;
 }
 
-std::vector<std::string> UCIEngine::getImportantResponses() {
+std::vector<std::string> UCIEngine::getCommands() {
   std::lock_guard<std::mutex> lock(response_mutex);
-  return important_responses;
+  return commands;
 }
 
-std::string UCIEngine::getLastImportantResponse() {
+std::string UCIEngine::getLastCommand() {
   std::lock_guard<std::mutex> lock(response_mutex);
-  if (important_responses.empty()) return "";
-  return important_responses.back();
+  if (commands.empty()) return "";
+  return commands.back();
 }
 
-void UCIEngine::clearResponses() {
+void UCIEngine::clearCommands() {
   std::lock_guard<std::mutex> lock(response_mutex);
-  important_responses.clear();
+  commands.clear();
 }
 
 void UCIEngine::observerLoop() {
@@ -101,7 +101,6 @@ void UCIEngine::observerLoop() {
         break;
       }
     }
-
     // Small sleep to prevent CPU spinning
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
@@ -133,14 +132,14 @@ void UCIEngine::processEngineOutput(const char* data, std::string& partial_line)
 
   // Process complete lines
   for (const auto& line : lines) {
-    if (isImportantResponse(line)) {
-      storeImportantResponse(line);
+    if (isCommandResponse(line)) {
+      storeCommandResponse(line);
     }
-    if (debug) std::cout << "Engine: " << line << std::endl;
+    if (debug) std::cout << "[GNUC] " << line << std::endl;
   }
 }
 
-bool UCIEngine::isImportantResponse(const std::string& response) {
+bool UCIEngine::isCommandResponse(const std::string& response) {
   // Define what constitutes an "important" response
   return (response.find("bestmove") != std::string::npos ||
       response.find("uciok") != std::string::npos ||
@@ -151,13 +150,13 @@ bool UCIEngine::isImportantResponse(const std::string& response) {
       response.find("id author") != std::string::npos);
 }
 
-void UCIEngine::storeImportantResponse(const std::string& response) {
+void UCIEngine::storeCommandResponse(const std::string& response) {
   std::lock_guard<std::mutex> lock(response_mutex);
-  important_responses.push_back(response);
+  commands.push_back(response);
 
   // Keep only the last MAX_RESPONSES
-  if (important_responses.size() > MAX_RESPONSES) {
-    important_responses.erase(important_responses.begin());
+  if (commands.size() > MAX_RESPONSES) {
+    commands.erase(commands.begin());
   }
 }
 
@@ -194,6 +193,14 @@ void UCIEngine::shutdown() {
   }
 }
 
+void UCIEngine::setDifficult(int difficult) {
+  this->difficult = difficult;
+}
+
+void UCIEngine::setMoveTime(uint32_t move_time) {
+  this->move_time = move_time;
+}
+
 // Helper method to wait for specific response
 bool UCIEngine::waitForResponse(const std::string& target, int timeout_ms) {
   auto start = std::chrono::steady_clock::now();
@@ -201,7 +208,7 @@ bool UCIEngine::waitForResponse(const std::string& target, int timeout_ms) {
   while (std::chrono::steady_clock::now() - start < 
       std::chrono::milliseconds(timeout_ms)) {
 
-    auto responses = getImportantResponses();
+    auto responses = getCommands();
     for (const auto& response : responses) {
       if (response.find(target) != std::string::npos) {
         return true;
@@ -227,15 +234,38 @@ void UCIEngine::newGame() {
   sendCommand("ucinewgame");
 }
 
+void UCIEngine::searchWithDepthAndTimeout(int depth, int max_time_ms) {
+    std::atomic<bool> search_completed{false};
+    std::string best_move;
+    
+    // Start search thread
+    std::thread search_thread([&]() {
+        sendCommand("go depth " + std::to_string(depth));
+        // Wait for bestmove and set search_completed = true when done
+    });
+    
+    // Start timeout thread
+    std::thread timeout_thread([&]() {
+        std::this_thread::sleep_for(std::chrono::milliseconds(max_time_ms));
+        if (!search_completed) {
+            sendCommand("stop");
+        }
+    });
+    
+    search_thread.join();
+    timeout_thread.join();
+}
+
 std::string UCIEngine::sendMove(const std::string& move) {
   moves_history = moves_history + " " + move;
   std::string moves = "position startpos moves" + moves_history;
   sendCommand(moves, debug);
-  sendCommand("go movetime 3000", debug);
+  // sendCommand("go movetime 3000", debug);
+  searchWithDepthAndTimeout(difficult, move_time * 1000);
   // Wait for bestmove asynchronously
-  if (waitForResponse("bestmove", 20000)) {
-    std::string lastMove = getLastImportantResponse();
-    important_responses.clear();
+  if (waitForResponse("bestmove", move_time * 1000 * 10)) {
+    std::string lastMove = getLastCommand();
+    commands.clear();
     std::string response = lastMove.substr(9, 4);
     return response;
   }

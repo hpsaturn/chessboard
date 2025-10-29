@@ -98,7 +98,7 @@ bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRo
     }
 
     if (fromPiece.type == PieceType::KING) {
-        std::cout << "[KEY] King move.." << std::endl;
+        std::cout << "[KEYH] King move.." << std::endl;
         // Check for castling - king moves two squares horizontally
         if (fromRow == toRow && abs(fromCol - toCol) == 2) {
             // Castling conditions:
@@ -116,13 +116,13 @@ bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRo
             
             // Check if king and rook are in starting positions
             if (fromPiece.hasMoved) return false;
-            std::cout << "[KEY] King never moved.." << std::endl;
+            std::cout << "[KEYH] King never moved.." << std::endl;
             
             const ChessPiece& rook = board[fromRow][rookCol];
             if (rook.isEmpty() || rook.type != PieceType::ROOK || rook.hasMoved || rook.color != fromPiece.color) {
                 return false;
             }
-            std::cout << "[KEY] Rook castelling never moved.." << std::endl;
+            std::cout << "[KEYH] Rook castelling never moved.." << std::endl;
             
             // Check that squares between king and rook are empty
             for (int col = fromCol + direction; col != rookCol; col += direction) {
@@ -130,8 +130,8 @@ bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRo
                     return false;
                 }
             }
-            std::cout << "[KEY] Castelling line is free.." << std::endl;
-            std::cout << "[KEY] Castelling Approved" << std::endl;
+            std::cout << "[KEYH] Castelling line is free.." << std::endl;
+            std::cout << "[KEYH] Castelling Approved" << std::endl;
             
             // Check that king is not currently in check
             // if (isInCheck(fromPiece.color)) {

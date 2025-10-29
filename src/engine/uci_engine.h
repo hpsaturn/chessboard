@@ -27,11 +27,13 @@ private:
     std::unique_ptr<std::thread> observer_thread;
     
     // Response storage
-    std::vector<std::string> important_responses;
+    std::vector<std::string> commands;
     std::mutex response_mutex;
     std::string moves_history = "";
     static const size_t MAX_RESPONSES = 50;
     bool debug = true;
+    int difficult = 1;
+    uint16_t move_time = 2;
 
 public:
     UCIEngine(bool debug = false) : engine_pid(-1), is_running(false),debug(debug) {
@@ -45,22 +47,24 @@ public:
 
     bool startEngine(const std::string& enginePath = "/usr/games/gnuchess");
     void sendCommand(const std::string& command, bool silent = true);
-    std::vector<std::string> getImportantResponses();
-    std::string getLastImportantResponse();
-    void clearResponses();
-    void shutdown();
+    std::vector<std::string> getCommands();
+    std::string getLastCommand();
+    void clearCommands();
     bool waitForResponse(const std::string& target, int timeout_ms = 5000);
-
+    void searchWithDepthAndTimeout(int depth, int max_time_ms);
     std::string sendMove(const std::string& move);
     std::string getMovesHistory();
     void addMoveToHistory(const std::string& move);
     void newGame();
+    void shutdown();
+    void setDifficult(int difficult);
+    void setMoveTime(uint32_t move_time);
 
 private:
     void observerLoop();
     void processEngineOutput(const char* data, std::string& partial_line);
-    bool isImportantResponse(const std::string& response);
-    void storeImportantResponse(const std::string& response);
+    bool isCommandResponse(const std::string& response);
+    void storeCommandResponse(const std::string& response);
 };
 
 #endif // UCI_ENGINE_H

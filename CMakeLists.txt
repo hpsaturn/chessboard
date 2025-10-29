@@ -46,6 +46,12 @@ else()
     message(WARNING "ncurses not found - ncurses mode will be disabled")
 endif()
 
+# Define resource paths
+# Development path: relative to executable in build directory
+# Installation path: /usr/local/share/chess (or custom prefix)
+set(RESOURCE_PATH_DEVELOPMENT "res")
+set(RESOURCE_PATH_INSTALLED "${CMAKE_INSTALL_PREFIX}/share/chess")
+
 # Source files for main chess application
 set(CHESS_SOURCES
     src/main.cpp
@@ -66,6 +72,8 @@ set(CHESS_SOURCES
 if(SDL2_FOUND)
     list(APPEND CHESS_SOURCES
         src/chessboard_sdl.cpp 
+src/settings_modal.cpp
+    src/settings_modal.h
     )
 endif()
 
@@ -78,6 +86,12 @@ endif()
 
 # Create main chess executable
 add_executable(chess ${CHESS_SOURCES})
+
+# Define resource path for development
+target_compile_definitions(chess PRIVATE 
+    RESOURCE_PATH_DEVELOPMENT="${RESOURCE_PATH_DEVELOPMENT}"
+    RESOURCE_PATH_INSTALLED="${RESOURCE_PATH_INSTALLED}"
+)
 
 # Link libraries for main chess executable
 if(SDL2_FOUND)
@@ -100,5 +114,19 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/src/engine_test.cpp")
     target_include_directories(engine_test PRIVATE src)
 endif()
 
-# Install target
+# Copy resources directory to build directory
+add_custom_command(TARGET chess POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_SOURCE_DIR}/res
+            $<TARGET_FILE_DIR:chess>/res
+    COMMENT "Copying resources to build directory"
+)
+
+# Install targets
 install(TARGETS chess DESTINATION bin)
+
+# Install resources directory
+install(DIRECTORY res/
+        DESTINATION share/chess
+        PATTERN ".gitkeep" EXCLUDE
+)

@@ -3,6 +3,7 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 #include <iostream>
+#include <filesystem>
 #include "chess_pieces_sdl.h"
 #include <map>
 #include "chess_pieces.h"
@@ -13,13 +14,34 @@
 std::map<PieceType, PieceTextures> pieceTextures;
 TTF_Font* font = nullptr;
 
+// Function to get resource path
+std::string getResourcePath(const std::string& relativePath) {
+    // First try development path (relative to executable)
+    std::string devPath = RESOURCE_PATH_DEVELOPMENT "/" + relativePath;
+    if (std::filesystem::exists(devPath)) {
+        return devPath;
+    }
+    
+    // Then try installed path
+    std::string installPath = RESOURCE_PATH_INSTALLED "/" + relativePath;
+    if (std::filesystem::exists(installPath)) {
+        return installPath;
+    }
+    
+    // If neither exists, return the development path (for error reporting)
+    return devPath;
+}
+
 // Function to load a texture from file
 SDL_Texture* loadTexture(SDL_Renderer* renderer, const std::string& path) {
     SDL_Texture* texture = nullptr;
-    SDL_Surface* surface = IMG_Load(path.c_str());
+    
+    // Get the actual resource path
+    std::string actualPath = getResourcePath(path);
+    SDL_Surface* surface = IMG_Load(actualPath.c_str());
     
     if (surface == nullptr) {
-        std::cerr << "Unable to load image " << path << ": " << IMG_GetError() << std::endl;
+        std::cerr << "[SDLG] Unable to load image " << actualPath << ": " << IMG_GetError() << std::endl;
         return nullptr;
     }
     
@@ -27,7 +49,7 @@ SDL_Texture* loadTexture(SDL_Renderer* renderer, const std::string& path) {
     SDL_FreeSurface(surface);
     
     if (texture == nullptr) {
-        std::cerr << "Unable to create texture from " << path << ": " << SDL_GetError() << std::endl;
+        std::cerr << "[SDLG] Unable to create texture from " << actualPath << ": " << SDL_GetError() << std::endl;
     }
     
     return texture;
@@ -37,63 +59,63 @@ SDL_Texture* loadTexture(SDL_Renderer* renderer, const std::string& path) {
 bool initChessPieceTextures(SDL_Renderer* renderer) {
     // Initialize SDL_image
     if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
-        std::cerr << "SDL_image could not initialize! SDL_image Error: " << IMG_GetError() << std::endl;
+        std::cerr << "[SDLG] SDL_image could not initialize! SDL_image Error: " << IMG_GetError() << std::endl;
         return false;
     }
     
     // Initialize SDL_ttf
     if (TTF_Init() == -1) {
-        std::cerr << "SDL_ttf could not initialize! SDL_ttf Error: " << TTF_GetError() << std::endl;
+        std::cerr << "[SDLG] SDL_ttf could not initialize! SDL_ttf Error: " << TTF_GetError() << std::endl;
         return false;
     }
     
     // Load font
     font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 10);
     if (font == nullptr) {
-        std::cerr << "Failed to load font! SDL_ttf Error: " << TTF_GetError() << std::endl;
+        std::cerr << "[SDLG] Failed to load font! SDL_ttf Error: " << TTF_GetError() << std::endl;
         // Continue without font - text rendering will fall back to primitive method
     }
     
     // Load all chess piece textures
     pieceTextures[PieceType::PAWN] = {
-        loadTexture(renderer, "res/default/pawn_white.png"),
-        loadTexture(renderer, "res/default/pawn_black.png")
+        loadTexture(renderer, "default/pawn_white.png"),
+        loadTexture(renderer, "default/pawn_black.png")
     };
     
     pieceTextures[PieceType::ROOK] = {
-        loadTexture(renderer, "res/default/rook_white.png"),
-        loadTexture(renderer, "res/default/rook_black.png")
+        loadTexture(renderer, "default/rook_white.png"),
+        loadTexture(renderer, "default/rook_black.png")
     };
     
     pieceTextures[PieceType::KNIGHT] = {
-        loadTexture(renderer, "res/default/knight_white.png"),
-        loadTexture(renderer, "res/default/knight_black.png")
+        loadTexture(renderer, "default/knight_white.png"),
+        loadTexture(renderer, "default/knight_black.png")
     };
     
     pieceTextures[PieceType::BISHOP] = {
-        loadTexture(renderer, "res/default/bishop_white.png"),
-        loadTexture(renderer, "res/default/bishop_black.png")
+        loadTexture(renderer, "default/bishop_white.png"),
+        loadTexture(renderer, "default/bishop_black.png")
     };
     
     pieceTextures[PieceType::QUEEN] = {
-        loadTexture(renderer, "res/default/queen_white.png"),
-        loadTexture(renderer, "res/default/queen_black.png")
+        loadTexture(renderer, "default/queen_white.png"),
+        loadTexture(renderer, "default/queen_black.png")
     };
     
     pieceTextures[PieceType::KING] = {
-        loadTexture(renderer, "res/default/king_white.png"),
-        loadTexture(renderer, "res/default/king_black.png")
+        loadTexture(renderer, "default/king_white.png"),
+        loadTexture(renderer, "default/king_black.png")
     };
     
     // Check if all textures loaded successfully
     for (const auto& pair : pieceTextures) {
         if (pair.second.white == nullptr || pair.second.black == nullptr) {
-            std::cerr << "Failed to load textures for piece type: " << static_cast<int>(pair.first) << std::endl;
+            std::cerr << "[SDLG] Failed to load textures for piece type: " << static_cast<int>(pair.first) << std::endl;
             return false;
         }
     }
     
-    std::cout << "Successfully loaded all chess piece textures" << std::endl;
+    std::cout << "[SDLG] Successfully loaded all chess piece textures" << std::endl;
     return true;
 }
 
@@ -120,13 +142,13 @@ void renderChessPiece(SDL_Renderer* renderer, int x, int y, const ChessPiece& pi
     
     auto it = pieceTextures.find(piece.type);
     if (it == pieceTextures.end()) {
-        std::cerr << "Texture not found for piece type: " << static_cast<int>(piece.type) << std::endl;
+        std::cerr << "[SDLG] Texture not found for piece type: " << static_cast<int>(piece.type) << std::endl;
         return;
     }
     
     SDL_Texture* texture = (piece.color == PieceColor::WHITE) ? it->second.white : it->second.black;
     if (texture == nullptr) {
-        std::cerr << "Texture is null for piece type: " << static_cast<int>(piece.type) << std::endl;
+        std::cerr << "[SDLG] Texture is null for piece type: " << static_cast<int>(piece.type) << std::endl;
         return;
     }
     
