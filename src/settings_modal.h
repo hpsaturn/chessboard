@@ -96,9 +96,12 @@ private:
     void initializeUI();
     
     // Helper functions
+    void drawCheckbox(const Checkbox& checkbox);
+    void drawSlider(const Slider& slider);
+    void drawButton(const Button& button);
+    void updateSliderValue(Slider& slider, int mouseX);
     void drawRoundedRect(const SDL_Rect& rect, int radius, SDL_Color color);
     void drawText(const std::string& text, int x, int y, SDL_Color color);
-    void updateSliderValue(Slider& slider, int mouseX);
 };
 
 #endif // SETTINGS_MODAL_H

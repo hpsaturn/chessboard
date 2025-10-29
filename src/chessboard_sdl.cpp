@@ -77,16 +77,19 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
             exit(0);
             break;
         case SDLK_ESCAPE:
-            // Deselect piece
-            pieceSelected = false;
-            selectedRow = -1;
-            selectedCol = -1;
+            // Deselect piece - only when modal is NOT visible
+            if (!settingsModal->isVisible()) {
+                pieceSelected = false;
+                selectedRow = -1;
+                selectedCol = -1;
+            }
             break;
         case SDLK_s:
             // Show settings modal
             if (settingsModal) {
                 settingsModal->show();
             }
+            break;
         case SDLK_r:
             // Reset board
             chessGame.resetGame();
@@ -119,15 +122,24 @@ void handleMouseClick(int mouseX, int mouseY, ChessGame& chessGame) {
         } else {
             // Move selected piece
             if (chessGame.movePiece(selectedRow, selectedCol, row, col)) {
-                // Move successful
+                // Move successful - clear selection
                 pieceSelected = false;
                 selectedRow = -1;
                 selectedCol = -1;
             } else {
-                // Move failed, deselect piece
-                pieceSelected = false;
-                selectedRow = -1;
-                selectedCol = -1;
+                // Move failed, but allow selecting a different piece
+                ChessPiece piece = chessGame.getPiece(row, col);
+                if (!piece.isEmpty() && ((chessGame.isWhiteTurn() && piece.color == PieceColor::WHITE) || 
+                                         (!chessGame.isWhiteTurn() && piece.color == PieceColor::BLACK))) {
+                    // Select the new piece
+                    selectedRow = row;
+                    selectedCol = col;
+                } else {
+                    // Deselect if clicking on empty square or opponent piece
+                    pieceSelected = false;
+                    selectedRow = -1;
+                    selectedCol = -1;
+                }
             }
         }
     }
