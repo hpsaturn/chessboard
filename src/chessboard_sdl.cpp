@@ -87,6 +87,16 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
             if (settingsModal) {
                 settingsModal->show();
             }
+        case SDLK_r:
+            // Reset board
+            chessGame.resetGame();
+            pieceSelected = false;
+            selectedRow = -1;
+            selectedCol = -1;
+            cursorRow = 0;
+            cursorCol = 0;
+            chessGame.pending_move.clear();
+            engine.newGame();
             break;
     }
 }
@@ -178,6 +188,20 @@ void renderChessboardSDL() {
         // Apply settings to game logic here if needed
         // For example: chessGame.setShowLegalMoves(settings.showLegalMoves);
     });
+
+    // Initialize engine
+    if (engine.startEngine()) {
+      // Initialize UCI protocol
+      engine.sendCommand("uci");
+      if (engine.waitForResponse("uciok")) {
+        std::cout << "Engine is UCI compatible!" << std::endl;
+      }
+
+      engine.sendCommand("isready");
+      if (engine.waitForResponse("readyok")) {
+        std::cout << "Engine is ready!" << std::endl;
+      }
+    }
 
     bool quit = false;
     SDL_Event e;
