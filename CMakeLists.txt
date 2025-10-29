@@ -100,5 +100,13 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/src/engine_test.cpp")
     target_include_directories(engine_test PRIVATE src)
 endif()
 
+# Copy resources directory to build directory
+add_custom_command(TARGET chess POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_SOURCE_DIR}/res
+            $<TARGET_FILE_DIR:chess>/res
+    COMMENT "Copying resources to build directory"
+)
+
 # Install target
 install(TARGETS chess DESTINATION bin)
