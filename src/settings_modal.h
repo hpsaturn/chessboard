@@ -50,6 +50,7 @@ private:
     int screenWidth;
     int screenHeight;
     bool visible;
+    int focusedElement; // Index of currently focused element (-1 for none)
     
     // Modal dimensions
     int modalWidth;
@@ -88,8 +89,8 @@ private:
     void initializeUI();
     
     // Helper functions
-    void drawCheckbox(const Checkbox& checkbox);
-    void drawSlider(Slider& slider);
+    void drawCheckbox(const Checkbox& checkbox, bool focused);
+    void drawSlider(Slider& slider, bool focused);
     void updateSliderValue(Slider& slider, int mouseX);
     void drawText(const std::string& text, int x, int y, SDL_Color color);
     SDL_Texture* createTextTexture(const std::string& text, SDL_Color color);
