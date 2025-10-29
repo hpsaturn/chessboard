@@ -75,8 +75,10 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
             break;
         case SDLK_q:
             // Quit the game
-            SDL_Quit();
-            exit(0);
+            if (!settingsModal->isVisible()) {
+              SDL_Quit();
+              exit(0);
+            }
             break;
         case SDLK_ESCAPE:
             // Deselect piece - only when modal is NOT visible
@@ -154,7 +156,7 @@ void renderChessboardSDL() {
     
     // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
+        std::cerr << "[SDLG] SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
         return;
     }
 
@@ -164,7 +166,7 @@ void renderChessboardSDL() {
                                           SCREEN_WIDTH, SCREEN_HEIGHT,
                                           SDL_WINDOW_SHOWN);
     if (!window) {
-        std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+        std::cerr << "[SDLG] Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
         SDL_Quit();
         return;
     }
@@ -172,7 +174,7 @@ void renderChessboardSDL() {
     // Create renderer
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (!renderer) {
-        std::cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+        std::cerr << "[SDLG] Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
         SDL_DestroyWindow(window);
         SDL_Quit();
         return;
@@ -180,7 +182,7 @@ void renderChessboardSDL() {
 
     // Initialize chess piece textures
     if (!initChessPieceTextures(renderer)) {
-        std::cerr << "Failed to initialize chess piece textures!" << std::endl;
+        std::cerr << "[SDLG] Failed to initialize chess piece textures!" << std::endl;
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
         SDL_Quit();
@@ -194,11 +196,9 @@ void renderChessboardSDL() {
     settingsModal->setOnSettingsChanged([&chessGame](const SettingsModal::Settings& settings) {
         std::cout << "[SDLG] Settings updated:" << std::endl;
         std::cout << "[SDLG]   Sound: " << (settings.soundEnabled ? "Enabled" : "Disabled") << std::endl;
-        std::cout << "[SDLG]   Show Legal Moves: " << (settings.showLegalMoves ? "Yes" : "No") << std::endl;
-        std::cout << "[SDLG]   Highlight Last Move: " << (settings.highlightLastMove ? "Yes" : "No") << std::endl;
-        std::cout << "[SDLG]   Difficulty Level: " << settings.difficultyLevel << std::endl;
-        std::cout << "[SDLG]   Board Theme: " << settings.boardTheme << std::endl;
-        std::cout << "[SDLG]   Piece Set: " << settings.pieceSet << std::endl;
+        std::cout << "[SDLG]   Depth Difficulty: " << settings.depthDifficulty << std::endl;
+        std::cout << "[SDLG]   Max Time Per Move: " << (settings.maxTimePerMove ? "Yes" : "No") << std::endl;
+        std::cout << "[SDLG]   Match Time: " << settings.matchTime << std::endl;
         
         // Apply settings to game logic here if needed
         // For example: chessGame.setShowLegalMoves(settings.showLegalMoves);

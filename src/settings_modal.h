@@ -3,6 +3,7 @@
 #define SETTINGS_MODAL_H
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 #include <string>
 #include <vector>
 #include <functional>
@@ -29,12 +30,10 @@ public:
     
     // Settings structure
     struct Settings {
+        int depthDifficulty;      // 1-10
+        int maxTimePerMove;       // seconds (0-300)
+        int matchTime;            // minutes (0-60)
         bool soundEnabled;
-        bool showLegalMoves;
-        bool highlightLastMove;
-        int difficultyLevel; // 1-5
-        std::string boardTheme;
-        std::string pieceSet;
     };
     
     // Get current settings
@@ -47,6 +46,7 @@ public:
 
 private:
     SDL_Renderer* renderer;
+    TTF_Font* font;
     int screenWidth;
     int screenHeight;
     bool visible;
@@ -58,13 +58,6 @@ private:
     int modalY;
     
     // UI elements
-    struct Button {
-        SDL_Rect rect;
-        std::string text;
-        bool hovered;
-        std::function<void()> onClick;
-    };
-    
     struct Checkbox {
         SDL_Rect rect;
         std::string label;
@@ -82,7 +75,6 @@ private:
         bool dragging;
     };
     
-    std::vector<Button> buttons;
     std::vector<Checkbox> checkboxes;
     std::vector<Slider> sliders;
     
@@ -97,11 +89,10 @@ private:
     
     // Helper functions
     void drawCheckbox(const Checkbox& checkbox);
-    void drawSlider(const Slider& slider);
-    void drawButton(const Button& button);
+    void drawSlider(Slider& slider);
     void updateSliderValue(Slider& slider, int mouseX);
-    void drawRoundedRect(const SDL_Rect& rect, int radius, SDL_Color color);
     void drawText(const std::string& text, int x, int y, SDL_Color color);
+    SDL_Texture* createTextTexture(const std::string& text, SDL_Color color);
 };
 
 #endif // SETTINGS_MODAL_H
