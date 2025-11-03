@@ -53,12 +53,24 @@ sudo apt install gnuchess cmake build-essential libsdl2-dev libsdl2-ttf-dev libs
 - [x] Adapter class for join with GNU-Chess using UCI protocol
 - [x] Picocalc keyboard issues (fixed)
 - [ ] Castelling full validations
-- [ ] Dead pieces count in each side
+- [x] Dead pieces count in each side (Game info window)
 - [ ] Points from the user (positive/negative)
-- [ ] Settings modal window
+- [x] Settings modal window
+- [ ] Game info modal window (in porgress)
 - [ ] Chronometers
+- [ ] Help info modal window
 - [ ] Buildroot config files for Luckfox Lyra tests
-- [ ] Sprite pieces improvement 
+- [ ] Sprite pieces improvement
+
+## Usage
+
+This version is optimized for Picocalc board using Luckfox Lyra. For that it has the next key bindings:
+
+- **S**: Enter to settings. **Arrows** for navitagion and scroll selections. **Space** key for selection.
+- **I**: Game info.
+- **Q**: Exit the game. (without state save for now)
+- **R**: Restart the game. (without ask before for now)
+- **H**: Help (in progress)
 
 ### Ncurses/Chars Board Piece Notation
 
