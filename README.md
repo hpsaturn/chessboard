@@ -66,11 +66,17 @@ sudo apt install gnuchess cmake build-essential libsdl2-dev libsdl2-ttf-dev libs
 
 This version is optimized for Picocalc board using Luckfox Lyra. For that it has the next key bindings:
 
-- **S**: Enter to settings. **Arrows** for navitagion and scroll selections. **Space** key for selection.
-- **I**: Game info.
-- **Q**: Exit the game. (without state save for now)
-- **R**: Restart the game. (without ask before for now)
-- **H**: Help (in progress)
+| Key | Action |
+|:-------:|-------|
+| **Arrows** | Piece and setting selections |
+| **SPACE** | Select piece or setting |
+| **ENTER** | Move selected piece |
+| **ESC** | Deselect piece or window exit |
+| **S**| Enter to settings section |
+| **I**| Enter to game info |
+| **Q**| Exit the game. (without state save for now) |
+| **R**| Restart the game. (without ask before for now) |
+| **H**| Help (in progress) |
 
 ### Ncurses/Chars Board Piece Notation
 
