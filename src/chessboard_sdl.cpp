@@ -1,3 +1,4 @@
+#include "gameinfo_modal.h"
 // Refactored SDL Chessboard - Separated Game Logic from SDL Rendering
 #include <SDL2/SDL.h>
 #include <iostream>
@@ -25,6 +26,7 @@ UCIEngine engine(true);
 
 // Settings modal
 SettingsModal* settingsModal = nullptr;
+GameInfoModal* gameInfoModal = nullptr;
 
 // Handle keyboard input for piece selection and movement
 void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
@@ -73,14 +75,14 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
             break;
         case SDLK_q:
             // Quit the game
-            if (!settingsModal->isVisible()) {
+            if (!(settingsModal->isVisible() || gameInfoModal->isVisible())) {
               SDL_Quit();
               exit(0);
             }
             break;
         case SDLK_ESCAPE:
             // Deselect piece - only when modal is NOT visible
-            if (!settingsModal->isVisible()) {
+            if (!(settingsModal->isVisible() || gameInfoModal->isVisible())) {
                 pieceSelected = false;
                 selectedRow = -1;
                 selectedCol = -1;
@@ -90,6 +92,13 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
             // Show settings modal
             if (settingsModal) {
                 settingsModal->show();
+            }
+            break;
+        case SDLK_i:
+            // Show game info modal
+            if (gameInfoModal) {
+                gameInfoModal->updateCapturedPieces(chessGame.getWhiteCapturedPieces(), chessGame.getBlackCapturedPieces());
+                gameInfoModal->show();
             }
             break;
         case SDLK_r:
@@ -189,6 +198,7 @@ void renderChessboardSDL() {
 
     // Create settings modal
     settingsModal = new SettingsModal(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
+gameInfoModal = new GameInfoModal(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
     
     // Set settings change callback
     settingsModal->setOnSettingsChanged([&chessGame](const SettingsModal::Settings& settings) {
@@ -239,23 +249,24 @@ void renderChessboardSDL() {
             }
             // Handle keyboard input
             else if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
-                // Let settings modal handle the event first
-                if (!settingsModal->handleEvent(e)) {
+                // Let modals handle the event first
+                if (!settingsModal->handleEvent(e) && !gameInfoModal->handleEvent(e)) {
                     handleKeyboardInput(e.key.keysym.sym, chessGame);
                 }
             }
             // Handle mouse click
             else if (e.type == SDL_MOUSEBUTTONDOWN) {
-                // Let settings modal handle the event first
-                if (!settingsModal->handleEvent(e)) {
+                // Let modals handle the event first
+                if (!settingsModal->handleEvent(e) && !gameInfoModal->handleEvent(e)) {
                     int mouseX, mouseY;
                     SDL_GetMouseState(&mouseX, &mouseY);
                     handleMouseClick(mouseX, mouseY, chessGame);
                 }
             }
-            // Handle other events for settings modal
+            // Handle other events for modals
             else {
                 settingsModal->handleEvent(e);
+                gameInfoModal->handleEvent(e);
             }
         }
         
@@ -356,6 +367,7 @@ void renderChessboardSDL() {
         // ===== SETTINGS MODAL =====
         // Render settings modal if visible
         settingsModal->render();
+gameInfoModal->render();
         
         // Update screen
         SDL_RenderPresent(renderer);
@@ -385,6 +397,7 @@ void renderChessboardSDL() {
 
     // Cleanup
     delete settingsModal;
+delete gameInfoModal;
     cleanupChessPieceTextures();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

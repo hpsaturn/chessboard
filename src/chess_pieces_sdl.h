@@ -22,7 +22,7 @@ bool initChessPieceTextures(SDL_Renderer* renderer);
 void cleanupChessPieceTextures();
 
 // Function to render a chess piece using loaded textures
-void renderChessPiece(SDL_Renderer* renderer, int x, int y, const ChessPiece& piece);
+void renderChessPiece(SDL_Renderer* renderer, int x, int y, const ChessPiece& piece, int scale = 1);
 
 // Function to render text using SDL_ttf
 void renderText(SDL_Renderer* renderer, const std::string& text, int x, int y, int size = 1);

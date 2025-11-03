@@ -12,6 +12,10 @@ private:
     std::vector<std::string> moveHistory;
     bool whiteTurn;
     
+    // Captured pieces tracking
+    std::vector<ChessPiece> whiteCapturedPieces;
+    std::vector<ChessPiece> blackCapturedPieces;
+    
 public:
     ChessGame();
     
@@ -20,6 +24,10 @@ public:
     bool isWhiteTurn() const;
     const std::vector<std::string>& getMoveHistory() const;
     std::string pending_move = "";
+    
+    // Get captured pieces
+    const std::vector<ChessPiece>& getWhiteCapturedPieces() const { return whiteCapturedPieces; }
+    const std::vector<ChessPiece>& getBlackCapturedPieces() const { return blackCapturedPieces; }
     
     // Coordinate conversion
     std::string toChessNotation(int row, int col) const;

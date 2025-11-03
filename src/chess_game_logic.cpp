@@ -308,6 +308,7 @@ bool ChessGame::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
     }
     
     ChessPiece& fromPiece = board[fromRow][fromCol];
+    ChessPiece toPiece   = board[toRow][toCol];
     
     // Handle castling
     if (fromPiece.type == PieceType::KING && isCastling) {
@@ -323,6 +324,9 @@ bool ChessGame::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
     std::string move = toChessNotation(fromRow, fromCol) + toChessNotation(toRow, toCol);
     
     // Perform the move
+    if (!toPiece.isEmpty() && whiteTurn) whiteCapturedPieces.push_back(toPiece);
+    else if (!toPiece.isEmpty() && !whiteTurn) blackCapturedPieces.push_back(toPiece);
+    
     board[toRow][toCol] = fromPiece;
     board[fromRow][fromCol] = ChessPiece(); // Empty square
    
@@ -338,6 +342,8 @@ bool ChessGame::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
 }
 
 void ChessGame::resetGame() {
+    whiteCapturedPieces.clear();
+    blackCapturedPieces.clear();
     initializeBoard();
     moveHistory.clear();
     whiteTurn = true;

@@ -74,6 +74,8 @@ if(SDL2_FOUND)
         src/chessboard_sdl.cpp 
 src/settings_modal.cpp
     src/settings_modal.h
+        src/gameinfo_modal.h
+        src/gameinfo_modal.cpp
     )
 endif()
 

@@ -136,7 +136,7 @@ void cleanupChessPieceTextures() {
 }
 
 // Function to render a chess piece using loaded textures
-void renderChessPiece(SDL_Renderer* renderer, int x, int y, const ChessPiece& piece) {
+void renderChessPiece(SDL_Renderer* renderer, int x, int y, const ChessPiece& piece, int scale) {
     if (piece.isEmpty()) return;
     
     auto it = pieceTextures.find(piece.type);
@@ -154,6 +154,9 @@ void renderChessPiece(SDL_Renderer* renderer, int x, int y, const ChessPiece& pi
     // Get texture dimensions
     int textureWidth, textureHeight;
     SDL_QueryTexture(texture, nullptr, nullptr, &textureWidth, &textureHeight);
+
+    textureWidth = textureWidth / scale;
+    textureHeight = textureHeight / scale;
     
     // Calculate destination rectangle
     SDL_Rect destRect = {
