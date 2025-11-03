@@ -7,8 +7,7 @@
 #include "chess_pieces_sdl.h"
 #include <map>
 #include "chess_pieces.h"
-
-#define SQUARE_SIZE 32 // BOARD_SIZE/8 = 260/8 = 32.5
+#include "definitions.h"
 
 // Global texture storage
 std::map<PieceType, PieceTextures> pieceTextures;
@@ -158,10 +157,10 @@ void renderChessPiece(SDL_Renderer* renderer, int x, int y, const ChessPiece& pi
     
     // Calculate destination rectangle
     SDL_Rect destRect = {
-        x + (SQUARE_SIZE - textureWidth) / 2 + 4,
-        y + (SQUARE_SIZE - textureHeight) / 2 + 4,
-        textureWidth-14,
-        textureHeight-14
+        x + (SQUARE_SIZE - textureWidth) / 2,
+        y + (SQUARE_SIZE - textureHeight) / 2,
+        textureWidth - (abs(textureWidth - SQUARE_SIZE)/3),
+        textureHeight - (abs(textureHeight - SQUARE_SIZE)/3)
     };
     
     // Render the texture

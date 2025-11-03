@@ -8,21 +8,19 @@
 #include "chess_game_logic.h"
 #include "engine/uci_engine.h"
 #include "settings_modal.h"
-
-#define SCREEN_WIDTH  320
-#define SCREEN_HEIGHT 320
-#define BOARD_SIZE 260
-#define SQUARE_SIZE (BOARD_SIZE/8)
-#define HISTORY_WIDTH 60
-#define INPUT_HEIGHT 60
+#include "definitions.h"
 
 // UI state variables
 bool pieceSelected = false;
 uint8_t selectedRow = -1;
 uint8_t selectedCol = -1;
-uint8_t cursorRow = 6;    // Cursor position for keyboard navigation
-uint8_t cursorCol = 4;    // Cursor position for keyboard navigation
-bool mouseUsed = false;   // Flag for deselect cursor if Mouse is used
+uint8_t lastMoveStartRow = -1;  // Last black move
+uint8_t lastMoveStartCol = -1;
+uint8_t lastMoveEndRow = -1;
+uint8_t lastMoveEndCol = -1;
+uint8_t cursorRow = 6;          // Cursor position for keyboard navigation
+uint8_t cursorCol = 4;          // Cursor position for keyboard navigation
+bool mouseUsed = false;         // Flag for deselect cursor if Mouse is used
 UCIEngine engine(true);
 
 // Settings modal
@@ -279,6 +277,12 @@ void renderChessboardSDL() {
                 else if (row == cursorRow && col == cursorCol && !mouseUsed) {
                     SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255); // Yellow for cursor
                 }
+                else if (row == lastMoveStartRow && col == lastMoveStartCol) {
+                    SDL_SetRenderDrawColor(renderer, 153, 153, 153, 255); // Last opponent move Start
+                }
+                else if (row == lastMoveEndRow && col == lastMoveEndCol) {
+                    SDL_SetRenderDrawColor(renderer, 102, 102, 102, 255); // Last opponent move End
+                }
                 // Normal square colors
                 else if ((row + col) % 2 == 0) {
                     SDL_SetRenderDrawColor(renderer, 240, 217, 181, 255); // Light squares
@@ -302,52 +306,52 @@ void renderChessboardSDL() {
         
         // ===== HISTORY PANEL =====
         // Draw history background
-        SDL_SetRenderDrawColor(renderer, 40, 40, 40, 255); // Dark gray
-        SDL_Rect historyRect = {BOARD_SIZE, 0, HISTORY_WIDTH, BOARD_SIZE};
-        SDL_RenderFillRect(renderer, &historyRect);
+        // SDL_SetRenderDrawColor(renderer, 40, 40, 40, 255); // Dark gray
+        // SDL_Rect historyRect = {BOARD_SIZE, 0, HISTORY_WIDTH, BOARD_SIZE};
+        // SDL_RenderFillRect(renderer, &historyRect);
         
         // Draw history border
-        SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255); // Light gray border
-        SDL_Rect historyBorder = {BOARD_SIZE - 2, 0, 2, BOARD_SIZE};
-        SDL_RenderFillRect(renderer, &historyBorder);
+        // SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255); // Light gray border
+        // SDL_Rect historyBorder = {BOARD_SIZE - 2, 0, 2, BOARD_SIZE};
+        // SDL_RenderFillRect(renderer, &historyBorder);
         
         // Draw history title
-        renderText(renderer, "HISTORY", BOARD_SIZE + 5, 10, 1);
+        // renderText(renderer, "HISTORY", BOARD_SIZE + 5, 10, 1);
         
         // Display move history
-        const auto& moveHistory = chessGame.getMoveHistory();
-        int historyY = 30;
-        for (size_t i = 0; i < moveHistory.size() && historyY < BOARD_SIZE - 20; i++) {
-            std::string moveText = std::to_string(i + 1) + ". " + moveHistory[i];
-            renderText(renderer, moveText.c_str(), BOARD_SIZE + 5, historyY, 1);
-            historyY += 20;
-        }
+        // const auto& moveHistory = chessGame.getMoveHistory();
+        // int historyY = 30;
+        // for (size_t i = 0; i < moveHistory.size() && historyY < BOARD_SIZE - 20; i++) {
+        //     std::string moveText = std::to_string(i + 1) + ". " + moveHistory[i];
+        //     renderText(renderer, moveText.c_str(), BOARD_SIZE + 5, historyY, 1);
+        //     historyY += 20;
+        // }
         
         // ===== INPUT ZONE =====
         // Draw input background
-        SDL_SetRenderDrawColor(renderer, 60, 60, 60, 255); // Dark gray
-        SDL_Rect inputRect = {0, BOARD_SIZE, BOARD_SIZE, INPUT_HEIGHT};
-        SDL_RenderFillRect(renderer, &inputRect);
+        // SDL_SetRenderDrawColor(renderer, 60, 60, 60, 255); // Dark gray
+        // SDL_Rect inputRect = {0, BOARD_SIZE, BOARD_SIZE, INPUT_HEIGHT};
+        // SDL_RenderFillRect(renderer, &inputRect);
         
         // Draw input border
-        SDL_SetRenderDrawColor(renderer, 150, 100, 100, 255); // Light red border
-        SDL_Rect inputBorder = {0, BOARD_SIZE, BOARD_SIZE, 2};
-        SDL_RenderFillRect(renderer, &inputBorder);
+        // SDL_SetRenderDrawColor(renderer, 150, 100, 100, 255); // Light red border
+        // SDL_Rect inputBorder = {0, BOARD_SIZE, BOARD_SIZE, 2};
+        // SDL_RenderFillRect(renderer, &inputBorder);
 
         // Draw input title
-        renderText(renderer, "INPUT ZONE", 10, BOARD_SIZE + 15, 1);
+        // renderText(renderer, "INPUT ZONE", 10, BOARD_SIZE + 15, 1);
         
         // Display current turn
-        std::string turnText = "Turn: " + std::string(chessGame.isWhiteTurn() ? "WHITE" : "BLACK");
-        renderText(renderer, turnText.c_str(), 10, BOARD_SIZE + 35, 1);
+        // std::string turnText = "Turn: " + std::string(chessGame.isWhiteTurn() ? "WHITE" : "BLACK");
+        // renderText(renderer, turnText.c_str(), 10, BOARD_SIZE + 35, 1);
         
         // Display selection status
-        if (pieceSelected) {
-            std::string selectedText = "Selected: " + chessGame.toChessNotation(selectedRow, selectedCol);
-            renderText(renderer, selectedText.c_str(), 10, BOARD_SIZE + 55, 1);
-        } else {
-            renderText(renderer, "Click to select piece", 10, BOARD_SIZE + 55, 1);
-        }
+        // if (pieceSelected) {
+        //     std::string selectedText = "Selected: " + chessGame.toChessNotation(selectedRow, selectedCol);
+        //     renderText(renderer, selectedText.c_str(), 10, BOARD_SIZE + 55, 1);
+        // } else {
+        //     renderText(renderer, "Click to select piece", 10, BOARD_SIZE + 55, 1);
+        // }
         
         // ===== SETTINGS MODAL =====
         // Render settings modal if visible
@@ -370,6 +374,10 @@ void renderChessboardSDL() {
           int fromRow, fromCol, toRow, toCol;
           chessGame.fromChessMoveNotation(engine_move, fromRow, fromCol, toRow, toCol);
           chessGame.movePiece(fromRow, fromCol, toRow, toCol);
+          lastMoveStartRow = fromRow;
+          lastMoveStartCol = fromCol;
+          lastMoveEndRow = toRow;
+          lastMoveEndCol = toCol;
           chessGame.pending_move.clear();
           engine_move.clear();
         }
