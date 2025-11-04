@@ -31,12 +31,12 @@ private:
     std::mutex response_mutex;
     std::string moves_history = "";
     static const size_t MAX_RESPONSES = 50;
-    bool debug = true;
+    bool debug;
     int difficult = 1;
     uint16_t move_time = 2;
 
 public:
-    UCIEngine(bool debug = false) : engine_pid(-1), is_running(false),debug(debug) {
+    UCIEngine() : engine_pid(-1), is_running(false) {
         engine_stdin[0] = engine_stdin[1] = -1;
         engine_stdout[0] = engine_stdout[1] = -1;
     }
@@ -45,8 +45,8 @@ public:
         shutdown();
     }
 
-    bool startEngine(const std::string& enginePath = "/usr/games/gnuchess");
-    void sendCommand(const std::string& command, bool silent = true);
+    bool startEngine(bool debug = false, const std::string& enginePath = "/usr/games/gnuchess");
+    bool sendCommand(const std::string& command, bool silent = true);
     std::vector<std::string> getCommands();
     std::string getLastCommand();
     void clearCommands();
@@ -56,6 +56,7 @@ public:
     std::string getMovesHistory();
     void addMoveToHistory(const std::string& move);
     void newGame();
+    void setFenInitBoard(const std::string& fen);
     void shutdown();
     void setDifficult(int difficult);
     void setMoveTime(uint32_t move_time);

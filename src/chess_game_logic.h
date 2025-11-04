@@ -10,18 +10,22 @@ class ChessGame {
 private:
     ChessPiece board[8][8];
     std::vector<std::string> moveHistory;
-    bool whiteTurn;
+    bool whiteTurn, fenMode;
     
     // Captured pieces tracking
     std::vector<ChessPiece> whiteCapturedPieces;
     std::vector<ChessPiece> blackCapturedPieces;
     
+    void clearBoard();
+    void loadCapturedPieces();
+
 public:
     ChessGame();
     
     // Game state access
     const ChessPiece& getPiece(int row, int col) const;
     bool isWhiteTurn() const;
+    bool isFenMode() const;
     const std::vector<std::string>& getMoveHistory() const;
     std::string pending_move = "";
     
@@ -35,11 +39,14 @@ public:
     bool fromChessMoveNotation(const std::string& moveNotation, int& fromRow, int& fromCol, int& toRow, int& toCol) const;
     
     // Game logic
-    void initializeBoard();
+    void initializeBoard(const std::string& fen = "");
     bool isValidMove(bool& isCastling, int fromRow, int fromCol, int toRow, int toCol) const;
+    bool isInCheck(const ChessPiece& king) const;
+    bool wouldBeInCheck(int fromRow, int toRow, int toCol, const ChessPiece& king) const;
     void handleCastling(int fromRow, int fromCol, int toRow, int toCol);
     bool movePiece(int fromRow, int fromCol, int toRow, int toCol);
     void resetGame();
+    std::string boardToFEN() const;
 };
 
 #endif // CHESS_GAME_LOGIC_H

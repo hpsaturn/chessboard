@@ -2,9 +2,8 @@
 #include <string>
 
 void renderChessboardChars();
-void renderChessboardSDL();
+void renderChessboardSDL(std::string fen);
 void renderChessboardNcurses();
-void renderChessboardCharsEngine();
 
 void printHelp() {
     std::cout << "Chessboard Renderer\n";
@@ -16,7 +15,6 @@ void printHelp() {
     std::cout << "              Render chessboard using SDL2 graphics (default)\n";
     std::cout << "  --chars     Render chessboard using ASCII characters\n";
     std::cout << "  --ncurses   Render chessboard using interactive ncurses interface\n";
-    std::cout << "  --engine    Test GNUChess engine integration with character mode\n";
     std::cout << "  --help      Show this help message\n";
     std::cout << "\n";
     std::cout << "Controls (SDL mode):\n";
@@ -30,7 +28,8 @@ void printHelp() {
 }
 
 int main(int argc, char* argv[]) {
-    std::string mode = "";
+    std::string mode = "SDL";
+    std::string fen = "";
     
     // Parse command line arguments
     for (int i = 1; i < argc; ++i) {
@@ -40,8 +39,9 @@ int main(int argc, char* argv[]) {
             mode = "chars";
         } else if (arg == "--ncurses") {
             mode = "ncurses";
-        } else if (arg == "--engine") {
-            mode = "engine";
+        } else if (arg == "--fen") { 
+            if (i + 1 <= argc) fen = argv[i + 1];
+            break;
         } else if (arg == "--help") {
             printHelp();
             return 0;
@@ -52,17 +52,15 @@ int main(int argc, char* argv[]) {
         }
     }
     
-    std::cout << "Chessboard with Pieces - " << mode << " mode\n";
-    std::cout << "========================\n";
+    std::cout << "GNUChess frontend - " << mode << " mode\n";
+    std::cout << "============================\n";
     
     if (mode == "ncurses") {
         renderChessboardNcurses();
     } else if (mode == "chars") {
         renderChessboardChars();
-    } else if (mode == "engine") {
-        renderChessboardCharsEngine();
     } else {
-        renderChessboardSDL();
+        renderChessboardSDL(fen);
     }
     
     return 0;
