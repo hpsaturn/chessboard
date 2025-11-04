@@ -1,6 +1,7 @@
 #include "uci_engine.h"
 
-bool UCIEngine::startEngine(const std::string& enginePath) {
+bool UCIEngine::startEngine(bool debug, const std::string& enginePath) {
+  debug = debug;
   if (pipe(engine_stdin) != 0 || pipe(engine_stdout) != 0) {
     std::cerr << "Failed to create pipes" << std::endl;
     return false;
@@ -48,14 +49,15 @@ bool UCIEngine::startEngine(const std::string& enginePath) {
   }
 }
 
-void UCIEngine::sendCommand(const std::string& command, bool silent) {
-  if (engine_stdin[1] == -1) return;
+bool UCIEngine::sendCommand(const std::string& command, bool silent) {
+  if (engine_stdin[1] == -1) return false;
 
   std::string full_command = command + "\n";
-  write(engine_stdin[1], full_command.c_str(), full_command.length());
+  int wbytes = write(engine_stdin[1], full_command.c_str(), full_command.length());
   fsync(engine_stdin[1]);
 
-  if (!silent) std::cout << "[GNUC] Sent: " << command << std::endl;
+  if (!silent) std::cout << "[GNUC] Sent: " << command << " (w:" << wbytes << ")" << std::endl;
+  return true;
 }
 
 std::vector<std::string> UCIEngine::getCommands() {
@@ -234,13 +236,16 @@ void UCIEngine::newGame() {
   sendCommand("ucinewgame");
 }
 
+void UCIEngine::setFenInitBoard(const std::string& fen) {
+}
+
 void UCIEngine::searchWithDepthAndTimeout(int depth, int max_time_ms) {
     std::atomic<bool> search_completed{false};
     std::string best_move;
     
     // Start search thread
     std::thread search_thread([&]() {
-        sendCommand("go depth " + std::to_string(depth));
+        sendCommand("go depth " + std::to_string(depth), !debug);
         // Wait for bestmove and set search_completed = true when done
     });
     
@@ -257,9 +262,14 @@ void UCIEngine::searchWithDepthAndTimeout(int depth, int max_time_ms) {
 }
 
 std::string UCIEngine::sendMove(const std::string& move) {
-  moves_history = moves_history + " " + move;
-  std::string moves = "position startpos moves" + moves_history;
-  sendCommand(moves, debug);
+  std::string moves = "";
+  if (move.size() > 4) {
+    moves = "position fen " + move;
+  }else{
+    moves_history = moves_history + " " + move;
+    moves = "position startpos moves" + moves_history;
+  }
+  sendCommand(moves, !debug);
   // sendCommand("go movetime 3000", debug);
   searchWithDepthAndTimeout(difficult, move_time * 1000);
   // Wait for bestmove asynchronously

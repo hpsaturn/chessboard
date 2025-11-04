@@ -56,8 +56,6 @@ set(RESOURCE_PATH_INSTALLED "${CMAKE_INSTALL_PREFIX}/share/chess")
 set(CHESS_SOURCES
     src/main.cpp
     src/chessboard_chars.cpp
-    src/chessboard_chars_engine.cpp
-    src/chessboard_chars_engine.h
     src/chess_pieces.h
     src/chess_pieces_ncurses.h
     src/chess_pieces_ncurses.cpp

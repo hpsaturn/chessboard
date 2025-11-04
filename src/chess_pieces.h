@@ -97,4 +97,44 @@ inline std::string getPieceName(const ChessPiece& piece) {
     }
 }
 
+inline ChessPiece charToPiece(char c) {
+    PieceColor color = (std::isupper(c)) ? PieceColor::WHITE : PieceColor::BLACK;
+    PieceType type;
+    
+    char lowerC = std::tolower(c);
+    switch (lowerC) {
+        case 'k': type = PieceType::KING; break;
+        case 'q': type = PieceType::QUEEN; break;
+        case 'r': type = PieceType::ROOK; break;
+        case 'b': type = PieceType::BISHOP; break;
+        case 'n': type = PieceType::KNIGHT; break;
+        case 'p': type = PieceType::PAWN; break;
+        default:  type = PieceType::NONE; break;
+    }
+    
+    return ChessPiece{type, color};
+}
+
+inline char getPieceChar(const ChessPiece& piece) {
+    if (piece.type == PieceType::NONE) return ' ';
+    
+    char baseChar;
+    switch (piece.type) {
+        case PieceType::KING:   baseChar = 'k'; break;
+        case PieceType::QUEEN:  baseChar = 'q'; break;
+        case PieceType::ROOK:   baseChar = 'r'; break;
+        case PieceType::BISHOP: baseChar = 'b'; break;
+        case PieceType::KNIGHT: baseChar = 'n'; break;
+        case PieceType::PAWN:   baseChar = 'p'; break;
+        default: return ' ';
+    }
+    
+    // Uppercase for white pieces
+    if (piece.color == PieceColor::WHITE) {
+        baseChar = std::toupper(baseChar);
+    }
+    
+    return baseChar;
+}
+
 #endif // CHESS_PIECES_H
