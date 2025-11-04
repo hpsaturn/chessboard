@@ -3,13 +3,13 @@
 bool UCIEngine::startEngine(bool debug, const std::string& enginePath) {
   debug = debug;
   if (pipe(engine_stdin) != 0 || pipe(engine_stdout) != 0) {
-    std::cerr << "Failed to create pipes" << std::endl;
+    std::cerr << "[GNUC] Failed to create pipes" << std::endl;
     return false;
   }
 
   engine_pid = fork();
   if (engine_pid == -1) {
-    std::cerr << "Failed to fork process" << std::endl;
+    std::cerr << "[GNUC] Failed to fork process" << std::endl;
     return false;
   }
 
@@ -30,7 +30,7 @@ bool UCIEngine::startEngine(bool debug, const std::string& enginePath) {
     execlp(enginePath.c_str(), enginePath.c_str(), "--uci", nullptr);
 
     // If we get here, exec failed
-    std::cerr << "Failed to execute " << enginePath << std::endl;
+    std::cerr << "[GNUC] Failed to execute " << enginePath << std::endl;
     exit(1);
   } else {
     // Parent process - our connector
@@ -99,7 +99,7 @@ void UCIEngine::observerLoop() {
         processEngineOutput(buffer, partial_line);
       } else if (bytes_read == 0) {
         // EOF - engine closed output
-        std::cout << "Engine output closed" << std::endl;
+        std::cout << "[GNUC] Engine output closed" << std::endl;
         break;
       }
     }
