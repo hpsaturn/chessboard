@@ -17,6 +17,7 @@ private:
     std::vector<ChessPiece> blackCapturedPieces;
     
     void clearBoard();
+    void loadCapturedPieces();
 
 public:
     ChessGame();

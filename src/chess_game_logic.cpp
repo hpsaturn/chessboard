@@ -128,10 +128,10 @@ void ChessGame::initializeBoard(const std::string& fen) {
         }
         col++;
       }
-
       if (row >= 8) break;
     }
     fenMode = true;
+    loadCapturedPieces();
   }
 }
 
@@ -143,9 +143,48 @@ void ChessGame::clearBoard() {
     }
 }
 
-bool ChessGame::isInCheck(const ChessPiece& king) const { return false; }
+void ChessGame::loadCapturedPieces() {
+  whiteCapturedPieces.clear();
+  blackCapturedPieces.clear();
 
-bool ChessGame::wouldBeInCheck(int fromRow, int toRow, int toCol, const ChessPiece& king) const { return false; }
+  // Standard piece counts: [PAWN, ROOK, KNIGHT, BISHOP, QUEEN, KING]
+  const int standardCounts[6] = {8, 2, 2, 2, 1, 1};
+
+  int currentWhite[6] = {0};
+  int currentBlack[6] = {0};
+
+  // Count current pieces
+  for (int row = 0; row < 8; row++) {
+    for (int col = 0; col < 8; col++) {
+      ChessPiece piece = board[row][col];
+      if (!piece.isEmpty()) {
+        int typeIndex = static_cast<int>(piece.type) - 1;  // Convert to 0-based
+        if (piece.color == PieceColor::WHITE) {
+          currentWhite[typeIndex]++;
+        } else {
+          currentBlack[typeIndex]++;
+        }
+      }
+    }
+  }
+
+  // Find captured pieces
+  for (int i = 0; i < 6; i++) {
+    PieceType pieceType = static_cast<PieceType>(i + 1);
+
+    // White captured black pieces
+    int missingBlack = standardCounts[i] - currentBlack[i];
+    for (int j = 0; j < missingBlack; j++) {
+      whiteCapturedPieces.push_back(ChessPiece(pieceType, PieceColor::BLACK));
+    }
+
+    // Black captured white pieces
+    int missingWhite = standardCounts[i] - currentWhite[i];
+    for (int j = 0; j < missingWhite; j++) {
+      blackCapturedPieces.push_back(ChessPiece(pieceType, PieceColor::WHITE));
+    }
+  }
+}
 
 bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRow, int toCol) const {
     // Can't move to the same square
@@ -364,23 +403,6 @@ bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRo
     return true;
 }
 
-void ChessGame::handleCastling(int fromRow, int fromCol, int toRow, int toCol) {
-  ChessPiece& fromPiece = board[fromRow][fromCol];
-  // Determine castling direction
-  bool isKingside = (toCol > fromCol);
-  int rookCol = isKingside ? 7 : 0;
-  int direction = isKingside ? 1 : -1;
-
-  // Move the rook
-  if (isKingside) {
-    board[toRow][toCol - 1] = board[fromRow][toCol+1];  // move rook king side
-    board[fromRow][toCol + 1] = ChessPiece();
-  } else {
-    board[toRow][toCol + 1] = board[fromRow][toCol - 2];  // move rook queen side
-    board[fromRow][toCol - 2] = ChessPiece();
-  }
-}
-
 bool ChessGame::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
     bool isCastling = false;
     if (!isValidMove(isCastling, fromRow, fromCol, toRow, toCol)) {
@@ -426,6 +448,27 @@ bool ChessGame::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
     whiteTurn = !whiteTurn;
     
     return true;
+}
+
+bool ChessGame::isInCheck(const ChessPiece& king) const { return false; }
+
+bool ChessGame::wouldBeInCheck(int fromRow, int toRow, int toCol, const ChessPiece& king) const { return false; }
+
+void ChessGame::handleCastling(int fromRow, int fromCol, int toRow, int toCol) {
+  ChessPiece& fromPiece = board[fromRow][fromCol];
+  // Determine castling direction
+  bool isKingside = (toCol > fromCol);
+  int rookCol = isKingside ? 7 : 0;
+  int direction = isKingside ? 1 : -1;
+
+  // Move the rook
+  if (isKingside) {
+    board[toRow][toCol - 1] = board[fromRow][toCol+1];  // move rook king side
+    board[fromRow][toCol + 1] = ChessPiece();
+  } else {
+    board[toRow][toCol + 1] = board[fromRow][toCol - 2];  // move rook queen side
+    board[fromRow][toCol - 2] = ChessPiece();
+  }
 }
 
 void ChessGame::resetGame() {
