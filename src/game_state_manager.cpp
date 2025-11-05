@@ -145,8 +145,8 @@ std::string GameStateManager::getCurrentDate() const {
     std::time_t t = std::time(nullptr);
     std::tm* now = std::localtime(&t);
     
-    char buffer[9]; // YYYYMMDD + null terminator
-    std::strftime(buffer, sizeof(buffer), "%Y%m%d", now);
+    char buffer[16]; // YYYYMMDD + null terminator
+    std::strftime(buffer, sizeof(buffer), "%Y%m%d_%H%M%S", now);
     
     return std::string(buffer);
 }

@@ -12,6 +12,7 @@
 #include "engine/uci_engine.h"
 #include "settings_modal.h"
 #include "config_manager.h"
+#include "game_state_manager.h"
 
 // UI state variables
 bool pieceSelected = false;
@@ -30,6 +31,8 @@ UCIEngine engine;
 SettingsModal* settingsModal = nullptr;
 GameInfoModal* gameInfoModal = nullptr;
 ConfigManager* configManager = nullptr;
+GameStateManager* stateManager = nullptr;
+
 
 // Handle keyboard input for piece selection and movement
 void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
@@ -104,6 +107,14 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
                                             chessGame.getBlackCapturedPieces());
         gameInfoModal->show();
       }
+      break;
+    case SDLK_F2:
+      // Save current state slot
+      stateManager->addGameState(chessGame.boardToFEN(),"");
+      break;
+    case SDLK_F3:
+      // Save current state slot
+      std::cout << "saved state: " << stateManager->getGameState("20251105_203301")->fen << std::endl;
       break;
     case SDLK_r:
       // Reset board
@@ -329,6 +340,9 @@ void renderChessboardSDL(std::string fen) {
   }
 
   configManager = new ConfigManager();
+  stateManager = new GameStateManager();
+
+  stateManager->loadGameStates();
 
   // Create settings modal
   settingsModal = new SettingsModal(renderer, SCREEN_WIDTH, SCREEN_HEIGHT, configManager);
