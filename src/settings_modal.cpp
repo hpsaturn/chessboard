@@ -4,8 +4,8 @@
 #include <iostream>
 #include <algorithm>
 
-SettingsModal::SettingsModal(SDL_Renderer* renderer, int screenWidth, int screenHeight)
-    : renderer(renderer), screenWidth(screenWidth), screenHeight(screenHeight), visible(false), font(nullptr), focusedElement(-1) {
+SettingsModal::SettingsModal(SDL_Renderer* renderer, int screenWidth, int screenHeight, ConfigManager* configManager)
+    : renderer(renderer), screenWidth(screenWidth), screenHeight(screenHeight), visible(false), font(nullptr), focusedElement(-1), configManager(configManager) {
     
     // Initialize SDL_ttf
     if (TTF_Init() == -1) {
@@ -18,11 +18,20 @@ SettingsModal::SettingsModal(SDL_Renderer* renderer, int screenWidth, int screen
         }
     }
     
-    // Initialize default settings
-    // currentSettings.depthDifficulty = 1;
-    // currentSettings.maxTimePerMove = 30;
-    // currentSettings.matchTime = 10;
-    // currentSettings.soundEnabled = true;
+    // Load settings from config file if config manager is available
+    if (configManager) {
+        ConfigManager::Settings loadedSettings;
+        if (configManager->loadSettings(loadedSettings)) {
+            // Convert ConfigManager::Settings to SettingsModal::Settings
+            currentSettings.depthDifficulty = loadedSettings.depthDifficulty;
+            currentSettings.maxTimePerMove = loadedSettings.maxTimePerMove;
+            currentSettings.matchTime = loadedSettings.matchTime;
+            currentSettings.soundEnabled = loadedSettings.soundEnabled;
+            std::cout << "Settings loaded from config file" << std::endl;
+        } else {
+            std::cout << "Using default settings" << std::endl;
+        }
+    }
     
     // Calculate modal position and size
     modalWidth = 250;
@@ -105,8 +114,27 @@ void SettingsModal::show() {
 void SettingsModal::hide() {
     visible = false;
     focusedElement = -1; // Reset focus when modal closes
+    
+    // Save settings when modal is closed
+    saveSettingsToFile();
 }
 
+void SettingsModal::saveSettingsToFile() {
+    if (configManager) {
+        // Convert SettingsModal::Settings to ConfigManager::Settings
+        ConfigManager::Settings settingsToSave;
+        settingsToSave.depthDifficulty = currentSettings.depthDifficulty;
+        settingsToSave.maxTimePerMove = currentSettings.maxTimePerMove;
+        settingsToSave.matchTime = currentSettings.matchTime;
+        settingsToSave.soundEnabled = currentSettings.soundEnabled;
+        
+        if (configManager->saveSettings(settingsToSave)) {
+            std::cout << "Settings saved to config file" << std::endl;
+        } else {
+            std::cerr << "Failed to save settings to config file" << std::endl;
+        }
+    }
+}
 bool SettingsModal::handleEvent(const SDL_Event& e) {
     if (!visible) return false;
     
@@ -131,6 +159,8 @@ bool SettingsModal::handleEvent(const SDL_Event& e) {
                         if (onSettingsChanged) {
                             onSettingsChanged(currentSettings);
                         }
+                        // Save settings immediately when checkbox is toggled
+                        saveSettingsToFile();
                         return true;
                     }
                 }
@@ -254,6 +284,8 @@ bool SettingsModal::handleEvent(const SDL_Event& e) {
                         if (onSettingsChanged) {
                             onSettingsChanged(currentSettings);
                         }
+                        // Save settings immediately when checkbox is toggled
+                        saveSettingsToFile();
                         return true;
                     }
                 }

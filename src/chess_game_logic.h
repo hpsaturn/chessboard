@@ -1,10 +1,9 @@
-// Chess Game Logic - Separated from SDL rendering
 #ifndef CHESS_GAME_LOGIC_H
 #define CHESS_GAME_LOGIC_H
 
-#include "chess_pieces.h"
-#include <string>
 #include <vector>
+#include <string>
+#include "chess_pieces.h"
 
 class ChessGame {
 private:
@@ -15,6 +14,10 @@ private:
     // Captured pieces tracking
     std::vector<ChessPiece> whiteCapturedPieces;
     std::vector<ChessPiece> blackCapturedPieces;
+    
+    // Selection state
+    int selectedRow = -1;
+    int selectedCol = -1;
     
     void clearBoard();
     void loadCapturedPieces();
@@ -47,6 +50,15 @@ public:
     bool movePiece(int fromRow, int fromCol, int toRow, int toCol);
     void resetGame();
     std::string boardToFEN() const;
+    
+    // Selection methods for UI
+    void selectPiece(int row, int col);
+    void deselectPiece();
+    bool isPieceSelected() const;
+    int getSelectedRow() const;
+    int getSelectedCol() const;
+    std::vector<std::pair<int, int>> getValidMoves(int row, int col) const;
+    char getPieceAt(int row, int col) const;
 };
 
 #endif // CHESS_GAME_LOGIC_H

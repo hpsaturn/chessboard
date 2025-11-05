@@ -36,6 +36,15 @@ else()
     message(ERROR "SDL2_ttf not found - Please install libsdl2-ttf-dev")
 endif()
 
+# Check for yaml-cpp
+pkg_check_modules(YAML_CPP QUIET yaml-cpp)
+if(YAML_CPP_FOUND)
+    message(STATUS "yaml-cpp found: ${YAML_CPP_VERSION}")
+    include_directories(${YAML_CPP_INCLUDE_DIRS})
+else()
+    message(ERROR "yaml-cpp not found! Please install libyaml-cpp-dev")
+endif()
+
 # Check for ncurses
 find_package(Curses QUIET)
 if(CURSES_FOUND)
@@ -64,6 +73,8 @@ set(CHESS_SOURCES
     src/engine/uci_engine.cpp
     src/engine/uci_engine.h
     src/chess_game_logic.cpp
+    src/config_manager.cpp
+    src/config_manager.h
 )
 
 # Add SDL sources if available
@@ -106,6 +117,10 @@ endif()
 
 if(CURSES_FOUND)
     target_link_libraries(chess PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${CURSES_LIBRARIES})
+endif()
+
+if(YAML_CPP_FOUND)
+    target_link_libraries(chess PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${YAML_CPP_LIBRARIES})
 endif()
 
 # Create engine test executables (only if files exist)

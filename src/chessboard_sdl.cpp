@@ -1,26 +1,49 @@
-#include "gameinfo_modal.h"
 #include <SDL2/SDL.h>
-
+#include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
 #include <iostream>
 #include <string>
 #include <vector>
-
-#include "chess_game_logic.h"
-#include "chess_pieces.h"
+#include <algorithm>
+#include <thread>
+#include <chrono>
 #include "chess_pieces_sdl.h"
-#include "definitions.h"
+#include "chess_game_logic.h"
 #include "engine/uci_engine.h"
 #include "settings_modal.h"
+#include "gameinfo_modal.h"
+#include "config_manager.h"
 
-// UI state variables
-bool pieceSelected = false;
-uint8_t selectedRow = -1;
-uint8_t selectedCol = -1;
-uint8_t lastMoveStartRow = -1;  // Last black move
-uint8_t lastMoveStartCol = -1;
-uint8_t lastMoveEndRow = -1;
-uint8_t lastMoveEndCol = -1;
-uint8_t cursorRow = 6;   // Cursor position for keyboard navigation
+// Undefine conflicting macros from definitions.h
+#ifdef SCREEN_WIDTH
+#undef SCREEN_WIDTH
+#endif
+#ifdef SCREEN_HEIGHT
+#undef SCREEN_HEIGHT
+#endif
+#ifdef BOARD_SIZE
+#undef BOARD_SIZE
+#endif
+#ifdef SQUARE_SIZE
+#undef SQUARE_SIZE
+#endif
+
+// Screen dimensions
+const int SCREEN_WIDTH = 800;
+const int SCREEN_HEIGHT = 600;
+
+// Board dimensions and position
+const int BOARD_SIZE = 480;
+const int BOARD_X = (SCREEN_WIDTH - BOARD_SIZE) / 2;
+const int BOARD_Y = (SCREEN_HEIGHT - BOARD_SIZE) / 2;
+const int SQUARE_SIZE = BOARD_SIZE / 8;
+
+// Global variables
+SDL_Window* window = nullptr;
+SDL_Renderer* renderer = nullptr;
+
+// Cursor position for keyboard navigation
+uint8_t cursorRow = 4;
 uint8_t cursorCol = 4;   // Cursor position for keyboard navigation
 bool mouseUsed = false;  // Flag for deselect cursor if Mouse is used
 UCIEngine engine;
@@ -28,10 +51,12 @@ UCIEngine engine;
 // Settings modal
 SettingsModal* settingsModal = nullptr;
 GameInfoModal* gameInfoModal = nullptr;
+ConfigManager* configManager = nullptr;
 
 // Handle keyboard input for piece selection and movement
 void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
   mouseUsed = false;
+
   switch (key) {
     case SDLK_UP:
       if (cursorRow > 0) cursorRow--;
@@ -45,289 +70,197 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
     case SDLK_RIGHT:
       if (cursorCol < 7) cursorCol++;
       break;
-    case SDLK_SPACE:
-      // Select/deselect piece at cursor position
-      if (!pieceSelected) {
-        // Select a piece
-        ChessPiece piece = chessGame.getPiece(cursorRow, cursorCol);
-        if (!piece.isEmpty() && ((chessGame.isWhiteTurn() && piece.color == PieceColor::WHITE) ||
-                                 (!chessGame.isWhiteTurn() && piece.color == PieceColor::BLACK))) {
-          selectedRow = cursorRow;
-          selectedCol = cursorCol;
-          pieceSelected = true;
-        }
-      } else {
-        // Deselect piece
-        pieceSelected = false;
-        selectedRow = -1;
-        selectedCol = -1;
-      }
-      break;
     case SDLK_RETURN:
-      // Move selected piece to cursor position
-      if (pieceSelected) {
-        if (chessGame.movePiece(selectedRow, selectedCol, cursorRow, cursorCol)) {
-          // Move successful
-          pieceSelected = false;
-          selectedRow = -1;
-          selectedCol = -1;
-        }
-      }
-      break;
-    case SDLK_q:
-      // Quit the game
-      if (!(settingsModal->isVisible() || gameInfoModal->isVisible())) {
-        SDL_Quit();
-        exit(0);
+    case SDLK_SPACE:
+      // Select/deselect piece or make move
+      if (!chessGame.isPieceSelected()) {
+        // Select piece
+        chessGame.selectPiece(cursorRow, cursorCol);
+      } else {
+        // Try to move piece
+        chessGame.movePiece(chessGame.getSelectedRow(), chessGame.getSelectedCol(), cursorRow, cursorCol);
+        chessGame.deselectPiece();
       }
       break;
     case SDLK_ESCAPE:
-      // Deselect piece - only when modal is NOT visible
-      if (!(settingsModal->isVisible() || gameInfoModal->isVisible())) {
-        pieceSelected = false;
-        selectedRow = -1;
-        selectedCol = -1;
-      }
-      break;
-    case SDLK_s:
-      // Show settings modal
-      if (settingsModal) {
-        settingsModal->show();
-      }
-      break;
-    case SDLK_i:
-      // Show game info modal
-      if (gameInfoModal) {
-        gameInfoModal->updateCapturedPieces(chessGame.getWhiteCapturedPieces(),
-                                            chessGame.getBlackCapturedPieces());
-        gameInfoModal->show();
-      }
-      break;
-    case SDLK_r:
-      // Reset board
-      chessGame.resetGame();
-      pieceSelected = false;
-      selectedRow = -1;
-      selectedCol = -1;
-      cursorRow = 6;
-      cursorCol = 4;
-      lastMoveStartRow = -1;
-      lastMoveStartCol = -1;
-      lastMoveEndRow = -1;
-      lastMoveEndCol = -1;
-      chessGame.pending_move.clear();
-      engine.newGame();
+      // Deselect piece
+      chessGame.deselectPiece();
       break;
   }
 }
 
-void handleMouseClick(int mouseX, int mouseY, ChessGame& chessGame) {
-  // Check if click is within chessboard bounds
-  if (mouseX >= 0 && mouseX < BOARD_SIZE && mouseY >= 0 && mouseY < BOARD_SIZE) {
-    mouseUsed = true;
-    int row = mouseY / SQUARE_SIZE;
-    int col = mouseX / SQUARE_SIZE;
+// Render the chess board
+void renderBoard(ChessGame& chessGame) {
+  // Clear screen
+  SDL_SetRenderDrawColor(renderer, 40, 40, 40, 255);
+  SDL_RenderClear(renderer);
 
-    if (!pieceSelected) {
-      // Select a piece
-      ChessPiece piece = chessGame.getPiece(row, col);
-      if (!piece.isEmpty() && ((chessGame.isWhiteTurn() && piece.color == PieceColor::WHITE) ||
-                               (!chessGame.isWhiteTurn() && piece.color == PieceColor::BLACK))) {
-        selectedRow = row;
-        selectedCol = col;
-        pieceSelected = true;
-      }
-    } else {
-      // Move selected piece
-      if (chessGame.movePiece(selectedRow, selectedCol, row, col)) {
-        // Move successful - clear selection
-        pieceSelected = false;
-        selectedRow = -1;
-        selectedCol = -1;
+  // Draw board background
+  SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
+  SDL_Rect boardRect = {BOARD_X - 10, BOARD_Y - 10, BOARD_SIZE + 20, BOARD_SIZE + 20};
+  SDL_RenderFillRect(renderer, &boardRect);
+
+  // Draw chess board squares
+  for (int row = 0; row < 8; row++) {
+    for (int col = 0; col < 8; col++) {
+      SDL_Rect squareRect = {BOARD_X + col * SQUARE_SIZE, BOARD_Y + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE};
+      
+      // Alternate square colors
+      if ((row + col) % 2 == 0) {
+        SDL_SetRenderDrawColor(renderer, 240, 217, 181, 255); // Light squares
       } else {
-        // Move failed, but allow selecting a different piece
-        ChessPiece piece = chessGame.getPiece(row, col);
-        if (!piece.isEmpty() && ((chessGame.isWhiteTurn() && piece.color == PieceColor::WHITE) ||
-                                 (!chessGame.isWhiteTurn() && piece.color == PieceColor::BLACK))) {
-          // Select the new piece
-          selectedRow = row;
-          selectedCol = col;
-        } else {
-          // Deselect if clicking on empty square or opponent piece
-          pieceSelected = false;
-          selectedRow = -1;
-          selectedCol = -1;
+        SDL_SetRenderDrawColor(renderer, 181, 136, 99, 255);  // Dark squares
+      }
+      SDL_RenderFillRect(renderer, &squareRect);
+
+      // Highlight selected square
+      if (chessGame.isPieceSelected() && chessGame.getSelectedRow() == row && chessGame.getSelectedCol() == col) {
+        SDL_SetRenderDrawColor(renderer, 255, 255, 0, 128); // Yellow highlight
+        SDL_RenderFillRect(renderer, &squareRect);
+      }
+
+      // Highlight cursor position (only if no piece is selected and mouse not used)
+      if (!chessGame.isPieceSelected() && !mouseUsed && cursorRow == row && cursorCol == col) {
+        SDL_SetRenderDrawColor(renderer, 0, 255, 0, 128); // Green cursor
+        SDL_RenderFillRect(renderer, &squareRect);
+      }
+
+      // Highlight valid moves
+      if (chessGame.isPieceSelected()) {
+        auto validMoves = chessGame.getValidMoves(chessGame.getSelectedRow(), chessGame.getSelectedCol());
+        for (const auto& move : validMoves) {
+          if (move.first == row && move.second == col) {
+            SDL_SetRenderDrawColor(renderer, 0, 0, 255, 128); // Blue for valid moves
+            SDL_RenderFillRect(renderer, &squareRect);
+          }
         }
       }
     }
   }
-}
 
-// Main game loop
-void mainLoop(ChessGame chessGame, SDL_Renderer* renderer) {
-  bool quit = false;
-  SDL_Event e;
-
-  // Frame rate limiting
-  const int FPS = 60;
-  const int frameDelay = 1000 / FPS;
-  Uint32 frameStart;
-  int frameTime;
-
-  while (!quit) {
-    frameStart = SDL_GetTicks();
-
-    // Handle events on queue
-    while (SDL_PollEvent(&e) != 0) {
-      // User requests quit
-      if (e.type == SDL_QUIT) {
-        quit = true;
-      }
-      // Handle keyboard input
-      else if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
-        // Let modals handle the event first
-        if (!settingsModal->handleEvent(e) && !gameInfoModal->handleEvent(e)) {
-          handleKeyboardInput(e.key.keysym.sym, chessGame);
-        }
-      }
-      // Handle mouse click
-      else if (e.type == SDL_MOUSEBUTTONDOWN) {
-        // Let modals handle the event first
-        if (!settingsModal->handleEvent(e) && !gameInfoModal->handleEvent(e)) {
-          int mouseX, mouseY;
-          SDL_GetMouseState(&mouseX, &mouseY);
-          handleMouseClick(mouseX, mouseY, chessGame);
-        }
-      }
-      // Handle other events for modals
-      else {
-        settingsModal->handleEvent(e);
-        gameInfoModal->handleEvent(e);
+  // Draw pieces
+  for (int row = 0; row < 8; row++) {
+    for (int col = 0; col < 8; col++) {
+      const ChessPiece& piece = chessGame.getPiece(row, col);
+      if (!piece.isEmpty()) {
+        renderChessPiece(renderer, BOARD_X + col * SQUARE_SIZE, BOARD_Y + row * SQUARE_SIZE, piece, SQUARE_SIZE / 60);
       }
     }
+  }
 
-    // Clear screen
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);  // Black background
-    SDL_RenderClear(renderer);
+  // Draw board coordinates
+  TTF_Font* font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 16);
+  if (font) {
+    SDL_Color textColor = {255, 255, 255, 255};
+    
+    // Draw file letters (a-h)
+    for (int col = 0; col < 8; col++) {
+      std::string fileLabel = std::string(1, 'a' + col);
+      SDL_Surface* surface = TTF_RenderText_Blended(font, fileLabel.c_str(), textColor);
+      SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+      int texW, texH;
+      SDL_QueryTexture(texture, nullptr, nullptr, &texW, &texH);
+      SDL_Rect dstRect = {BOARD_X + col * SQUARE_SIZE + SQUARE_SIZE/2 - texW/2, BOARD_Y + BOARD_SIZE + 5, texW, texH};
+      SDL_RenderCopy(renderer, texture, nullptr, &dstRect);
+      SDL_DestroyTexture(texture);
+      SDL_FreeSurface(surface);
+    }
 
-    // ===== CHESSBOARD =====
-    // Draw chessboard squares
+    // Draw rank numbers (1-8)
     for (int row = 0; row < 8; row++) {
-      for (int col = 0; col < 8; col++) {
-        SDL_Rect square = {col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE};
-
-        // Highlight selected square
-        if (pieceSelected && row == selectedRow && col == selectedCol) {
-          SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);  // Green for selected
-        }
-        // Highlight cursor position
-        else if (row == cursorRow && col == cursorCol && !mouseUsed && !chessGame.pending_move.empty()) {
-          SDL_SetRenderDrawColor(renderer, 172, 83, 83, 255);  // Yellow for cursor
-        } else if (row == cursorRow && col == cursorCol && !mouseUsed && chessGame.pending_move.empty()) {
-          SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);  // Yellow for cursor
-        } else if (row == lastMoveStartRow && col == lastMoveStartCol) {
-          SDL_SetRenderDrawColor(renderer, 153, 153, 153, 255);  // Last opponent move Start
-        } else if (row == lastMoveEndRow && col == lastMoveEndCol) {
-          SDL_SetRenderDrawColor(renderer, 102, 102, 102, 255);  // Last opponent move End
-        }
-        // Normal square colors
-        else if ((row + col) % 2 == 0) {
-          SDL_SetRenderDrawColor(renderer, 240, 217, 181, 255);  // Light squares
-        } else {
-          SDL_SetRenderDrawColor(renderer, 181, 136, 99, 255);  // Dark squares
-        }
-
-        SDL_RenderFillRect(renderer, &square);
-      }
+      std::string rankLabel = std::to_string(8 - row);
+      SDL_Surface* surface = TTF_RenderText_Blended(font, rankLabel.c_str(), textColor);
+      SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+      int texW, texH;
+      SDL_QueryTexture(texture, nullptr, nullptr, &texW, &texH);
+      SDL_Rect dstRect = {BOARD_X - 20, BOARD_Y + row * SQUARE_SIZE + SQUARE_SIZE/2 - texH/2, texW, texH};
+      SDL_RenderCopy(renderer, texture, nullptr, &dstRect);
+      SDL_DestroyTexture(texture);
+      SDL_FreeSurface(surface);
     }
 
-    // Draw chess pieces
-    for (int row = 0; row < 8; row++) {
-      for (int col = 0; col < 8; col++) {
-        ChessPiece piece = chessGame.getPiece(row, col);
-        if (!piece.isEmpty()) {
-          renderChessPiece(renderer, col * SQUARE_SIZE, row * SQUARE_SIZE, piece);
-        }
-      }
-    }
+    TTF_CloseFont(font);
+  }
 
-    // Render settings modal windows
+  // Render modals if they are visible
+  if (settingsModal && settingsModal->isVisible()) {
     settingsModal->render();
-    gameInfoModal->render();
-
-    // Update screen
-    SDL_RenderPresent(renderer);
-
-    // Send move to engine and update its move
-    if (!chessGame.pending_move.empty()) {
-      std::cout << "[SDLG] sending move  : " << chessGame.pending_move << std::endl;
-      std::string engine_move;
-      if (chessGame.isFenMode())
-        engine_move = engine.sendMove(chessGame.boardToFEN());
-      else 
-        engine_move = engine.sendMove(chessGame.pending_move);
-      std::cout << "[SDLG] receiving move: " << engine_move << std::endl;
-      engine.addMoveToHistory(engine_move);
-      int fromRow, fromCol, toRow, toCol;
-      chessGame.fromChessMoveNotation(engine_move, fromRow, fromCol, toRow, toCol);
-      chessGame.movePiece(fromRow, fromCol, toRow, toCol);
-      lastMoveStartRow = fromRow;
-      lastMoveStartCol = fromCol;
-      lastMoveEndRow = toRow;
-      lastMoveEndCol = toCol;
-      chessGame.pending_move.clear();
-      std::cout << "[SDLG] state: \"" << chessGame.boardToFEN() << "\"" << std::endl;
-      engine_move.clear();
-    }
-
-    // Frame rate limiting
-    frameTime = SDL_GetTicks() - frameStart;
-    if (frameDelay > frameTime) {
-      SDL_Delay(frameDelay - frameTime);
-    }
   }
+  
+  if (gameInfoModal && gameInfoModal->isVisible()) {
+    gameInfoModal->render();
+  }
+
+  // Present renderer
+  SDL_RenderPresent(renderer);
 }
 
 void renderChessboardSDL(std::string fen) {
-  // Create ChessGame instance inside main to avoid global initialization issues
-  ChessGame chessGame;
-
   // Initialize SDL
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-    std::cerr << "[SDLG] SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
+    std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
+    return;
+  }
+
+  // Initialize SDL_image
+  if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
+    std::cerr << "SDL_image could not initialize! SDL_image Error: " << IMG_GetError() << std::endl;
+    SDL_Quit();
+    return;
+  }
+
+  // Initialize SDL_ttf
+  if (TTF_Init() == -1) {
+    std::cerr << "SDL_ttf could not initialize! SDL_ttf Error: " << TTF_GetError() << std::endl;
+    IMG_Quit();
+    SDL_Quit();
     return;
   }
 
   // Create window
-  SDL_Window* window =
-      SDL_CreateWindow("Chess Game", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH,
-                       SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+  window = SDL_CreateWindow("Chess Game - SDL",
+                           SDL_WINDOWPOS_CENTERED,
+                           SDL_WINDOWPOS_CENTERED,
+                           SCREEN_WIDTH, SCREEN_HEIGHT,
+                           SDL_WINDOW_SHOWN);
   if (!window) {
-    std::cerr << "[SDLG] Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+    std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+    TTF_Quit();
+    IMG_Quit();
     SDL_Quit();
     return;
   }
 
   // Create renderer
-  SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+  renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
   if (!renderer) {
-    std::cerr << "[SDLG] Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+    std::cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
     SDL_DestroyWindow(window);
+    TTF_Quit();
+    IMG_Quit();
     SDL_Quit();
     return;
   }
 
-  // Initialize chess piece textures
+  // Initialize chess pieces
   if (!initChessPieceTextures(renderer)) {
-    std::cerr << "[SDLG] Failed to initialize chess piece textures!" << std::endl;
+    std::cerr << "Failed to initialize chess pieces!" << std::endl;
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    TTF_Quit();
+    IMG_Quit();
     SDL_Quit();
     return;
   }
 
+  // Create chess game
+  ChessGame chessGame;
+
+  // Create config manager
+  configManager = new ConfigManager();
+  
   // Create settings modal
-  settingsModal = new SettingsModal(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
+  settingsModal = new SettingsModal(renderer, SCREEN_WIDTH, SCREEN_HEIGHT, configManager);
   gameInfoModal = new GameInfoModal(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
 
   // Set settings change callback
@@ -337,36 +270,80 @@ void renderChessboardSDL(std::string fen) {
     std::cout << "[SDLG]   Depth Difficulty: " << settings.depthDifficulty << std::endl;
     std::cout << "[SDLG]   Max Time Per Move: " << settings.maxTimePerMove << std::endl;
     std::cout << "[SDLG]   Match Time: " << settings.matchTime << std::endl;
-
-    engine.setDifficult(settingsModal->getSettings().depthDifficulty);
-    engine.setMoveTime(settingsModal->getSettings().maxTimePerMove);
   });
 
-  // Initialize engine
-  if (engine.startEngine()) {
-    // Initialize UCI protocol
-    engine.sendCommand("uci");
-    if (engine.waitForResponse("uciok")) {
-      std::cout << "[SDLG] Engine is UCI compatible!" << std::endl;
+  // Main game loop
+  bool quit = false;
+  SDL_Event e;
+
+  while (!quit) {
+    // Handle events
+    while (SDL_PollEvent(&e) != 0) {
+      if (e.type == SDL_QUIT) {
+        quit = true;
+      }
+      
+      // Handle modal events first
+      if (settingsModal && settingsModal->isVisible() && settingsModal->handleEvent(e)) {
+        continue; // Modal handled the event
+      }
+      
+      if (gameInfoModal && gameInfoModal->isVisible() && gameInfoModal->handleEvent(e)) {
+        continue; // Modal handled the event
+      }
+
+      switch (e.type) {
+        case SDL_KEYDOWN:
+          if (e.key.keysym.sym == SDLK_s && !settingsModal->isVisible() && !gameInfoModal->isVisible()) {
+            settingsModal->show();
+          } else if (e.key.keysym.sym == SDLK_i && !settingsModal->isVisible() && !gameInfoModal->isVisible()) {
+            gameInfoModal->show();
+          } else if (!settingsModal->isVisible() && !gameInfoModal->isVisible()) {
+            handleKeyboardInput(e.key.keysym.sym, chessGame);
+          }
+          break;
+
+        case SDL_MOUSEBUTTONDOWN:
+          if (e.button.button == SDL_BUTTON_LEFT && !settingsModal->isVisible() && !gameInfoModal->isVisible()) {
+            mouseUsed = true;
+            int mouseX, mouseY;
+            SDL_GetMouseState(&mouseX, &mouseY);
+            
+            // Convert mouse coordinates to board coordinates
+            if (mouseX >= BOARD_X && mouseX < BOARD_X + BOARD_SIZE &&
+                mouseY >= BOARD_Y && mouseY < BOARD_Y + BOARD_SIZE) {
+              int col = (mouseX - BOARD_X) / SQUARE_SIZE;
+              int row = (mouseY - BOARD_Y) / SQUARE_SIZE;
+              
+              if (!chessGame.isPieceSelected()) {
+                // Select piece
+                chessGame.selectPiece(row, col);
+              } else {
+                // Try to move piece
+                chessGame.movePiece(chessGame.getSelectedRow(), chessGame.getSelectedCol(), row, col);
+                chessGame.deselectPiece();
+              }
+            }
+          }
+          break;
+      }
     }
 
-    engine.sendCommand("isready");
-    if (engine.waitForResponse("readyok")) {
-      std::cout << "[SDLG] Engine is ready!" << std::endl;
-      engine.setDifficult(settingsModal->getSettings().depthDifficulty);
-      engine.setMoveTime(settingsModal->getSettings().maxTimePerMove);
-    }
-    chessGame.initializeBoard(fen);
+    // Render
+    renderBoard(chessGame);
+
+    // Cap frame rate
+    SDL_Delay(16); // ~60 FPS
   }
-
-  mainLoop(chessGame, renderer);
 
   // Cleanup
   delete settingsModal;
   delete gameInfoModal;
-
+  delete configManager;
   cleanupChessPieceTextures();
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
+  TTF_Quit();
+  IMG_Quit();
   SDL_Quit();
 }
