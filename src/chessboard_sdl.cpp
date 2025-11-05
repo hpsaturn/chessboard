@@ -373,6 +373,12 @@ void renderChessboardSDL(std::string fen) {
     std::cout << "[SDLG]   Match Time: " << settings.matchTime << std::endl;
 
     engine.setDifficult(settingsModal->getSettings().depthDifficulty);
+  
+  // Set game state selection callback
+  gameStatesModal->setOnStateSelected([&chessGame](const std::string& fen) {
+    std::cout << "[SDLG] Loading game state from FEN: " << fen << std::endl;
+    chessGame.initializeBoard(fen);
+  });
     engine.setMoveTime(settingsModal->getSettings().maxTimePerMove);
   });
 

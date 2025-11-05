@@ -33,6 +33,11 @@ public:
     
     // Load states from manager
     void loadStates();
+    
+    // Set callback for when a state is selected
+    void setOnStateSelected(std::function<void(const std::string& fen)> callback) {
+        onStateSelected = callback;
+    }
 
 private:
     SDL_Renderer* renderer;
@@ -58,6 +63,9 @@ private:
     int previewBoardSize;
     int previewBoardX;
     int previewBoardY;
+    
+    // Callback for state selection
+    std::function<void(const std::string& fen)> onStateSelected;
     
     // Helper functions
     void drawText(const std::string& text, int x, int y, SDL_Color color);

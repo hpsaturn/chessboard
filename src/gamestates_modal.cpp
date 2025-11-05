@@ -10,7 +10,8 @@
 
 GameStatesModal::GameStatesModal(SDL_Renderer* renderer, int screenWidth, int screenHeight, GameStateManager* stateManager)
     : renderer(renderer), screenWidth(screenWidth), screenHeight(screenHeight), 
-      visible(false), stateManager(stateManager), font(nullptr), selectedIndex(-1), scrollOffset(0) {
+      visible(false), stateManager(stateManager), font(nullptr), selectedIndex(-1), scrollOffset(0),
+      onStateSelected(nullptr) {
     
     // Initialize SDL_ttf
     if (TTF_Init() == -1) {
@@ -73,7 +74,11 @@ bool GameStatesModal::handleEvent(const SDL_Event& e) {
                 hide();
                 return true;
             }
-            handleKeyPress(e.key.keysym.sym);
+            
+            // Handle keyboard navigation with ARM CPU fix
+            if (e.key.repeat == 0) {
+                handleKeyPress(e.key.keysym.sym);
+            }
             return true;
             
         case SDL_MOUSEBUTTONDOWN:
@@ -254,6 +259,9 @@ void GameStatesModal::handleKeyPress(SDL_Keycode key) {
                 if (selectedIndex < scrollOffset) {
                     scrollOffset = selectedIndex;
                 }
+            } else if (states.size() > 0 && selectedIndex == -1) {
+                // If no selection, select the first item
+                selectedIndex = 0;
             }
             break;
             
@@ -264,6 +272,9 @@ void GameStatesModal::handleKeyPress(SDL_Keycode key) {
                 if (selectedIndex >= scrollOffset + itemsPerPage) {
                     scrollOffset = selectedIndex - itemsPerPage + 1;
                 }
+            } else if (states.size() > 0 && selectedIndex == -1) {
+                // If no selection, select the first item
+                selectedIndex = 0;
             }
             break;
             
@@ -275,9 +286,13 @@ void GameStatesModal::handleKeyPress(SDL_Keycode key) {
 
 void GameStatesModal::loadSelectedState() {
     if (selectedIndex >= 0 && selectedIndex < states.size()) {
-        // This would typically be handled by the main application
         std::cout << "[GameStatesModal] Loading state: " << states[selectedIndex].fen << std::endl;
-        // The actual loading would be done by the main application
+        
+        // Call the callback if set
+        if (onStateSelected) {
+            onStateSelected(states[selectedIndex].fen);
+        }
+        
         hide();
     }
 }
