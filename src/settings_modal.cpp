@@ -9,12 +9,12 @@ SettingsModal::SettingsModal(SDL_Renderer* renderer, int screenWidth, int screen
     
     // Initialize SDL_ttf
     if (TTF_Init() == -1) {
-        std::cerr << "TTF_Init failed: " << TTF_GetError() << std::endl;
+        std::cerr << "[CONF] TTF_Init failed: " << TTF_GetError() << std::endl;
     } else {
         // Load DejaVu Sans font (commonly available on Linux)
         font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 13);
         if (!font) {
-            std::cerr << "Failed to load font: " << TTF_GetError() << std::endl;
+            std::cerr << "[CONF] Failed to load font: " << TTF_GetError() << std::endl;
         }
     }
     
@@ -27,9 +27,9 @@ SettingsModal::SettingsModal(SDL_Renderer* renderer, int screenWidth, int screen
             currentSettings.maxTimePerMove = loadedSettings.maxTimePerMove;
             currentSettings.matchTime = loadedSettings.matchTime;
             currentSettings.soundEnabled = loadedSettings.soundEnabled;
-            std::cout << "Settings loaded from config file" << std::endl;
+            std::cout << "[CONF] Settings loaded from config file" << std::endl;
         } else {
-            std::cout << "Using default settings" << std::endl;
+            std::cout << "[CONF] Using default settings" << std::endl;
         }
     }
     
@@ -77,10 +77,10 @@ void SettingsModal::initializeUI() {
     Slider timePerMoveSlider;
     timePerMoveSlider.trackRect = {modalX + padding, currentY, elementWidth, elementHeight};
     timePerMoveSlider.thumbRect = {modalX + padding, currentY, 20, elementHeight};
-    timePerMoveSlider.label = "Max Time/Move: " + std::to_string(currentSettings.maxTimePerMove) + "s";
+    timePerMoveSlider.label = "Max Time Per Move: " + std::to_string(currentSettings.maxTimePerMove) + "s";
     timePerMoveSlider.value = &currentSettings.maxTimePerMove;
-    timePerMoveSlider.minValue = 0;
-    timePerMoveSlider.maxValue = 300;
+    timePerMoveSlider.minValue = 2;
+    timePerMoveSlider.maxValue = 30;
     timePerMoveSlider.dragging = false;
     sliders.push_back(timePerMoveSlider);
     currentY += elementHeight + 18;
@@ -91,7 +91,7 @@ void SettingsModal::initializeUI() {
     matchTimeSlider.thumbRect = {modalX + padding, currentY, 20, elementHeight};
     matchTimeSlider.label = "Match Time: " + std::to_string(currentSettings.matchTime) + "m";
     matchTimeSlider.value = &currentSettings.matchTime;
-    matchTimeSlider.minValue = 0;
+    matchTimeSlider.minValue = 5;
     matchTimeSlider.maxValue = 60;
     matchTimeSlider.dragging = false;
     sliders.push_back(matchTimeSlider);
@@ -129,9 +129,9 @@ void SettingsModal::saveSettingsToFile() {
         settingsToSave.soundEnabled = currentSettings.soundEnabled;
         
         if (configManager->saveSettings(settingsToSave)) {
-            std::cout << "Settings saved to config file" << std::endl;
+            std::cout << "[CONF] Settings saved to config file" << std::endl;
         } else {
-            std::cerr << "Failed to save settings to config file" << std::endl;
+            std::cerr << "[CONF] Failed to save settings to config file!" << std::endl;
         }
     }
 }
@@ -237,7 +237,10 @@ bool SettingsModal::handleEvent(const SDL_Event& e) {
                     
                     if (e.key.keysym.sym == SDLK_LEFT && e.key.repeat == 0) {
                         // Decrease slider value
-                        *slider.value = std::max(slider.minValue, *slider.value - 1);
+                        if (slider.label.find("Time Per Move")!= std::string::npos)
+                          *slider.value = std::max(slider.minValue, *slider.value - 2);
+                        else
+                         *slider.value = std::max(slider.minValue, *slider.value - 1);
                         if (onSettingsChanged) {
                             onSettingsChanged(currentSettings);
                         }
@@ -246,7 +249,10 @@ bool SettingsModal::handleEvent(const SDL_Event& e) {
                     
                     if (e.key.keysym.sym == SDLK_RIGHT && e.key.repeat == 0) {
                         // Increase slider value
-                        *slider.value = std::min(slider.maxValue, *slider.value + 1);
+                        if (slider.label.find("Time Per Move")!= std::string::npos)
+                          *slider.value = std::min(slider.maxValue, *slider.value + 2);
+                        else
+                          *slider.value = std::min(slider.maxValue, *slider.value + 1);
                         if (onSettingsChanged) {
                             onSettingsChanged(currentSettings);
                         }
@@ -392,8 +398,8 @@ void SettingsModal::drawSlider(Slider& slider, bool focused) {
     // Update and draw label with current value
     if (slider.label.find("Depth") != std::string::npos) {
         slider.label = "Depth Difficulty: " + std::to_string(*slider.value);
-    } else if (slider.label.find("Time/Move") != std::string::npos) {
-        slider.label = "Max Time/Move: " + std::to_string(*slider.value) + "s";
+    } else if (slider.label.find("Time Per Move") != std::string::npos) {
+        slider.label = "Max Time Per Move: " + std::to_string(*slider.value) + "s";
     } else if (slider.label.find("Match Time") != std::string::npos) {
         slider.label = "Match Time: " + std::to_string(*slider.value) + "m";
     }

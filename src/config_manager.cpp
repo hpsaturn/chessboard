@@ -7,7 +7,7 @@ ConfigManager::ConfigManager() {
     // Get user home directory
     const char* homeDir = std::getenv("HOME");
     if (!homeDir) {
-        std::cerr << "Error: HOME environment variable not set" << std::endl;
+        std::cerr << "[CONF] Error: HOME environment variable not set" << std::endl;
         return;
     }
     
@@ -17,7 +17,7 @@ ConfigManager::ConfigManager() {
     
     // Ensure config directory exists
     if (!ensureConfigDir()) {
-        std::cerr << "Error: Failed to create config directory: " << configDir << std::endl;
+        std::cerr << "[CONF] Error: Failed to create config directory: " << configDir << std::endl;
     }
 }
 
@@ -28,7 +28,7 @@ bool ConfigManager::ensureConfigDir() {
         }
         return true;
     } catch (const std::filesystem::filesystem_error& e) {
-        std::cerr << "Filesystem error: " << e.what() << std::endl;
+        std::cerr << "[CONF] Filesystem error: " << e.what() << std::endl;
         return false;
     }
 }
@@ -36,21 +36,21 @@ bool ConfigManager::ensureConfigDir() {
 bool ConfigManager::loadSettings(Settings& settings) {
     try {
         if (!std::filesystem::exists(configPath)) {
-            std::cout << "Config file not found, using default settings" << std::endl;
+            std::cout << "[CONF] Config file not found, using default settings" << std::endl;
             return false; // File doesn't exist, use defaults
         }
         
         YAML::Node config = YAML::LoadFile(configPath);
         settings = yamlToSettings(config);
         
-        std::cout << "Settings loaded from: " << configPath << std::endl;
+        std::cout << "[CONF] Settings loaded from: " << configPath << std::endl;
         return true;
         
     } catch (const YAML::Exception& e) {
-        std::cerr << "YAML parsing error: " << e.what() << std::endl;
+        std::cerr << "[CONF] YAML parsing error: " << e.what() << std::endl;
         return false;
     } catch (const std::exception& e) {
-        std::cerr << "Error loading settings: " << e.what() << std::endl;
+        std::cerr << "[CONF] Error loading settings: " << e.what() << std::endl;
         return false;
     }
 }
@@ -61,18 +61,18 @@ bool ConfigManager::saveSettings(const Settings& settings) {
         
         std::ofstream file(configPath);
         if (!file.is_open()) {
-            std::cerr << "Error: Could not open config file for writing: " << configPath << std::endl;
+            std::cerr << "[CONF] Error: Could not open config file for writing: " << configPath << std::endl;
             return false;
         }
         
         file << config;
         file.close();
         
-        std::cout << "Settings saved to: " << configPath << std::endl;
+        std::cout << "[CONF] Settings saved to: " << configPath << std::endl;
         return true;
         
     } catch (const std::exception& e) {
-        std::cerr << "Error saving settings: " << e.what() << std::endl;
+        std::cerr << "[CONF] Error saving settings: " << e.what() << std::endl;
         return false;
     }
 }
