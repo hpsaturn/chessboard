@@ -75,6 +75,8 @@ set(CHESS_SOURCES
     src/chess_game_logic.cpp
     src/config_manager.cpp
     src/config_manager.h
+    src/game_state_manager.cpp
+    src/game_state_manager.h
 )
 
 # Add SDL sources if available
