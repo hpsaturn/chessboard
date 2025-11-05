@@ -31,6 +31,9 @@ public:
     // Get game state by date
     GameState* getGameState(const std::string& date);
     
+    // Get the most recent game state
+    GameState* getLastGameState();
+    
     // Add a new game state
     bool addGameState(const std::string& fen, const std::string& title);
     

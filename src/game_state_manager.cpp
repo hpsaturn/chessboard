@@ -93,6 +93,16 @@ GameStateManager::GameState* GameStateManager::getGameState(const std::string& d
     return nullptr;
 }
 
+GameStateManager::GameState* GameStateManager::getLastGameState() {
+    if (gameStates.empty()) {
+        return nullptr;
+    }
+    
+    // Since states are stored in the order they were added (most recent last),
+    // the last element is the most recent state
+    return &gameStates.back();
+}
+
 bool GameStateManager::addGameState(const std::string& fen, const std::string& title) {
     std::string currentDate = getCurrentDate();
     
