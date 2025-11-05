@@ -9,7 +9,7 @@ GameStateManager::GameStateManager() {
     // Get user home directory
     const char* homeDir = std::getenv("HOME");
     if (!homeDir) {
-        std::cerr << "[STATE] Error: HOME environment variable not set" << std::endl;
+        std::cerr << "[GMST] Error: HOME environment variable not set" << std::endl;
         return;
     }
     
@@ -19,7 +19,7 @@ GameStateManager::GameStateManager() {
     
     // Ensure config directory exists
     if (!ensureConfigDir()) {
-        std::cerr << "[STATE] Error: Failed to create config directory: " << configDir << std::endl;
+        std::cerr << "[GMST] Error: Failed to create config directory: " << configDir << std::endl;
     }
 }
 
@@ -30,7 +30,7 @@ bool GameStateManager::ensureConfigDir() {
         }
         return true;
     } catch (const std::filesystem::filesystem_error& e) {
-        std::cerr << "[STATE] Filesystem error: " << e.what() << std::endl;
+        std::cerr << "[GMST] Filesystem error: " << e.what() << std::endl;
         return false;
     }
 }
@@ -38,7 +38,7 @@ bool GameStateManager::ensureConfigDir() {
 bool GameStateManager::loadGameStates() {
     try {
         if (!std::filesystem::exists(statesPath)) {
-            std::cout << "[STATE] States file not found, starting with empty states" << std::endl;
+            std::cout << "[GMST] States file not found, starting with empty states" << std::endl;
             gameStates.clear();
             return true; // File doesn't exist, start with empty states
         }
@@ -47,16 +47,16 @@ bool GameStateManager::loadGameStates() {
         bool success = yamlToStates(statesYaml);
         
         if (success) {
-            std::cout << "[STATE] Loaded " << gameStates.size() << " game states from: " << statesPath << std::endl;
+            std::cout << "[GMST] Loaded " << gameStates.size() << " game states from: " << statesPath << std::endl;
         }
         
         return success;
         
     } catch (const YAML::Exception& e) {
-        std::cerr << "[STATE] YAML parsing error: " << e.what() << std::endl;
+        std::cerr << "[GMST] YAML parsing error: " << e.what() << std::endl;
         return false;
     } catch (const std::exception& e) {
-        std::cerr << "[STATE] Error loading game states: " << e.what() << std::endl;
+        std::cerr << "[GMST] Error loading game states: " << e.what() << std::endl;
         return false;
     }
 }
@@ -67,18 +67,18 @@ bool GameStateManager::saveGameStates() {
         
         std::ofstream file(statesPath);
         if (!file.is_open()) {
-            std::cerr << "[STATE] Error: Could not open states file for writing: " << statesPath << std::endl;
+            std::cerr << "[GMST] Error: Could not open states file for writing: " << statesPath << std::endl;
             return false;
         }
         
         file << statesYaml;
         file.close();
         
-        std::cout << "[STATE] Saved " << gameStates.size() << " game states to: " << statesPath << std::endl;
+        std::cout << "[GMST] Saved " << gameStates.size() << " game states to: " << statesPath << std::endl;
         return true;
         
     } catch (const std::exception& e) {
-        std::cerr << "[STATE] Error saving game states: " << e.what() << std::endl;
+        std::cerr << "[GMST] Error saving game states: " << e.what() << std::endl;
         return false;
     }
 }
@@ -108,7 +108,7 @@ bool GameStateManager::addGameState(const std::string& fen, const std::string& t
     
     // Check if state with this date already exists
     if (getGameState(currentDate)) {
-        std::cerr << "[STATE] Error: Game state with date " << currentDate << " already exists" << std::endl;
+        std::cerr << "[GMST] Error: Game state with date " << currentDate << " already exists" << std::endl;
         return false;
     }
     
@@ -119,7 +119,7 @@ bool GameStateManager::addGameState(const std::string& fen, const std::string& t
     
     gameStates.push_back(newState);
     
-    std::cout << "[STATE] Added new game state: " << title << " (" << currentDate << ")" << std::endl;
+    std::cout << "[GMST] Added new game state: " << title << " (" << currentDate << ")" << std::endl;
     return saveGameStates();
 }
 
@@ -130,11 +130,11 @@ bool GameStateManager::removeGameState(const std::string& date) {
     if (it != gameStates.end()) {
         std::string title = it->title;
         gameStates.erase(it);
-        std::cout << "[STATE] Removed game state: " << title << " (" << date << ")" << std::endl;
+        std::cout << "[GMST] Removed game state: " << title << " (" << date << ")" << std::endl;
         return saveGameStates();
     }
     
-    std::cerr << "[STATE] Error: Game state with date " << date << " not found" << std::endl;
+    std::cerr << "[GMST] Error: Game state with date " << date << " not found" << std::endl;
     return false;
 }
 
@@ -143,11 +143,11 @@ bool GameStateManager::updateGameState(const std::string& date, const std::strin
     if (state) {
         state->fen = fen;
         state->title = title;
-        std::cout << "[STATE] Updated game state: " << title << " (" << date << ")" << std::endl;
+        std::cout << "[GMST] Updated game state: " << title << " (" << date << ")" << std::endl;
         return saveGameStates();
     }
     
-    std::cerr << "[STATE] Error: Game state with date " << date << " not found" << std::endl;
+    std::cerr << "[GMST] Error: Game state with date " << date << " not found" << std::endl;
     return false;
 }
 
@@ -179,7 +179,7 @@ bool GameStateManager::yamlToStates(const YAML::Node& node) {
     gameStates.clear();
     
     if (!node.IsMap()) {
-        std::cerr << "[STATE] Error: Invalid YAML structure - expected map" << std::endl;
+        std::cerr << "[GMST] Error: Invalid YAML structure - expected map" << std::endl;
         return false;
     }
     
@@ -195,7 +195,7 @@ bool GameStateManager::yamlToStates(const YAML::Node& node) {
             
             gameStates.push_back(state);
         } else {
-            std::cerr << "[STATE] Warning: Invalid state entry for date " << date << std::endl;
+            std::cerr << "[GMST] Warning: Invalid state entry for date " << date << std::endl;
         }
     }
     

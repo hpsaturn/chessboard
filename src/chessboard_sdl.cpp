@@ -110,11 +110,14 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
       break;
     case SDLK_F2:
       // Save current state slot
+      std::cout << "[SDLG] saving state:" << std::endl;
       stateManager->addGameState(chessGame.boardToFEN(),"");
       break;
     case SDLK_F3:
-      // Save current state slot
-      std::cout << "saved state: " << stateManager->getGameState("20251105_203301")->fen << std::endl;
+      // Load last state slot
+      std::cout << "[SDLG] loading state: " << stateManager->getLastGameState()->fen << std::endl;
+      engine.newGame();
+      chessGame.initializeBoard(stateManager->getLastGameState()->fen);
       break;
     case SDLK_r:
       // Reset board
