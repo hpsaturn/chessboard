@@ -1,4 +1,5 @@
 #include "gameinfo_modal.h"
+#include "gamestates_modal.h"
 #include <SDL2/SDL.h>
 
 #include <iostream>
@@ -30,6 +31,7 @@ UCIEngine engine;
 // Settings modal
 SettingsModal* settingsModal = nullptr;
 GameInfoModal* gameInfoModal = nullptr;
+GameStatesModal* gameStatesModal = nullptr;
 ConfigManager* configManager = nullptr;
 GameStateManager* stateManager = nullptr;
 
@@ -118,6 +120,13 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
       std::cout << "[SDLG] loading state: " << stateManager->getLastGameState()->fen << std::endl;
       engine.newGame();
       chessGame.initializeBoard(stateManager->getLastGameState()->fen);
+      break;
+    
+    case SDLK_F4:
+      // Show game states modal
+      if (gameStatesModal) {
+        gameStatesModal->show();
+      }
       break;
     case SDLK_r:
       // Reset board
@@ -219,6 +228,7 @@ void mainLoop(ChessGame chessGame, SDL_Renderer* renderer) {
       else {
         settingsModal->handleEvent(e);
         gameInfoModal->handleEvent(e);
+        gameStatesModal->handleEvent(e);
       }
     }
 
@@ -270,6 +280,7 @@ void mainLoop(ChessGame chessGame, SDL_Renderer* renderer) {
     // Render settings modal windows
     settingsModal->render();
     gameInfoModal->render();
+    gameStatesModal->render();
 
     // Update screen
     SDL_RenderPresent(renderer);
@@ -341,6 +352,7 @@ void renderChessboardSDL(std::string fen) {
     SDL_Quit();
     return;
   }
+  gameStatesModal = new GameStatesModal(renderer, SCREEN_WIDTH, SCREEN_HEIGHT, stateManager);
 
   configManager = new ConfigManager();
   stateManager = new GameStateManager();
@@ -350,6 +362,7 @@ void renderChessboardSDL(std::string fen) {
   // Create settings modal
   settingsModal = new SettingsModal(renderer, SCREEN_WIDTH, SCREEN_HEIGHT, configManager);
   gameInfoModal = new GameInfoModal(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
+  gameStatesModal = new GameStatesModal(renderer, SCREEN_WIDTH, SCREEN_HEIGHT, stateManager);
 
   // Set settings change callback
   settingsModal->setOnSettingsChanged([&chessGame](const SettingsModal::Settings& settings) {
@@ -384,6 +397,7 @@ void renderChessboardSDL(std::string fen) {
 
   // Cleanup
   delete settingsModal;
+  delete gameStatesModal;
   delete gameInfoModal;
 
   cleanupChessPieceTextures();
