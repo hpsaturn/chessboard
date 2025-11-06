@@ -63,6 +63,7 @@ void GameStatesModal::loadStates() {
     for (const auto& state : allStates) {
         states.push_back(state);
     }
+    std::reverse(states.begin(), states.end());
 }
 
 bool GameStatesModal::handleEvent(const SDL_Event& e) {
