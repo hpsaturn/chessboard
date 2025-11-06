@@ -64,7 +64,7 @@ bool GameInfoModal::handleEvent(const SDL_Event& e) {
         }
         
         case SDL_KEYDOWN: {
-            if (e.key.keysym.sym == SDLK_ESCAPE) {
+            if (e.key.keysym.sym == SDLK_ESCAPE || e.key.keysym.sym == SDLK_i) {
                 hide();
                 return true; // Modal consumed the ESC event
             }

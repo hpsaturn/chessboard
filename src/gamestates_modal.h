@@ -45,6 +45,7 @@ private:
     int screenWidth;
     int screenHeight;
     bool visible;
+
     GameStateManager* stateManager;
     
     // Modal dimensions
@@ -56,6 +57,7 @@ private:
     // List view state
     std::vector<GameStateManager::GameState> states;
     int selectedIndex;
+    int indexShowed;
     int scrollOffset;
     int itemsPerPage;
     

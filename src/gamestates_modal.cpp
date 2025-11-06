@@ -34,9 +34,9 @@ GameStatesModal::GameStatesModal(SDL_Renderer* renderer, int screenWidth, int sc
     itemsPerPage = 8;
     
     // Board preview settings
-    previewBoardSize = 120;
+    previewBoardSize = 160;
     previewBoardX = modalX + modalWidth - previewBoardSize - 10;
-    previewBoardY = modalY + 10;
+    previewBoardY = modalY + 40;
 }
 
 GameStatesModal::~GameStatesModal() {
@@ -49,7 +49,7 @@ GameStatesModal::~GameStatesModal() {
 void GameStatesModal::show() {
     visible = true;
     loadStates();
-    selectedIndex = -1;
+    selectedIndex = 0;
     scrollOffset = 0;
 }
 
@@ -126,7 +126,7 @@ void GameStatesModal::render() {
 void GameStatesModal::renderListView() {
     int listX = modalX + 10;
     int listY = modalY + 40;
-    int listWidth = modalWidth - previewBoardSize - 30;
+    int listWidth = modalWidth - previewBoardSize - 25;
     int itemHeight = 25;
     
     SDL_Color white = {255, 255, 255, 255};
@@ -135,7 +135,7 @@ void GameStatesModal::renderListView() {
     
     // Draw list background
     SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
-    SDL_Rect listRect = {listX, listY, listWidth, itemsPerPage * itemHeight};
+    SDL_Rect listRect = {listX, listY, listWidth, itemsPerPage * itemHeight + 40};
     SDL_RenderFillRect(renderer, &listRect);
     
     // Draw list border
@@ -188,7 +188,6 @@ void GameStatesModal::renderBoardPreview() {
         drawText("Select a state", previewBoardX + 10, previewBoardY + previewBoardSize/2 - 10, white);
         return;
     }
-    
     // Render the board from FEN
     renderBoardFromFEN(states[selectedIndex].fen);
 }
@@ -196,7 +195,7 @@ void GameStatesModal::renderBoardPreview() {
 void GameStatesModal::renderBoardFromFEN(const std::string& fen) {
     // Create a temporary chess game to render the board
     ChessGame tempGame;
-    // pGame.initializeBoard(fen);
+    tempGame.initializeBoard(fen);
     
     int squareSize = previewBoardSize / 8;
     
@@ -217,11 +216,11 @@ void GameStatesModal::renderBoardFromFEN(const std::string& fen) {
             SDL_RenderFillRect(renderer, &squareRect);
             
             // Draw piece if present
-            // ChessPiece piece = tempGame.getPiece(row, col);
-            // if (piece.type != PieceType::NONE) {
+            ChessPiece piece = tempGame.getPiece(row, col);
+            if (piece.type != PieceType::NONE) {
                 // Use chess_pieces_sdl to render the piece
-                // renderChessPiece(renderer, x, y, piece, 3);
-            // }
+                renderChessPiece(renderer, x - 9, y - 8, piece, 2);
+            }
         }
     }
     
