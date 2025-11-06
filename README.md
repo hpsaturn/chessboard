@@ -10,9 +10,9 @@ C++ chessboard renderer with SDL2, ASCII, and NCurses on the top of GNUChess UCI
 
 - [x] **SDL2 Mode**: Graphical chessboard with smooth rendering (default)
 - [x] **GNUChess UCI**: protocol integration
-- [x] **Unified Binary**: Single executable with command-line options
 - [x] **Picocalc Luckfox Lyra**: SDL and keyboard issues are fixed
 - [x] **FEN notation support**: Basic game state loader via CLI argument
+- [x] **Fast game states**: Save and load bookmarks with small preview
 - [ ] **NCurses Mode**: Terminal UI with keyboard navigation (in progress)
 - [ ] **Cross-platform**: Works on Linux, Windows, and macOS
 - [ ] **ASCII Mode**: Terminal interface with Unicode pieces (inprogress)
@@ -25,12 +25,8 @@ C++ chessboard renderer with SDL2, ASCII, and NCurses on the top of GNUChess UCI
 - CMake (>= 3.10)
 - C++11 compatible compiler
 - SDL2 development libraries (ttf and image dev libraries)
+- Yaml cpp library
 - NCurses development libraries (optional, for interactive terminal mode)
-
-### Runtime Dependencies
-
-- SDL2 runtime libraries (for graphical mode)
-- NCurses runtime libraries (for interactive terminal mode)
 
 ## Installation
 
@@ -39,7 +35,7 @@ C++ chessboard renderer with SDL2, ASCII, and NCurses on the top of GNUChess UCI
 ```bash
 # Install development libraries
 sudo apt update
-sudo apt install gnuchess cmake build-essential libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev libncurses-dev
+sudo apt install gnuchess cmake build-essential libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev libncurses-dev libyaml-cpp-dev
 
 # Build the project
 ./build.sh
@@ -53,7 +49,6 @@ sudo apt install gnuchess cmake build-essential libsdl2-dev libsdl2-ttf-dev libs
 
 For more about FEN notation and details, please enter [here](https://www.redhotpawn.com/chess/chess-fen-viewer.php)
 
-
 ## Usage
 
 This version is optimized for Picocalc board using Luckfox Lyra. For that it has the next key bindings:
@@ -64,8 +59,12 @@ This version is optimized for Picocalc board using Luckfox Lyra. For that it has
 | **SPACE** | Select piece or setting |
 | **ENTER** | Move selected piece |
 | **ESC** | Deselect piece or window exit |
+| **F2**| Save game state |
+| **F3**| Load last game state saved |
+| **F4**| Enter to game states window |
+| **BACKSPACE** | Delete game state (states window) |
 | **S**| Enter to settings section |
-| **I**| Enter to game info |
+| **I**| Toggle to show game info |
 | **Q**| Exit the game. (without state save for now) |
 | **R**| Restart the game. (without ask before for now) |
 | **H**| Help (in progress) |
@@ -93,6 +92,7 @@ This version is optimized for Picocalc board using Luckfox Lyra. For that it has
 - [x] Dead pieces count in each side (Game info window)
 - [x] Basic settings modal window
 - [ ] Castelling full validations
+- [ ] Ilegal check moves validations (engine crashes)
 - [ ] isInCheck() validations
 - [ ] Points from the user (positive/negative)
 - [ ] Game info modal window (in porgress)
@@ -106,8 +106,7 @@ This version is optimized for Picocalc board using Luckfox Lyra. For that it has
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Test all modes (ASCII, SDL2, NCurses)
-5. Submit a pull request
+4. Submit a pull request
 
 ## Credits
 

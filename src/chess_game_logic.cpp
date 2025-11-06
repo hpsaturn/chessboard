@@ -102,7 +102,6 @@ void ChessGame::initializeBoard(const std::string& fen) {
     }
   }
   else {
-    std::cout << "[GAME] game state: " << fen << std::endl;
     clearBoard();
     std::istringstream fenStream(fen);
     std::string piecePlacement;

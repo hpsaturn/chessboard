@@ -48,31 +48,26 @@ void GameInfoModal::hide() {
 }
 
 bool GameInfoModal::handleEvent(const SDL_Event& e) {
-    if (!visible) return false;
-    
-    switch (e.type) {
-        case SDL_MOUSEBUTTONDOWN: {
-            int mouseX, mouseY;
-            SDL_GetMouseState(&mouseX, &mouseY);
-            
-            // Check if click is within modal
-            if (mouseX >= modalX && mouseX <= modalX + modalWidth &&
-                mouseY >= modalY && mouseY <= modalY + modalHeight) {
-                return true; // Modal consumed the event
-            }
-            break;
-        }
-        
-        case SDL_KEYDOWN: {
-            if (e.key.keysym.sym == SDLK_ESCAPE) {
-                hide();
-                return true; // Modal consumed the ESC event
-            }
-            break;
-        }
+  if (!visible) return false;
+
+  if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
+    if (e.key.keysym.sym == SDLK_ESCAPE || e.key.keysym.sym == SDLK_i) {
+      hide();
+      return true;  // Modal consumed the ESC event
     }
-    
-    return false;
+  }
+  // Handle mouse click
+  else if (e.type == SDL_MOUSEBUTTONDOWN) {
+    int mouseX, mouseY;
+    SDL_GetMouseState(&mouseX, &mouseY);
+
+    // Check if click is within modal
+    if (mouseX >= modalX && mouseX <= modalX + modalWidth && mouseY >= modalY &&
+        mouseY <= modalY + modalHeight) {
+      return true;  // Modal consumed the event
+    }
+  }
+  return false;
 }
 
 void GameInfoModal::render() {

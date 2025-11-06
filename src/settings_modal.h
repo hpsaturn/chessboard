@@ -7,10 +7,11 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include "config_manager.h"
 
 class SettingsModal {
 public:
-    SettingsModal(SDL_Renderer* renderer, int screenWidth, int screenHeight);
+    SettingsModal(SDL_Renderer* renderer, int screenWidth, int screenHeight, ConfigManager* configManager = nullptr);
     ~SettingsModal();
     
     // Show the modal window
@@ -51,6 +52,7 @@ private:
     int screenHeight;
     bool visible;
     int focusedElement; // Index of currently focused element (-1 for none)
+    ConfigManager* configManager;
     
     // Modal dimensions
     int modalWidth;
@@ -94,6 +96,9 @@ private:
     void updateSliderValue(Slider& slider, int mouseX);
     void drawText(const std::string& text, int x, int y, SDL_Color color);
     SDL_Texture* createTextTexture(const std::string& text, SDL_Color color);
+    
+    // Save settings to config file
+    void saveSettingsToFile();
 };
 
 #endif // SETTINGS_MODAL_H
