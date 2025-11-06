@@ -196,7 +196,7 @@ void GameStatesModal::renderBoardPreview() {
 void GameStatesModal::renderBoardFromFEN(const std::string& fen) {
     // Create a temporary chess game to render the board
     ChessGame tempGame;
-    tempGame.initializeBoard(fen);
+    // pGame.initializeBoard(fen);
     
     int squareSize = previewBoardSize / 8;
     
@@ -217,11 +217,11 @@ void GameStatesModal::renderBoardFromFEN(const std::string& fen) {
             SDL_RenderFillRect(renderer, &squareRect);
             
             // Draw piece if present
-            ChessPiece piece = tempGame.getPiece(row, col);
-            if (piece.type != PieceType::NONE) {
+            // ChessPiece piece = tempGame.getPiece(row, col);
+            // if (piece.type != PieceType::NONE) {
                 // Use chess_pieces_sdl to render the piece
-                renderChessPiece(renderer, x, y, piece, squareSize);
-            }
+                // renderChessPiece(renderer, x, y, piece, 3);
+            // }
         }
     }
     
@@ -281,19 +281,27 @@ void GameStatesModal::handleKeyPress(SDL_Keycode key) {
         case SDLK_RETURN:
             loadSelectedState();
             break;
+
+        case SDLK_BACKSPACE:
+            removeSelectedState();
+            break;
     }
 }
 
 void GameStatesModal::loadSelectedState() {
     if (selectedIndex >= 0 && selectedIndex < states.size()) {
-        std::cout << "[GameStatesModal] Loading state: " << states[selectedIndex].fen << std::endl;
-        
         // Call the callback if set
         if (onStateSelected) {
             onStateSelected(states[selectedIndex].fen);
         }
-        
         hide();
+    }
+}
+
+void GameStatesModal::removeSelectedState() {
+    if (selectedIndex >= 0 && selectedIndex < states.size()) {
+        stateManager->removeGameState(states[selectedIndex].date);
+        loadStates();
     }
 }
 

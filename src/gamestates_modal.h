@@ -76,6 +76,7 @@ private:
     void handleMouseClick(int x, int y);
     void handleKeyPress(SDL_Keycode key);
     void loadSelectedState();
+    void removeSelectedState();
 
 };
 

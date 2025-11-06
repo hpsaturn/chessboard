@@ -35,6 +35,8 @@ GameStatesModal* gameStatesModal = nullptr;
 ConfigManager* configManager = nullptr;
 GameStateManager* stateManager = nullptr;
 
+std::string pending_fen;
+
 
 // Handle keyboard input for piece selection and movement
 void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
@@ -83,14 +85,14 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
       break;
     case SDLK_q:
       // Quit the game
-      if (!(settingsModal->isVisible() || gameInfoModal->isVisible())) {
+      if (!(settingsModal->isVisible() || gameInfoModal->isVisible() || gameStatesModal->isVisible())) {
         SDL_Quit();
         exit(0);
       }
       break;
     case SDLK_ESCAPE:
       // Deselect piece - only when modal is NOT visible
-      if (!(settingsModal->isVisible() || gameInfoModal->isVisible())) {
+      if (!(settingsModal->isVisible() || gameInfoModal->isVisible() || gameStatesModal->isVisible())) {
         pieceSelected = false;
         selectedRow = -1;
         selectedCol = -1;
@@ -211,14 +213,14 @@ void mainLoop(ChessGame chessGame, SDL_Renderer* renderer) {
       // Handle keyboard input
       else if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
         // Let modals handle the event first
-        if (!settingsModal->handleEvent(e) && !gameInfoModal->handleEvent(e)) {
+        if (!settingsModal->handleEvent(e) && !gameInfoModal->handleEvent(e) && !gameStatesModal->handleEvent(e)) {
           handleKeyboardInput(e.key.keysym.sym, chessGame);
         }
       }
       // Handle mouse click
       else if (e.type == SDL_MOUSEBUTTONDOWN) {
         // Let modals handle the event first
-        if (!settingsModal->handleEvent(e) && !gameInfoModal->handleEvent(e)) {
+        if (!settingsModal->handleEvent(e) && !gameInfoModal->handleEvent(e) && !gameInfoModal->handleEvent(e)) {
           int mouseX, mouseY;
           SDL_GetMouseState(&mouseX, &mouseY);
           handleMouseClick(mouseX, mouseY, chessGame);
@@ -230,6 +232,12 @@ void mainLoop(ChessGame chessGame, SDL_Renderer* renderer) {
         gameInfoModal->handleEvent(e);
         gameStatesModal->handleEvent(e);
       }
+    }
+
+    if (!pending_fen.empty()) {
+      engine.newGame();
+      chessGame.initializeBoard(pending_fen);
+      pending_fen.clear();
     }
 
     // Clear screen
@@ -372,13 +380,7 @@ void renderChessboardSDL(std::string fen) {
     std::cout << "[SDLG]   Max Time Per Move: " << settings.maxTimePerMove << std::endl;
     std::cout << "[SDLG]   Match Time: " << settings.matchTime << std::endl;
 
-    engine.setDifficult(settingsModal->getSettings().depthDifficulty);
-  
-  // Set game state selection callback
-  gameStatesModal->setOnStateSelected([&chessGame](const std::string& fen) {
-    std::cout << "[SDLG] Loading game state from FEN: " << fen << std::endl;
-    chessGame.initializeBoard(fen);
-  });
+    engine.setDifficult(settingsModal->getSettings().depthDifficulty); 
     engine.setMoveTime(settingsModal->getSettings().maxTimePerMove);
   });
 
@@ -398,6 +400,12 @@ void renderChessboardSDL(std::string fen) {
     }
     chessGame.initializeBoard(fen);
   }
+
+  // Set game state selection callback
+  gameStatesModal->setOnStateSelected([&chessGame](const std::string& sfen) {
+    std::cout << "[SDLG] Loading game state from FEN: " << sfen << std::endl;
+    pending_fen = sfen;
+  });
 
   mainLoop(chessGame, renderer);
 
