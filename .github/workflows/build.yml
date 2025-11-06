@@ -22,6 +22,7 @@ jobs:
             libsdl2-image-dev \
             libsdl2-ttf-dev \
             libncurses-dev \
+            libyaml-cpp-dev \
             cmake \
             build-essential
             

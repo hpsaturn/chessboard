@@ -25,12 +25,8 @@ C++ chessboard renderer with SDL2, ASCII, and NCurses on the top of GNUChess UCI
 - CMake (>= 3.10)
 - C++11 compatible compiler
 - SDL2 development libraries (ttf and image dev libraries)
+- Yaml cpp library
 - NCurses development libraries (optional, for interactive terminal mode)
-
-### Runtime Dependencies
-
-- SDL2 runtime libraries (for graphical mode)
-- NCurses runtime libraries (for interactive terminal mode)
 
 ## Installation
 
@@ -39,7 +35,7 @@ C++ chessboard renderer with SDL2, ASCII, and NCurses on the top of GNUChess UCI
 ```bash
 # Install development libraries
 sudo apt update
-sudo apt install gnuchess cmake build-essential libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev libncurses-dev
+sudo apt install gnuchess cmake build-essential libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev libncurses-dev libyaml-cpp-dev
 
 # Build the project
 ./build.sh
