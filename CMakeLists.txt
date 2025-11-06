@@ -72,6 +72,7 @@ set(CHESS_SOURCES
     src/chess_pieces_sdl.cpp
     src/engine/uci_engine.cpp
     src/engine/uci_engine.h
+    src/engine/bitboard.cpp
     src/chess_game_logic.cpp
     src/config_manager.cpp
     src/config_manager.h
