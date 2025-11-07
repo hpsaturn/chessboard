@@ -14,6 +14,7 @@
 #include "settings_modal.h"
 #include "config_manager.h"
 #include "game_state_manager.h"
+#include "engine/bitboard.h"
 
 // UI state variables
 bool pieceSelected = false;
@@ -27,7 +28,8 @@ uint8_t cursorRow = 6;   // Cursor position for keyboard navigation
 uint8_t cursorCol = 4;   // Cursor position for keyboard navigation
 bool mouseUsed = false;  // Flag for deselect cursor if Mouse is used
 UCIEngine engine;
-
+ChessBoard bitboard;
+ 
 // Settings modal
 SettingsModal* settingsModal = nullptr;
 GameInfoModal* gameInfoModal = nullptr;
@@ -144,6 +146,11 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
       lastMoveEndCol = -1;
       chessGame.pending_move.clear();
       engine.newGame();
+      break;
+    case SDLK_F5:
+      // Print FEN to console
+      // bitboard.test_king_with_two_rooks();
+      bitboard.test_complex_position();
       break;
   }
 }
@@ -311,7 +318,7 @@ void mainLoop(ChessGame chessGame, SDL_Renderer* renderer) {
       lastMoveEndRow = toRow;
       lastMoveEndCol = toCol;
       chessGame.pending_move.clear();
-      std::cout << "[SDLG] state: \"" << chessGame.boardToFEN() << "\"" << std::endl;
+      std::cout << "[SDLG] FEN: \"" << chessGame.boardToFEN() << "\"" << std::endl;
       engine_move.clear();
     }
 

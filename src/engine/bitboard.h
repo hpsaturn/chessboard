@@ -68,6 +68,12 @@ private:
 public:
  bool is_king_move_legal(Square from, Square to) const;
  void print_board() const;
+ void set_piece(Square square, Piece piece, Color color);
+ void set_custom_position(const std::string& fen = "");
+ void test_complex_position();
+ void test_king_escape();
+ void test_king_with_two_rooks();
+ void print_attack_map(Color color) const;
 };
 
 #endif // BITBOARD_H

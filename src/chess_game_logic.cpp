@@ -260,16 +260,10 @@ bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRo
             }
             std::cout << "[GAME] Castelling line is free.." << std::endl;
             std::cout << "[GAME] Castelling Approved" << std::endl;
+            std::cout << "[GAME] King valid move" << std::endl;
+
+            // return -1 on invalid input
             
-            // Check that king is not currently in check
-            if (isInCheck(fromPiece)) {
-                return false;
-            }
-           
-            // Check that king doesn't end or pass up in check
-            if (wouldBeInCheck(fromRow, toRow, toCol, fromPiece)) {
-                return false;
-            }
             isCastling = true;
             return true;
         }

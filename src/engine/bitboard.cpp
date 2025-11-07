@@ -295,3 +295,183 @@ void ChessBoard::print_board() const {
     std::cout << "\n";
   }
 }
+
+// Set up a custom position for testing
+void ChessBoard::set_custom_position(const std::string& fen) {
+  // Clear the board
+  for (int i = 0; i < 6; ++i) pieces[i] = 0;
+  for (int i = 0; i < 2; ++i) colors[i] = 0;
+
+  if (fen.empty()) {
+    // Default: set up a simple position with two rooks attacking the king
+    // White king on e1, black rooks on a3 and h3
+    set_piece(E2, KING, WHITE);
+    set_piece(A3, ROOK, BLACK);
+    set_piece(H3, ROOK, BLACK);
+    side_to_move = WHITE;
+  } else {
+    // Simple FEN parser for basic test positions
+    // This is a simplified parser - only handles piece placement
+    int rank = 7;
+    int file = 0;
+
+    for (char c : fen) {
+      if (c == '/') {
+        rank--;
+        file = 0;
+      } else if (isdigit(c)) {
+        file += c - '0';
+      } else {
+        Piece piece;
+        Color color = isupper(c) ? WHITE : BLACK;
+
+        switch (tolower(c)) {
+          case 'p':
+            piece = PAWN;
+            break;
+          case 'n':
+            piece = KNIGHT;
+            break;
+          case 'b':
+            piece = BISHOP;
+            break;
+          case 'r':
+            piece = ROOK;
+            break;
+          case 'q':
+            piece = QUEEN;
+            break;
+          case 'k':
+            piece = KING;
+            break;
+          default:
+            continue;
+        }
+
+        int square = rank * 8 + file;
+        set_piece(static_cast<Square>(square), piece, color);
+        file++;
+      }
+    }
+    side_to_move = WHITE;
+  }
+
+  // Reset castling rights for custom positions
+  castling_rights[WHITE][0] = castling_rights[WHITE][1] = false;
+  castling_rights[BLACK][0] = castling_rights[BLACK][1] = false;
+}
+
+
+// Helper function to set a piece on the board
+void ChessBoard::set_piece(Square square, Piece piece, Color color) {
+  Bitboard mask = 1ULL << square;
+
+  // Clear any existing piece on this square
+  for (int i = 0; i < 6; ++i) {
+    pieces[i] &= ~mask;
+  }
+  colors[WHITE] &= ~mask;
+  colors[BLACK] &= ~mask;
+
+  // Set the new piece
+  pieces[piece] |= mask;
+  colors[color] |= mask;
+}
+
+// Print the attack map for visualization
+void ChessBoard::print_attack_map(Color color) const {
+  Bitboard attacks = compute_attack_map(color);
+  std::cout << (color == WHITE ? "White" : "Black") << " attack map:\n";
+  std::cout << "  a b c d e f g h\n";
+  for (int rank = 7; rank >= 0; --rank) {
+    std::cout << (rank + 1) << " ";
+    for (int file = 0; file < 8; ++file) {
+      int square = rank * 8 + file;
+      if (attacks & (1ULL << square)) {
+        std::cout << "X ";
+      } else {
+        std::cout << ". ";
+      }
+    }
+    std::cout << "\n";
+  }
+}
+
+ // Test function to demonstrate king move validation with two rooks
+void ChessBoard::test_king_with_two_rooks() {
+  std::cout << "=== TEST 1: King trapped by two rooks ===\n";
+
+  // Set up a position where white king is on e1 and black has rooks on a3 and h3
+  set_custom_position();
+
+  std::cout << "Position: White king on e1, Black rooks on a3 and h3\n";
+  print_board();
+  std::cout << "\n";
+
+  print_attack_map(BLACK);
+  std::cout << "\n";
+
+  Square white_king = E2;
+
+  std::cout << "Testing white king moves from e1:\n";
+  std::vector<std::pair<std::string, Square>> test_moves = {
+      {"e2-d1", D1}, {"e2-d2", D2}, {"e2-e1", E1}, {"e2-f1", F1}, {"e2-f3", F3}};
+
+  for (const auto& [move_name, to_square] : test_moves) {
+    bool legal = is_king_move_legal(white_king, to_square);
+    std::cout << move_name << ": " << (legal ? "Legal" : "Illegal") << "\n";
+  }
+}
+
+void ChessBoard::test_complex_position() {
+  std::cout << "\n=== TEST 2: Complex position ===\n";
+
+  // Set up a more complex position using FEN-like string
+  set_custom_position("3k4/8/8/8/3r4/8/2K5/3r4");
+  // Black king on d8, white king on c2, black rooks on d4 and d1
+
+  std::cout << "Position: White king on c2, Black king on d8, Black rooks on d4 and d1\n";
+  print_board();
+  std::cout << "\n";
+
+  print_attack_map(BLACK);
+  std::cout << "\n";
+
+  Square white_king = C2;
+
+  std::cout << "Testing white king moves from c2:\n";
+  std::vector<std::pair<std::string, Square>> test_moves = {
+      {"c2-b1", B1}, {"c2-b2", B2}, {"c2-b3", B3}, {"c2-c1", C1},
+      {"c2-c3", C3}, {"c2-d1", D1}, {"c2-d2", D2}, {"c2-d3", D3}};
+
+  for (const auto& [move_name, to_square] : test_moves) {
+    bool legal = is_king_move_legal(white_king, to_square);
+    std::cout << move_name << ": " << (legal ? "Legal" : "Illegal") << "\n";
+  }
+}
+
+// Test function for king in check with escape routes
+void ChessBoard::test_king_escape() {
+  std::cout << "\n=== TEST 3: King can escape check ===\n";
+
+  // White king on e1, black rook on e8, but escape squares available
+  set_custom_position("4r3/8/8/8/8/8/8/4K3");
+
+  std::cout << "Position: White king on e1, Black rook on e8\n";
+  print_board();
+  std::cout << "\n";
+
+  print_attack_map(BLACK);
+  std::cout << "\n";
+
+  Square white_king = E1;
+
+  std::cout << "Testing white king moves from e1:\n";
+  std::vector<std::pair<std::string, Square>> test_moves = {
+      {"e1-d1", D1}, {"e1-d2", D2}, {"e1-e2", E2}, {"e1-f1", F1}, {"e1-f2", F2}};
+
+  for (const auto& [move_name, to_square] : test_moves) {
+    bool legal = is_king_move_legal(white_king, to_square);
+    std::cout << move_name << ": " << (legal ? "Legal" : "Illegal") << "\n";
+  }
+}

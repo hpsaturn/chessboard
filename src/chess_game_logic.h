@@ -2,6 +2,7 @@
 #ifndef CHESS_GAME_LOGIC_H
 #define CHESS_GAME_LOGIC_H
 
+#include "engine/bitboard.h"
 #include "chess_pieces.h"
 #include <string>
 #include <vector>
@@ -15,6 +16,8 @@ private:
     // Captured pieces tracking
     std::vector<ChessPiece> whiteCapturedPieces;
     std::vector<ChessPiece> blackCapturedPieces;
+
+    // ChessBoard bitboard;
     
     void clearBoard();
     void loadCapturedPieces();
