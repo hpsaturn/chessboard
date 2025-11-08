@@ -188,7 +188,7 @@ void ChessGame::loadCapturedPieces() {
 bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRow, int toCol) const {
     // Can't move to the same square
     if (fromRow == toRow && fromCol == toCol) return false;
-    
+ 
     const ChessPiece& fromPiece = board[fromRow][fromCol];
     const ChessPiece& toPiece = board[toRow][toCol];
     
@@ -260,16 +260,10 @@ bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRo
             }
             std::cout << "[GAME] Castelling line is free.." << std::endl;
             std::cout << "[GAME] Castelling Approved" << std::endl;
+            std::cout << "[GAME] King valid move" << std::endl;
+
+            // return -1 on invalid input
             
-            // Check that king is not currently in check
-            if (isInCheck(fromPiece)) {
-                return false;
-            }
-           
-            // Check that king doesn't end or pass up in check
-            if (wouldBeInCheck(fromRow, toRow, toCol, fromPiece)) {
-                return false;
-            }
             isCastling = true;
             return true;
         }
@@ -402,12 +396,36 @@ bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRo
     return true;
 }
 
+bool ChessGame::isInCheck() { 
+  ChessBoard bitboard;
+  ChessBoard::Square king_pos = bitboard.set_custom_position(boardToFEN());
+  bool check = bitboard.is_king_in_check(ChessBoard::Color::WHITE);
+  std::cout << "[GAME] isInCheck:" << (check ? "yes" : "no") << "\n";
+  return check;
+}
+
+bool ChessGame::would_move_leave_king_in_check(int fromRow, int fromCol, int toRow, int toCol) const {
+  ChessBoard bitboard;
+  ChessBoard::Square king_pos = bitboard.set_custom_position(boardToFEN());
+  bool wcheck = bitboard.would_move_leave_king_in_check(
+      bitboard.from_row_col(fromRow, fromCol),
+      bitboard.from_row_col(toRow, toCol)
+    );
+  std::cout << "[GAME] would move leave king in check: " << (wcheck ? "yes" : "no") << "\n";
+  return wcheck;
+}
+
 bool ChessGame::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
     bool isCastling = false;
     if (!isValidMove(isCastling, fromRow, fromCol, toRow, toCol)) {
         return false;
     }
-    
+
+    if (whiteTurn &&  would_move_leave_king_in_check(fromRow, fromCol, toRow, toCol)) {
+        std::cout << "[GAME] Move would leave king in check. Move invalid!" << std::endl;
+        return false;
+    }
+ 
     ChessPiece& fromPiece = board[fromRow][fromCol];
     ChessPiece toPiece   = board[toRow][toCol];
     
@@ -437,7 +455,8 @@ bool ChessGame::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
     // Perform the move
     board[toRow][toCol] = fromPiece;
     board[fromRow][fromCol] = ChessPiece(); // Empty square
-   
+    // isInCheck();
+ 
     moveHistory.push_back(move);
     if (whiteTurn) {
       pending_move = move;
@@ -448,10 +467,6 @@ bool ChessGame::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
     
     return true;
 }
-
-bool ChessGame::isInCheck(const ChessPiece& king) const { return false; }
-
-bool ChessGame::wouldBeInCheck(int fromRow, int toRow, int toCol, const ChessPiece& king) const { return false; }
 
 void ChessGame::handleCastling(int fromRow, int fromCol, int toRow, int toCol) {
   ChessPiece& fromPiece = board[fromRow][fromCol];
