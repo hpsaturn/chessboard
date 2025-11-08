@@ -134,6 +134,7 @@ void HelpModal::drawText(const std::string& text, int x, int y, SDL_Color color)
         int texW, texH;
         SDL_QueryTexture(texture, NULL, NULL, &texW, &texH);
         SDL_Rect dstRect = {x, y, texW, texH};
+        TTF_SizeText(font, text.c_str(), &texW, &texH);
         SDL_RenderCopy(renderer, texture, NULL, &dstRect);
         SDL_DestroyTexture(texture);
     }
@@ -158,18 +159,19 @@ void HelpModal::initializeHelpContent() {
     helpLines.clear();
     
     // Add help content with proper tabular formatting
-    helpLines.push_back("Arrows     Piece and setting selections");
-    helpLines.push_back("SPACE      Select piece or setting");
-    helpLines.push_back("ENTER      Move selected piece");
-    helpLines.push_back("ESC        Deselect piece or window exit");
-    helpLines.push_back("F2         Save game state");
-    helpLines.push_back("F3         Load last game state saved");
-    helpLines.push_back("F4         Enter to game states window");
+    helpLines.push_back("ARROWS      Piece and setting selections");
+    helpLines.push_back("SPACE          Select piece or setting");
+    helpLines.push_back("ENTER          Move selected piece");
+    helpLines.push_back("ESC             Deselect piece or window exit");
+    helpLines.push_back("F1               Show this help window");
+    helpLines.push_back("F2               Save game state");
+    helpLines.push_back("F3               Load last game state saved");
+    helpLines.push_back("F4               Enter to game states window");
     helpLines.push_back("BACKSPACE  Delete game state");
-    helpLines.push_back("S          Enter to settings section");
-    helpLines.push_back("I          Toggle to show game info");
-    helpLines.push_back("Q          Exit the game");
-    helpLines.push_back("R          Restart the game");
-    helpLines.push_back("H / F1     Show this help window");
-    helpLines.push_back("ESC        Close help window");
+    helpLines.push_back("S                 Enter to settings section");
+    helpLines.push_back("I                  Toggle to show game info");
+    helpLines.push_back("Q                 Exit the game");
+    helpLines.push_back("R                 Restart the game");
+    helpLines.push_back("H                 Show this help window");
+    helpLines.push_back("ESC             Close current window");
 }

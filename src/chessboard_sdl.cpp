@@ -129,18 +129,13 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
       break;
     
     case SDLK_F4:
-
+      // Show game states modal
+      if (gameStatesModal) gameStatesModal->show();
+      break;
     case SDLK_h:
     case SDLK_F1:
       // Show help modal
-      if (helpModal) {
-        helpModal->show();
-      }
-      break;
-      // Show game states modal
-      if (gameStatesModal) {
-        gameStatesModal->show();
-      }
+      if (helpModal) helpModal->show();
       break;
     case SDLK_r:
       // Reset board
