@@ -403,6 +403,8 @@ bool ChessGame::isInCheck() {
   // ChessBoard::Square king_white = ChessBoard::Square::E1;
   bitboard.print_board();
   std::cout << "\n";
+  bitboard.print_attack_map(ChessBoard::Color::WHITE);
+  std::cout << "\n";
   // bitboard.print_attack_map(ChessBoard::Color::BLACK);
   std::cout << "[GAME] isInCheck:" << (legal ? "yes" : "no") << "\n";
   return legal;
@@ -413,6 +415,8 @@ bool ChessGame::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
     if (!isValidMove(isCastling, fromRow, fromCol, toRow, toCol)) {
         return false;
     }
+    
+    if(isInCheck()) return false;
  
     ChessPiece& fromPiece = board[fromRow][fromCol];
     ChessPiece toPiece   = board[toRow][toCol];
@@ -440,11 +444,10 @@ bool ChessGame::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
     if (fromPiece.type == PieceType::PAWN && whiteTurn && toRow == 0) fromPiece.type = PieceType::QUEEN;
     if (fromPiece.type == PieceType::PAWN && !whiteTurn && toRow == 7) fromPiece.type = PieceType::QUEEN;
 
-    isInCheck();
     // Perform the move
     board[toRow][toCol] = fromPiece;
     board[fromRow][fromCol] = ChessPiece(); // Empty square
-    isInCheck();
+    // isInCheck();
      
     moveHistory.push_back(move);
     if (whiteTurn) {

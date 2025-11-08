@@ -135,6 +135,42 @@ ChessBoard::Color ChessBoard::get_color_at(ChessBoard::Square square) const {
   return ChessBoard::BOTH;  // Empty square
 }
 
+ChessBoard::Bitboard ChessBoard::get_sliding_attacks(Square square, Piece piece) const {
+  Bitboard attacks = 0;
+  Bitboard occupancy = colors[WHITE] | colors[BLACK];
+
+  int x = square % 8;
+  int y = square / 8;
+
+  std::vector<std::pair<int, int>> directions;
+
+  if (piece == ROOK || piece == QUEEN) {
+    directions.insert(directions.end(), {{0, 1}, {1, 0}, {0, -1}, {-1, 0}});
+  }
+  if (piece == BISHOP || piece == QUEEN) {
+    directions.insert(directions.end(), {{1, 1}, {1, -1}, {-1, -1}, {-1, 1}});
+  }
+
+  for (const auto& [dx, dy] : directions) {
+    int new_x = x + dx;
+    int new_y = y + dy;
+
+    while (new_x >= 0 && new_x < 8 && new_y >= 0 && new_y < 8) {
+      int current_square = new_y * 8 + new_x;
+      attacks |= (1ULL << current_square);
+
+      if (occupancy & (1ULL << current_square)) {
+        break;
+      }
+
+      new_x += dx;
+      new_y += dy;
+    }
+  }
+
+  return attacks;
+}
+
 ChessBoard::Bitboard ChessBoard::compute_attack_map(ChessBoard::Color attacking_color) const {
   ChessBoard::Bitboard attack_map = 0;
   ChessBoard::Bitboard occupancy = colors[ChessBoard::WHITE] | colors[ChessBoard::BLACK];
@@ -163,27 +199,51 @@ ChessBoard::Bitboard ChessBoard::compute_attack_map(ChessBoard::Color attacking_
     kings &= kings - 1;
   }
 
-  // Bishop attacks (simplified - considers all moves without blocking)
-  ChessBoard::Bitboard bishops = pieces[ChessBoard::BISHOP] & colors[attacking_color];
+  // // Bishop attacks (simplified - considers all moves without blocking)
+  // ChessBoard::Bitboard bishops = pieces[ChessBoard::BISHOP] & colors[attacking_color];
+  // while (bishops) {
+  //   int square = __builtin_ctzll(bishops);
+  //   attack_map |= bishop_attacks_base[square];
+  //   bishops &= bishops - 1;
+  // }
+
+  // Bishop attacks
+  Bitboard bishops = pieces[BISHOP] & colors[attacking_color];
   while (bishops) {
     int square = __builtin_ctzll(bishops);
-    attack_map |= bishop_attacks_base[square];
+    attack_map |= get_sliding_attacks(static_cast<Square>(square), BISHOP);
     bishops &= bishops - 1;
   }
 
   // Rook attacks (simplified)
-  ChessBoard::Bitboard rooks = pieces[ChessBoard::ROOK] & colors[attacking_color];
+  // ChessBoard::Bitboard rooks = pieces[ChessBoard::ROOK] & colors[attacking_color];
+  // while (rooks) {
+  //   int square = __builtin_ctzll(rooks);
+  //   attack_map |= rook_attacks_base[square];
+  //   rooks &= rooks - 1;
+  // }
+
+  // Rook attacks
+  Bitboard rooks = pieces[ROOK] & colors[attacking_color];
   while (rooks) {
     int square = __builtin_ctzll(rooks);
-    attack_map |= rook_attacks_base[square];
+    attack_map |= get_sliding_attacks(static_cast<Square>(square), ROOK);
     rooks &= rooks - 1;
   }
 
   // Queen attacks (bishop + rook)
-  ChessBoard::Bitboard queens = pieces[ChessBoard::QUEEN] & colors[attacking_color];
+  // ChessBoard::Bitboard queens = pieces[ChessBoard::QUEEN] & colors[attacking_color];
+  // while (queens) {
+  //   int square = __builtin_ctzll(queens);
+  //   attack_map |= bishop_attacks_base[square] | rook_attacks_base[square];
+  //   queens &= queens - 1;
+  // }
+
+  // Queen attacks
+  Bitboard queens = pieces[QUEEN] & colors[attacking_color];
   while (queens) {
     int square = __builtin_ctzll(queens);
-    attack_map |= bishop_attacks_base[square] | rook_attacks_base[square];
+    attack_map |= get_sliding_attacks(static_cast<Square>(square), QUEEN);
     queens &= queens - 1;
   }
 

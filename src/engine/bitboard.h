@@ -60,6 +60,7 @@ private:
 
  Piece get_piece_at(Square square) const;
  Color get_color_at(Square square) const;
+ Bitboard get_sliding_attacks(Square square, Piece piece) const;
  Bitboard compute_attack_map(Color attacking_color) const;
 
  bool is_castling_move_legal(Square from, Square to) const;
