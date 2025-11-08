@@ -7,6 +7,7 @@
 #include <iostream>
 #include <vector>
 
+
 class ChessBoard {
 private:
     // Bitboard definitions (Little-endian rank-file mapping)
@@ -18,7 +19,7 @@ private:
  // Colors
  enum Color { WHITE, BLACK, BOTH };
 
-// Squares
+ // Squares
  enum Square {
   A1, B1, C1, D1, E1, F1, G1, H1,
   A2, B2, C2, D2, E2, F2, G2, H2,
@@ -64,16 +65,30 @@ private:
  bool is_castling_move_legal(Square from, Square to) const;
  bool is_kingside_castling_legal(Color color) const;
  bool is_queenside_castling_legal(Color color) const;
+ Square find_king_square(Color color) const;
 
 public:
+ typedef Square Square;
+ typedef Piece Piece;
+ typedef Color Color;
  bool is_king_move_legal(Square from, Square to) const;
- void print_board() const;
+ bool is_king_move_legal(int from_row, int from_col, int to_row, int to_col) const;
+ bool is_king_in_check(Color king_color) const;
+ bool is_king_in_check_row_col(int king_row, int king_col) const;
+
+ Square from_row_col(int row, int col) const;
+ std::pair<int, int> to_row_col(Square square) const;
+
  void set_piece(Square square, Piece piece, Color color);
- void set_custom_position(const std::string& fen = "");
+ Square set_custom_position(const std::string& fen = "");
+ 
+ void print_board() const;
+ void print_attack_map(Color color) const;
+
  void test_complex_position();
  void test_king_escape();
  void test_king_with_two_rooks();
- void print_attack_map(Color color) const;
+ void test_fen_load_queen_test();
 };
 
 #endif // BITBOARD_H

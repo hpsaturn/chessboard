@@ -148,9 +148,10 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
       engine.newGame();
       break;
     case SDLK_F5:
-      // Print FEN to console
       // bitboard.test_king_with_two_rooks();
-      bitboard.test_complex_position();
+      // bitboard.test_complex_position();
+      bitboard.test_fen_load_queen_test();
+      // bitboard.test_king_escape();
       break;
   }
 }

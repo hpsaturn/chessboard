@@ -16,9 +16,7 @@ private:
     // Captured pieces tracking
     std::vector<ChessPiece> whiteCapturedPieces;
     std::vector<ChessPiece> blackCapturedPieces;
-
-    // ChessBoard bitboard;
-    
+ 
     void clearBoard();
     void loadCapturedPieces();
 
@@ -44,8 +42,7 @@ public:
     // Game logic
     void initializeBoard(const std::string& fen = "");
     bool isValidMove(bool& isCastling, int fromRow, int fromCol, int toRow, int toCol) const;
-    bool isInCheck(const ChessPiece& king) const;
-    bool wouldBeInCheck(int fromRow, int toRow, int toCol, const ChessPiece& king) const;
+    bool isInCheck();
     void handleCastling(int fromRow, int fromCol, int toRow, int toCol);
     bool movePiece(int fromRow, int fromCol, int toRow, int toCol);
     void resetGame();

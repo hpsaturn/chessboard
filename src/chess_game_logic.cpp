@@ -188,7 +188,7 @@ void ChessGame::loadCapturedPieces() {
 bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRow, int toCol) const {
     // Can't move to the same square
     if (fromRow == toRow && fromCol == toCol) return false;
-    
+ 
     const ChessPiece& fromPiece = board[fromRow][fromCol];
     const ChessPiece& toPiece = board[toRow][toCol];
     
@@ -396,12 +396,24 @@ bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRo
     return true;
 }
 
+bool ChessGame::isInCheck() { 
+  ChessBoard bitboard;
+  ChessBoard::Square king_pos = bitboard.set_custom_position(boardToFEN());
+  bool legal = bitboard.is_king_in_check(ChessBoard::Color::WHITE);
+  // ChessBoard::Square king_white = ChessBoard::Square::E1;
+  bitboard.print_board();
+  std::cout << "\n";
+  // bitboard.print_attack_map(ChessBoard::Color::BLACK);
+  std::cout << "[GAME] isInCheck:" << (legal ? "yes" : "no") << "\n";
+  return legal;
+}
+
 bool ChessGame::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
     bool isCastling = false;
     if (!isValidMove(isCastling, fromRow, fromCol, toRow, toCol)) {
         return false;
     }
-    
+ 
     ChessPiece& fromPiece = board[fromRow][fromCol];
     ChessPiece toPiece   = board[toRow][toCol];
     
@@ -428,10 +440,12 @@ bool ChessGame::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
     if (fromPiece.type == PieceType::PAWN && whiteTurn && toRow == 0) fromPiece.type = PieceType::QUEEN;
     if (fromPiece.type == PieceType::PAWN && !whiteTurn && toRow == 7) fromPiece.type = PieceType::QUEEN;
 
+    isInCheck();
     // Perform the move
     board[toRow][toCol] = fromPiece;
     board[fromRow][fromCol] = ChessPiece(); // Empty square
-   
+    isInCheck();
+     
     moveHistory.push_back(move);
     if (whiteTurn) {
       pending_move = move;
@@ -442,10 +456,6 @@ bool ChessGame::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
     
     return true;
 }
-
-bool ChessGame::isInCheck(const ChessPiece& king) const { return false; }
-
-bool ChessGame::wouldBeInCheck(int fromRow, int toRow, int toCol, const ChessPiece& king) const { return false; }
 
 void ChessGame::handleCastling(int fromRow, int fromCol, int toRow, int toCol) {
   ChessPiece& fromPiece = board[fromRow][fromCol];

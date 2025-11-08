@@ -251,29 +251,200 @@ bool ChessBoard::is_queenside_castling_legal(ChessBoard::Color color) const {
          !(opponent_attacks & (1ULL << c_square));
 }
 
- bool ChessBoard::is_king_move_legal(ChessBoard::Square from, Square to) const {
-   ChessBoard::Color moving_color = get_color_at(from);
-   ChessBoard::Color opponent_color = (moving_color == ChessBoard::WHITE) ? ChessBoard::BLACK : ChessBoard::WHITE;
-
-   // Basic validation
-   if (from == to) return false;
-   if (get_piece_at(from) != ChessBoard::KING) return false;
-
-   // Check if destination is occupied by friendly piece
-   ChessBoard::Color dest_color = get_color_at(to);
-   if (dest_color == moving_color) return false;
-
-   // Check if move is within king's movement pattern
-   ChessBoard::Bitboard king_moves = king_attacks[from];
-   if (!(king_moves & (1ULL << to))) {
-     // Not a normal king move, check for castling
-     return is_castling_move_legal(from, to);
-   }
-
-   // For normal moves: compute opponent's attack map and check if destination is safe
-   ChessBoard::Bitboard opponent_attacks = compute_attack_map(opponent_color);
-   return !(opponent_attacks & (1ULL << to));
+/**
+ * Find the square of the king for the given color
+ * @param color: Color of the king to find
+ * @return Square where the king is located, or NO_SQ if not found
+ */
+ChessBoard::Square ChessBoard::find_king_square(Color color) const {
+  Bitboard king_bitboard = pieces[KING] & colors[color];
+  if (king_bitboard == 0) {
+    return NO_SQ;
+  }
+  return static_cast<Square>(__builtin_ctzll(king_bitboard));
 }
+
+bool ChessBoard::is_king_move_legal(ChessBoard::Square from, Square to) const {
+  ChessBoard::Color moving_color = get_color_at(from);
+  ChessBoard::Color opponent_color =
+      (moving_color == ChessBoard::WHITE) ? ChessBoard::BLACK : ChessBoard::WHITE;
+
+  // Basic validation
+  if (from == to) return false;
+  if (get_piece_at(from) != ChessBoard::KING) return false;
+
+  // Check if destination is occupied by friendly piece
+  ChessBoard::Color dest_color = get_color_at(to);
+  if (dest_color == moving_color) return false;
+
+  // Check if move is within king's movement pattern
+  ChessBoard::Bitboard king_moves = king_attacks[from];
+  if (!(king_moves & (1ULL << to))) {
+    // Not a normal king move, check for castling
+    return is_castling_move_legal(from, to);
+  }
+
+  // For normal moves: compute opponent's attack map and check if destination is safe
+  ChessBoard::Bitboard opponent_attacks = compute_attack_map(opponent_color);
+  return !(opponent_attacks & (1ULL << to));
+}
+
+/**
+ * Check if a king move is legal using row,col coordinates
+ * @param from_row, from_col: source coordinates
+ * @param to_row, to_col: destination coordinates
+ * @return true if move is legal
+ */
+bool ChessBoard::is_king_move_legal(int from_row, int from_col, int to_row, int to_col) const {
+  Square from_square = from_row_col(from_row, from_col);
+  Square to_square = from_row_col(to_row, to_col);
+  return is_king_move_legal(from_square, to_square);
+}
+
+/**
+ * Check if the king of the given color is in check
+ * @param king_color: Color of the king to check
+ * @return true if the king is in check
+ */
+bool ChessBoard::is_king_in_check(Color king_color) const {
+  Color opponent_color = (king_color == WHITE) ? BLACK : WHITE;
+
+  // Find the king's square
+  Square king_square = find_king_square(king_color);
+  if (king_square == NO_SQ) {
+    throw std::runtime_error("King not found on the board");
+  }
+
+  // Compute opponent's attack map and check if king's square is attacked
+  Bitboard opponent_attacks = compute_attack_map(opponent_color);
+  return (opponent_attacks & (1ULL << king_square)) != 0;
+}
+
+/**
+ * Check if the king of the given color is in check (using row,col)
+ * @param king_color: Color of the king to check
+ * @return true if the king is in check
+ */
+bool ChessBoard::is_king_in_check_row_col(int king_row, int king_col) const {
+  Color king_color = get_color_at(from_row_col(king_row, king_col));
+  return is_king_in_check(king_color);
+}
+
+// Set up a custom position for testing
+ChessBoard::Square ChessBoard::set_custom_position(const std::string& fen) {
+  // Clear the board
+  for (int i = 0; i < 6; ++i) pieces[i] = 0;
+  for (int i = 0; i < 2; ++i) colors[i] = 0;
+
+  // Simple FEN parser for basic test positions
+  // This is a simplified parser - only handles piece placement
+  int rank = 7;
+  int file = 0;
+
+  Square king;
+
+  std::string sfen = fen.substr(0, fen.find(' '));  // Get only piece placement part
+
+  for (char c : sfen) {
+    if (c == '/') {
+      rank--;
+      file = 0;
+    } else if (isdigit(c)) {
+      file += c - '0';
+    } else {
+      Piece piece;
+      Color color = isupper(c) ? WHITE : BLACK;
+
+      switch (tolower(c)) {
+        case 'p':
+          piece = PAWN;
+          break;
+        case 'n':
+          piece = KNIGHT;
+          break;
+        case 'b':
+          piece = BISHOP;
+          break;
+        case 'r':
+          piece = ROOK;
+          break;
+        case 'q':
+          piece = QUEEN;
+          break;
+        case 'k':
+          piece = KING;
+          break;
+        default:
+          continue;
+      }
+
+      int square = rank * 8 + file;
+      if (piece == KING && color == WHITE) {
+        king = static_cast<Square>(square);
+      }
+      set_piece(static_cast<Square>(square), piece, color);
+      file++;
+    }
+    side_to_move = WHITE;
+  }
+
+  // Reset castling rights for custom positions
+  castling_rights[WHITE][0] = castling_rights[WHITE][1] = false;
+  castling_rights[BLACK][0] = castling_rights[BLACK][1] = false;
+  
+  return king;
+}
+
+// Helper function to set a piece on the board
+void ChessBoard::set_piece(Square square, Piece piece, Color color) {
+  Bitboard mask = 1ULL << square;
+
+  // Clear any existing piece on this square
+  for (int i = 0; i < 6; ++i) {
+    pieces[i] &= ~mask;
+  }
+  colors[WHITE] &= ~mask;
+  colors[BLACK] &= ~mask;
+
+  // Set the new piece
+  pieces[piece] |= mask;
+  colors[color] |= mask;
+}
+
+// =========================================================================
+// CONVERSION METHODS - For compatibility with your old system
+// =========================================================================
+
+/**
+ * Convert from (row, col) coordinates to bitboard Square enum
+ * @param row: 0-7 where 0 is rank 1 (bottom) and 7 is rank 8 (top)
+ * @param col: 0-7 where 0 is file a (left) and 7 is file h (right)
+ * @return Square enum value
+ */
+ChessBoard::Square ChessBoard::from_row_col(int row, int col) const {
+  if (row < 0 || row > 7 || col < 0 || col > 7) {
+    throw std::out_of_range("Row and col must be between 0 and 7");
+  }
+  return static_cast<Square>(row * 8 + col);
+}
+
+/**
+ * Convert from bitboard Square enum to (row, col) coordinates
+ * @param square: Square enum value
+ * @return pair of (row, col) where row 0 is rank 1, row 7 is rank 8
+ */
+std::pair<int, int> ChessBoard::to_row_col(Square square) const {
+  if (square < 0 || square > 63) {
+    throw std::out_of_range("Square must be between 0 and 63");
+  }
+  int row = square / 8;
+  int col = square % 8;
+  return {row, col};
+}
+
+// =========================================================================
+// TESTING AND DEBUGGING METHODS 
+// =========================================================================
 
 void ChessBoard::print_board() const {
   std::cout << "  a b c d e f g h\n";
@@ -294,88 +465,6 @@ void ChessBoard::print_board() const {
     }
     std::cout << "\n";
   }
-}
-
-// Set up a custom position for testing
-void ChessBoard::set_custom_position(const std::string& fen) {
-  // Clear the board
-  for (int i = 0; i < 6; ++i) pieces[i] = 0;
-  for (int i = 0; i < 2; ++i) colors[i] = 0;
-
-  if (fen.empty()) {
-    // Default: set up a simple position with two rooks attacking the king
-    // White king on e1, black rooks on a3 and h3
-    set_piece(E2, KING, WHITE);
-    set_piece(A3, ROOK, BLACK);
-    set_piece(H3, ROOK, BLACK);
-    side_to_move = WHITE;
-  } else {
-    // Simple FEN parser for basic test positions
-    // This is a simplified parser - only handles piece placement
-    int rank = 7;
-    int file = 0;
-
-    for (char c : fen) {
-      if (c == '/') {
-        rank--;
-        file = 0;
-      } else if (isdigit(c)) {
-        file += c - '0';
-      } else {
-        Piece piece;
-        Color color = isupper(c) ? WHITE : BLACK;
-
-        switch (tolower(c)) {
-          case 'p':
-            piece = PAWN;
-            break;
-          case 'n':
-            piece = KNIGHT;
-            break;
-          case 'b':
-            piece = BISHOP;
-            break;
-          case 'r':
-            piece = ROOK;
-            break;
-          case 'q':
-            piece = QUEEN;
-            break;
-          case 'k':
-            piece = KING;
-            break;
-          default:
-            continue;
-        }
-
-        int square = rank * 8 + file;
-        set_piece(static_cast<Square>(square), piece, color);
-        file++;
-      }
-    }
-    side_to_move = WHITE;
-  }
-
-  // Reset castling rights for custom positions
-  castling_rights[WHITE][0] = castling_rights[WHITE][1] = false;
-  castling_rights[BLACK][0] = castling_rights[BLACK][1] = false;
-}
-
-
-// Helper function to set a piece on the board
-void ChessBoard::set_piece(Square square, Piece piece, Color color) {
-  Bitboard mask = 1ULL << square;
-
-  // Clear any existing piece on this square
-  for (int i = 0; i < 6; ++i) {
-    pieces[i] &= ~mask;
-  }
-  colors[WHITE] &= ~mask;
-  colors[BLACK] &= ~mask;
-
-  // Set the new piece
-  pieces[piece] |= mask;
-  colors[color] |= mask;
 }
 
 // Print the attack map for visualization
@@ -416,6 +505,25 @@ void ChessBoard::test_king_with_two_rooks() {
   std::cout << "Testing white king moves from e1:\n";
   std::vector<std::pair<std::string, Square>> test_moves = {
       {"e2-d1", D1}, {"e2-d2", D2}, {"e2-e1", E1}, {"e2-f1", F1}, {"e2-f3", F3}};
+
+  for (const auto& [move_name, to_square] : test_moves) {
+    bool legal = is_king_move_legal(white_king, to_square);
+    std::cout << move_name << ": " << (legal ? "Legal" : "Illegal") << "\n";
+  }
+}
+
+void ChessBoard::test_fen_load_queen_test() {
+  std::cout << "\n=== TEST 2: Complex position ===\n";
+
+  Square white_king = set_custom_position("r3kb1r/1p4pp/pQp2p2/1P1pp3/1P1P3P/3PPNPq/1B1N1P2/2R1K3 b KQkq - 0 1");
+  print_board();
+  std::cout << "\n";
+  print_attack_map(BLACK);
+  std::cout << "\n";
+
+  std::cout << "Testing white king moves from c2:\n";
+  std::vector<std::pair<std::string, Square>> test_moves = {
+      {"e1-e1", E1}, {"e1-e2", E2}, {"e1-f1", F1}, {"e1-d1", D1}};
 
   for (const auto& [move_name, to_square] : test_moves) {
     bool legal = is_king_move_legal(white_king, to_square);
@@ -468,7 +576,7 @@ void ChessBoard::test_king_escape() {
 
   std::cout << "Testing white king moves from e1:\n";
   std::vector<std::pair<std::string, Square>> test_moves = {
-      {"e1-d1", D1}, {"e1-d2", D2}, {"e1-e2", E2}, {"e1-f1", F1}, {"e1-f2", F2}};
+      {"e1-d1", D1}, {"e1-d2", D2}, {"e1-e2", E2}, {"e1-f1", F1}, {"e1-f2", F2}, {"e1-e1", E1}};
 
   for (const auto& [move_name, to_square] : test_moves) {
     bool legal = is_king_move_legal(white_king, to_square);
