@@ -72,7 +72,7 @@ else()
 endif()
 
 # Add source files
-file(GLOB SOURCES "src/*.cpp")
+file(GLOB SOURCES "src/*.cpp" "src/engine/*.cpp")
 
 # Create executable
 add_executable(chess ${SOURCES})
@@ -102,3 +102,12 @@ endif()
 
 # Install target
 install(TARGETS chess DESTINATION bin)
+
+# Define resource paths for development and installation
+add_compile_definitions(
+    RESOURCE_PATH_DEVELOPMENT="res"
+    RESOURCE_PATH_INSTALLED="/usr/local/share/chess"
+)
+
+# Copy resource files to build directory
+file(COPY res/ DESTINATION ${CMAKE_BINARY_DIR}/res)
