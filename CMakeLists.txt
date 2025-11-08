@@ -90,6 +90,8 @@ src/settings_modal.cpp
         src/gameinfo_modal.cpp
         src/gamestates_modal.h
         src/gamestates_modal.cpp
+        src/help_modal.h
+        src/help_modal.cpp
     )
 endif()
 

@@ -1,6 +1,7 @@
 #include "gameinfo_modal.h"
 #include "gamestates_modal.h"
 #include <SDL2/SDL.h>
+#include "help_modal.h"
 
 #include <iostream>
 #include <string>
@@ -35,6 +36,7 @@ SettingsModal* settingsModal = nullptr;
 GameInfoModal* gameInfoModal = nullptr;
 GameStatesModal* gameStatesModal = nullptr;
 ConfigManager* configManager = nullptr;
+HelpModal* helpModal = nullptr;
 GameStateManager* stateManager = nullptr;
 
 std::string pending_fen;
@@ -87,14 +89,14 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
       break;
     case SDLK_q:
       // Quit the game
-      if (!(settingsModal->isVisible() || gameInfoModal->isVisible() || gameStatesModal->isVisible())) {
+      if (!(settingsModal->isVisible() || gameInfoModal->isVisible() || gameStatesModal->isVisible() || helpModal->isVisible())) {
         SDL_Quit();
         exit(0);
       }
       break;
     case SDLK_ESCAPE:
       // Deselect piece - only when modal is NOT visible
-      if (!(settingsModal->isVisible() || gameInfoModal->isVisible() || gameStatesModal->isVisible())) {
+      if (!(settingsModal->isVisible() || gameInfoModal->isVisible() || gameStatesModal->isVisible() || helpModal->isVisible())) {
         pieceSelected = false;
         selectedRow = -1;
         selectedCol = -1;
@@ -127,6 +129,14 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
       break;
     
     case SDLK_F4:
+
+    case SDLK_h:
+    case SDLK_F1:
+      // Show help modal
+      if (helpModal) {
+        helpModal->show();
+      }
+      break;
       // Show game states modal
       if (gameStatesModal) {
         gameStatesModal->show();
@@ -221,14 +231,14 @@ void mainLoop(ChessGame chessGame, SDL_Renderer* renderer) {
       // Handle keyboard input
       else if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
         // Let modals handle the event first
-        if (!settingsModal->handleEvent(e) && !gameInfoModal->handleEvent(e) && !gameStatesModal->handleEvent(e)) {
+        if (!settingsModal->handleEvent(e) && !gameInfoModal->handleEvent(e) && !gameStatesModal->handleEvent(e) && !helpModal->handleEvent(e)) {
           handleKeyboardInput(e.key.keysym.sym, chessGame);
         }
       }
       // Handle mouse click
       else if (e.type == SDL_MOUSEBUTTONDOWN) {
         // Let modals handle the event first
-        if (!settingsModal->handleEvent(e) && !gameInfoModal->handleEvent(e) && !gameInfoModal->handleEvent(e)) {
+        if (!settingsModal->handleEvent(e) && !gameInfoModal->handleEvent(e) && !helpModal->handleEvent(e) && !gameInfoModal->handleEvent(e)) {
           int mouseX, mouseY;
           SDL_GetMouseState(&mouseX, &mouseY);
           handleMouseClick(mouseX, mouseY, chessGame);
@@ -298,6 +308,7 @@ void mainLoop(ChessGame chessGame, SDL_Renderer* renderer) {
     gameInfoModal->render();
     gameStatesModal->render();
 
+    helpModal->render();
     // Update screen
     SDL_RenderPresent(renderer);
 
@@ -379,6 +390,7 @@ void renderChessboardSDL(std::string fen) {
   settingsModal = new SettingsModal(renderer, SCREEN_WIDTH, SCREEN_HEIGHT, configManager);
   gameInfoModal = new GameInfoModal(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
   gameStatesModal = new GameStatesModal(renderer, SCREEN_WIDTH, SCREEN_HEIGHT, stateManager);
+  helpModal = new HelpModal(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
 
   // Set settings change callback
   settingsModal->setOnSettingsChanged([&chessGame](const SettingsModal::Settings& settings) {
@@ -422,6 +434,7 @@ void renderChessboardSDL(std::string fen) {
   delete gameStatesModal;
   delete gameInfoModal;
 
+  delete helpModal;
   cleanupChessPieceTextures();
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
