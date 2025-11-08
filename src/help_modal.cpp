@@ -111,13 +111,6 @@ void HelpModal::render() {
         int lineIndex = scrollOffset + i;
         if (lineIndex < (int)helpLines.size()) {
             SDL_Color color = {200, 200, 200, 255}; // Light gray for regular text
-            
-            // Highlight headers
-            if (helpLines[lineIndex].find("Key") != std::string::npos ||
-                helpLines[lineIndex].find("Piece") != std::string::npos) {
-                color = {255, 255, 255, 255}; // White for headers
-            }
-            
             drawText(helpLines[lineIndex], modalX + 10, startY + (i * lineHeight), color);
         }
     }
@@ -165,8 +158,6 @@ void HelpModal::initializeHelpContent() {
     helpLines.clear();
     
     // Add help content from README usage section
-    helpLines.push_back("Key Bindings:");
-    helpLines.push_back("");
     helpLines.push_back("Arrows     Piece and setting selections");
     helpLines.push_back("SPACE      Select piece or setting");
     helpLines.push_back("ENTER      Move selected piece");
@@ -174,29 +165,11 @@ void HelpModal::initializeHelpContent() {
     helpLines.push_back("F2         Save game state");
     helpLines.push_back("F3         Load last game state saved");
     helpLines.push_back("F4         Enter to game states window");
-    helpLines.push_back("BACKSPACE  Delete game state (states window)");
+    helpLines.push_back("BACKSPACE  Delete game state");
     helpLines.push_back("S          Enter to settings section");
     helpLines.push_back("I          Toggle to show game info");
     helpLines.push_back("Q          Exit the game");
     helpLines.push_back("R          Restart the game");
     helpLines.push_back("H / F1     Show this help window");
-    helpLines.push_back("");
-    helpLines.push_back("Piece Notation:");
-    helpLines.push_back("");
-    helpLines.push_back("K k  King");
-    helpLines.push_back("Q q  Queen");
-    helpLines.push_back("B b  Bishop");
-    helpLines.push_back("N n  Knight");
-    helpLines.push_back("R r  Rook");
-    helpLines.push_back("P p  Pawn");
-    helpLines.push_back("");
-    helpLines.push_back("Note: Uppercase = black pieces");
-    helpLines.push_back("      Lowercase = white pieces");
-    helpLines.push_back("");
-    helpLines.push_back("Navigation:");
-    helpLines.push_back("");
-    helpLines.push_back("UP/DOWN     Scroll help text");
-    helpLines.push_back("PAGE UP/DN  Scroll faster");
-    helpLines.push_back("HOME/END    Jump to top/bottom");
     helpLines.push_back("ESC         Close help window");
 }
