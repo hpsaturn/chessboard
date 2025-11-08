@@ -31,21 +31,21 @@ jobs:
           cmake --build build --verbose
 
   build-windows:
-  runs-on: windows-latest
-  steps:
-    - uses: actions/checkout@v4
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
     
-    - name: Install vcpkg and dependencies
-      run: |
-        git clone https://github.com/Microsoft/vcpkg.git
-        .\vcpkg\bootstrap-vcpkg.bat
-        .\vcpkg\vcpkg integrate install
-        .\vcpkg\vcpkg install sdl2 sdl2-image sdl2-ttf yaml-cpp --triplet x64-windows
+      - name: Install vcpkg and dependencies
+        run: |
+          git clone https://github.com/Microsoft/vcpkg.git
+          .\vcpkg\bootstrap-vcpkg.bat
+          .\vcpkg\vcpkg integrate install
+          .\vcpkg\vcpkg install sdl2 sdl2-image sdl2-ttf yaml-cpp --triplet x64-windows
 
-    - name: Configure with vcpkg toolchain
-      run: |
-        cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake"
+      - name: Configure with vcpkg toolchain
+        run: |
+          cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake"
 
-    - name: Build project
-      run: |
-        cmake --build build --config Release
+      - name: Build project
+        run: |
+          cmake --build build --config Release
