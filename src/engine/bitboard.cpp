@@ -351,6 +351,7 @@ void ChessBoard::make_move_on_board(Square from, Square to) {
   colors[moving_color] |= (1ULL << to);
 
   // Switch side to move
+  // weird issue and I changed the code to this:
   side_to_move = (side_to_move == WHITE) ? WHITE : BLACK;
 }
 
