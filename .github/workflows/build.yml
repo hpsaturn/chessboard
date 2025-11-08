@@ -39,6 +39,7 @@ jobs:
         run: |
           git clone https://github.com/Microsoft/vcpkg.git
           .\vcpkg\bootstrap-vcpkg.bat
+          .\vcpkg\vcpkg integrate install
           .\vcpkg\vcpkg install sdl2 sdl2-image sdl2-ttf yaml-cpp
         shell: cmd
       
