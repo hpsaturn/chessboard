@@ -410,13 +410,32 @@ bool ChessGame::isInCheck() {
   return legal;
 }
 
+bool ChessGame::would_move_leave_king_in_check(int fromRow, int fromCol, int toRow,
+                                               int toCol) const {
+  ChessBoard bitboard;
+  ChessBoard::Square king_pos = bitboard.set_custom_position(boardToFEN());
+  std::cout << "[GAME] current board: " << std::endl;
+  // bitboard.print_board();
+  // std::cout << "\n";
+  bool legal = bitboard.would_move_leave_king_in_check(
+      bitboard.from_row_col(fromRow, fromCol),
+      bitboard.from_row_col(toRow, toCol));
+  std::cout << "[GAME] would move leave king in check: " << (legal ? "yes" : "no") << "\n";
+  return legal;
+}
+
 bool ChessGame::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
     bool isCastling = false;
     if (!isValidMove(isCastling, fromRow, fromCol, toRow, toCol)) {
         return false;
     }
-    
-    if(isInCheck()) return false;
+
+    std::cout << "[GAME] from: " << fromRow << "x" << fromCol << std::endl;
+
+    if (whiteTurn &&  would_move_leave_king_in_check(fromRow, fromCol, toRow, toCol)) {
+        std::cout << "[GAME] Move would leave king in check. Move invalid!" << std::endl;
+        return false;
+    }
  
     ChessPiece& fromPiece = board[fromRow][fromCol];
     ChessPiece toPiece   = board[toRow][toCol];
@@ -448,7 +467,7 @@ bool ChessGame::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
     board[toRow][toCol] = fromPiece;
     board[fromRow][fromCol] = ChessPiece(); // Empty square
     // isInCheck();
-     
+ 
     moveHistory.push_back(move);
     if (whiteTurn) {
       pending_move = move;

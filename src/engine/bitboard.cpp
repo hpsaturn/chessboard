@@ -324,6 +324,36 @@ ChessBoard::Square ChessBoard::find_king_square(Color color) const {
   return static_cast<Square>(__builtin_ctzll(king_bitboard));
 }
 
+/**
+ * Make a move on the board (for simulation purposes)
+ * Note: This is a simplified version that doesn't handle special moves
+ */
+void ChessBoard::make_move_on_board(Square from, Square to) {
+  Piece moving_piece = get_piece_at(from);
+  Color moving_color = get_color_at(from);
+
+  if (moving_piece == NONE) return;
+
+  // Clear the source square
+  pieces[moving_piece] &= ~(1ULL << from);
+  colors[moving_color] &= ~(1ULL << from);
+
+  // Clear the destination square (capture)
+  Piece captured_piece = get_piece_at(to);
+  if (captured_piece != NONE) {
+    Color captured_color = get_color_at(to);
+    pieces[captured_piece] &= ~(1ULL << to);
+    colors[captured_color] &= ~(1ULL << to);
+  }
+
+  // Set the destination square
+  pieces[moving_piece] |= (1ULL << to);
+  colors[moving_color] |= (1ULL << to);
+
+  // Switch side to move
+  side_to_move = (side_to_move == WHITE) ? WHITE : BLACK;
+}
+
 bool ChessBoard::is_king_move_legal(ChessBoard::Square from, Square to) const {
   ChessBoard::Color moving_color = get_color_at(from);
   ChessBoard::Color opponent_color =
@@ -388,6 +418,29 @@ bool ChessBoard::is_king_in_check(Color king_color) const {
 bool ChessBoard::is_king_in_check_row_col(int king_row, int king_col) const {
   Color king_color = get_color_at(from_row_col(king_row, king_col));
   return is_king_in_check(king_color);
+}
+
+/**
+ * Check if the current side to move is in check
+ * @return true if current side to move is in check
+ */
+bool ChessBoard::is_current_player_in_check() const { return is_king_in_check(side_to_move); }
+
+/**
+ * Check if the move would leave the king in check (simulates the move)
+ * @param from: source square
+ * @param to: destination square
+ * @return true if the move would leave the king in check
+ */
+bool ChessBoard::would_move_leave_king_in_check(Square from, Square to) const {
+  // Create a temporary copy of the board and make the move
+  ChessBoard temp_board = *this;
+  temp_board.make_move_on_board(from, to);
+  std::cout << "[GAME] simulated board: " << std::endl;
+  temp_board.print_board();
+  std::cout << "\n";
+  // Check if the king is in check after the move
+  return temp_board.is_current_player_in_check();
 }
 
 // Set up a custom position for testing
@@ -485,7 +538,12 @@ ChessBoard::Square ChessBoard::from_row_col(int row, int col) const {
   if (row < 0 || row > 7 || col < 0 || col > 7) {
     throw std::out_of_range("Row and col must be between 0 and 7");
   }
-  return static_cast<Square>(row * 8 + col);
+  // Convert from your system to standard bitboard system:
+  // Your system: row 0 = rank 8, row 7 = rank 1
+  // Bitboard: row 0 = rank 1, row 7 = rank 8
+  int bitboard_row = 7 - row;
+  int bitboard_col = col;
+  return static_cast<Square>(bitboard_row * 8 + col);
 }
 
 /**

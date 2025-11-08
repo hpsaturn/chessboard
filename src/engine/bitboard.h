@@ -67,6 +67,7 @@ private:
  bool is_kingside_castling_legal(Color color) const;
  bool is_queenside_castling_legal(Color color) const;
  Square find_king_square(Color color) const;
+ void make_move_on_board(Square from, Square to);
 
 public:
  typedef Square Square;
@@ -76,7 +77,8 @@ public:
  bool is_king_move_legal(int from_row, int from_col, int to_row, int to_col) const;
  bool is_king_in_check(Color king_color) const;
  bool is_king_in_check_row_col(int king_row, int king_col) const;
-
+ bool is_current_player_in_check() const;
+ bool would_move_leave_king_in_check(Square from, Square to) const;
  Square from_row_col(int row, int col) const;
  std::pair<int, int> to_row_col(Square square) const;
 

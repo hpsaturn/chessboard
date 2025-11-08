@@ -43,6 +43,7 @@ public:
     void initializeBoard(const std::string& fen = "");
     bool isValidMove(bool& isCastling, int fromRow, int fromCol, int toRow, int toCol) const;
     bool isInCheck();
+    bool would_move_leave_king_in_check(int fromRow, int fromCol, int toRow, int toCol) const;
     void handleCastling(int fromRow, int fromCol, int toRow, int toCol);
     bool movePiece(int fromRow, int fromCol, int toRow, int toCol);
     void resetGame();
