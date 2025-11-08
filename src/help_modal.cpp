@@ -100,7 +100,7 @@ void HelpModal::render() {
     SDL_RenderDrawRect(renderer, &modalBorder);
     
     // Draw title
-    drawText("Chess Game Help", modalX + 10, modalY + 10, {255, 255, 255, 255});
+    drawText("Key Bindings", modalX + 10, modalY + 10, {255, 255, 255, 255});
     
     // Draw help content with scroll
     int lineHeight = 15;
@@ -158,8 +158,6 @@ void HelpModal::initializeHelpContent() {
     helpLines.clear();
     
     // Add help content with proper tabular formatting
-    helpLines.push_back("KEY BINDINGS:");
-    helpLines.push_back("");
     helpLines.push_back("Arrows     Piece and setting selections");
     helpLines.push_back("SPACE      Select piece or setting");
     helpLines.push_back("ENTER      Move selected piece");
@@ -174,19 +172,4 @@ void HelpModal::initializeHelpContent() {
     helpLines.push_back("R          Restart the game");
     helpLines.push_back("H / F1     Show this help window");
     helpLines.push_back("ESC        Close help window");
-    helpLines.push_back("");
-    helpLines.push_back("PIECE NOTATION:");
-    helpLines.push_back("");
-    helpLines.push_back("K = King");
-    helpLines.push_back("Q = Queen");
-    helpLines.push_back("R = Rook");
-    helpLines.push_back("B = Bishop");
-    helpLines.push_back("N = Knight");
-    helpLines.push_back("P = Pawn");
-    helpLines.push_back("");
-    helpLines.push_back("NAVIGATION:");
-    helpLines.push_back("");
-    helpLines.push_back("Use arrow keys to navigate");
-    helpLines.push_back("Page Up/Down for fast scroll");
-    helpLines.push_back("Home/End to jump to top/bottom");
 }
