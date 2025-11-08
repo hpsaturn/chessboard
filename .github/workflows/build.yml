@@ -31,48 +31,21 @@ jobs:
           cmake --build build --verbose
 
   build-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install vcpkg and dependencies
-        run: |
-          git clone https://github.com/Microsoft/vcpkg.git
-          .\vcpkg\bootstrap-vcpkg.bat
-          .\vcpkg\vcpkg integrate install
-          .\vcpkg\vcpkg install sdl2 sdl2-image sdl2-ttf yaml-cpp
-        shell: cmd
-      
-      - name: Configure with vcpkg toolchain
-        run: |
-          cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake"
-        shell: cmd
-        
-      - name: Build project
-        run: |
-          cmake --build build --config Release --verbose
-        shell: cmd
+  runs-on: windows-latest
+  steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install vcpkg and dependencies
+      run: |
+        git clone https://github.com/Microsoft/vcpkg.git
+        .\vcpkg\bootstrap-vcpkg.bat
+        .\vcpkg\vcpkg integrate install
+        .\vcpkg\vcpkg install sdl2 sdl2-image sdl2-ttf yaml-cpp --triplet x64-windows
 
-  build-windows-msys2:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup MSYS2
-        uses: msys2/setup-msys2@v2
-        with:
-          update: true
-          install: >
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-SDL2
-            mingw-w64-x86_64-SDL2_image
-            mingw-w64-x86_64-SDL2_ttf
-            mingw-w64-x86_64-yaml-cpp
-            mingw-w64-x86_64-ncurses
-      
-      - name: Configure and build with MSYS2
-        run: |
-          cmake -S . -B build -G "MinGW Makefiles"
-          cmake --build build --verbose
-        shell: msys2 {0}
+    - name: Configure with vcpkg toolchain
+      run: |
+        cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake"
+
+    - name: Build project
+      run: |
+        cmake --build build --config Release
