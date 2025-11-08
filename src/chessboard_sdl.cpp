@@ -150,8 +150,8 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
     case SDLK_F5:
       // bitboard.test_king_with_two_rooks();
       // bitboard.test_complex_position();
-      bitboard.test_fen_load_queen_test();
       // bitboard.test_king_escape();
+      // bitboard.test_fen_load_queen_test();
       break;
   }
 }
@@ -264,7 +264,7 @@ void mainLoop(ChessGame chessGame, SDL_Renderer* renderer) {
         }
         // Highlight cursor position
         else if (row == cursorRow && col == cursorCol && !mouseUsed && !chessGame.pending_move.empty()) {
-          SDL_SetRenderDrawColor(renderer, 172, 83, 83, 255);  // Yellow for cursor
+          SDL_SetRenderDrawColor(renderer, 172, 83, 83, 255);  // Red light for cursor
         } else if (row == cursorRow && col == cursorCol && !mouseUsed && chessGame.pending_move.empty()) {
           SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);  // Yellow for cursor
         } else if (row == lastMoveStartRow && col == lastMoveStartCol) {

@@ -199,14 +199,6 @@ ChessBoard::Bitboard ChessBoard::compute_attack_map(ChessBoard::Color attacking_
     kings &= kings - 1;
   }
 
-  // // Bishop attacks (simplified - considers all moves without blocking)
-  // ChessBoard::Bitboard bishops = pieces[ChessBoard::BISHOP] & colors[attacking_color];
-  // while (bishops) {
-  //   int square = __builtin_ctzll(bishops);
-  //   attack_map |= bishop_attacks_base[square];
-  //   bishops &= bishops - 1;
-  // }
-
   // Bishop attacks
   Bitboard bishops = pieces[BISHOP] & colors[attacking_color];
   while (bishops) {
@@ -215,14 +207,6 @@ ChessBoard::Bitboard ChessBoard::compute_attack_map(ChessBoard::Color attacking_
     bishops &= bishops - 1;
   }
 
-  // Rook attacks (simplified)
-  // ChessBoard::Bitboard rooks = pieces[ChessBoard::ROOK] & colors[attacking_color];
-  // while (rooks) {
-  //   int square = __builtin_ctzll(rooks);
-  //   attack_map |= rook_attacks_base[square];
-  //   rooks &= rooks - 1;
-  // }
-
   // Rook attacks
   Bitboard rooks = pieces[ROOK] & colors[attacking_color];
   while (rooks) {
@@ -230,14 +214,6 @@ ChessBoard::Bitboard ChessBoard::compute_attack_map(ChessBoard::Color attacking_
     attack_map |= get_sliding_attacks(static_cast<Square>(square), ROOK);
     rooks &= rooks - 1;
   }
-
-  // Queen attacks (bishop + rook)
-  // ChessBoard::Bitboard queens = pieces[ChessBoard::QUEEN] & colors[attacking_color];
-  // while (queens) {
-  //   int square = __builtin_ctzll(queens);
-  //   attack_map |= bishop_attacks_base[square] | rook_attacks_base[square];
-  //   queens &= queens - 1;
-  // }
 
   // Queen attacks
   Bitboard queens = pieces[QUEEN] & colors[attacking_color];
@@ -437,9 +413,6 @@ bool ChessBoard::would_move_leave_king_in_check(Square from, Square to) const {
   // Create a temporary copy of the board and make the move
   ChessBoard temp_board = *this;
   temp_board.make_move_on_board(from, to);
-  std::cout << "[GAME] simulated board: " << std::endl;
-  temp_board.print_board();
-  std::cout << "\n";
   // Check if the king is in check after the move
   return temp_board.is_current_player_in_check();
 }
@@ -556,8 +529,13 @@ std::pair<int, int> ChessBoard::to_row_col(Square square) const {
   if (square < 0 || square > 63) {
     throw std::out_of_range("Square must be between 0 and 63");
   }
-  int row = square / 8;
-  int col = square % 8;
+  // Convert from bitboard system to your system:
+  int bitboard_row = square / 8;
+  int bitboard_col = square % 8;
+
+  int row = 7 - bitboard_row;  // Invert the row
+  int col = bitboard_col;
+
   return {row, col};
 }
 

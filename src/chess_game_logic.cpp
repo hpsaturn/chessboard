@@ -399,29 +399,20 @@ bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRo
 bool ChessGame::isInCheck() { 
   ChessBoard bitboard;
   ChessBoard::Square king_pos = bitboard.set_custom_position(boardToFEN());
-  bool legal = bitboard.is_king_in_check(ChessBoard::Color::WHITE);
-  // ChessBoard::Square king_white = ChessBoard::Square::E1;
-  bitboard.print_board();
-  std::cout << "\n";
-  bitboard.print_attack_map(ChessBoard::Color::WHITE);
-  std::cout << "\n";
-  // bitboard.print_attack_map(ChessBoard::Color::BLACK);
-  std::cout << "[GAME] isInCheck:" << (legal ? "yes" : "no") << "\n";
-  return legal;
+  bool check = bitboard.is_king_in_check(ChessBoard::Color::WHITE);
+  std::cout << "[GAME] isInCheck:" << (check ? "yes" : "no") << "\n";
+  return check;
 }
 
-bool ChessGame::would_move_leave_king_in_check(int fromRow, int fromCol, int toRow,
-                                               int toCol) const {
+bool ChessGame::would_move_leave_king_in_check(int fromRow, int fromCol, int toRow, int toCol) const {
   ChessBoard bitboard;
   ChessBoard::Square king_pos = bitboard.set_custom_position(boardToFEN());
-  std::cout << "[GAME] current board: " << std::endl;
-  // bitboard.print_board();
-  // std::cout << "\n";
-  bool legal = bitboard.would_move_leave_king_in_check(
+  bool wcheck = bitboard.would_move_leave_king_in_check(
       bitboard.from_row_col(fromRow, fromCol),
-      bitboard.from_row_col(toRow, toCol));
-  std::cout << "[GAME] would move leave king in check: " << (legal ? "yes" : "no") << "\n";
-  return legal;
+      bitboard.from_row_col(toRow, toCol)
+    );
+  std::cout << "[GAME] would move leave king in check: " << (wcheck ? "yes" : "no") << "\n";
+  return wcheck;
 }
 
 bool ChessGame::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
@@ -429,8 +420,6 @@ bool ChessGame::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
     if (!isValidMove(isCastling, fromRow, fromCol, toRow, toCol)) {
         return false;
     }
-
-    std::cout << "[GAME] from: " << fromRow << "x" << fromCol << std::endl;
 
     if (whiteTurn &&  would_move_leave_king_in_check(fromRow, fromCol, toRow, toCol)) {
         std::cout << "[GAME] Move would leave king in check. Move invalid!" << std::endl;
