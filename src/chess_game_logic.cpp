@@ -396,11 +396,14 @@ bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRo
     return true;
 }
 
-bool ChessGame::isInCheck() { 
+bool ChessGame::isInCheck(int& kingRow, int& kingCol) const { 
   ChessBoard bitboard;
   ChessBoard::Square king_pos = bitboard.set_custom_position(boardToFEN());
+  std::pair<int, int> kingPos = bitboard.to_row_col(king_pos);
+  kingRow = kingPos.first;
+  kingCol = kingPos.second;
   bool check = bitboard.is_king_in_check(ChessBoard::Color::WHITE);
-  std::cout << "[GAME] isInCheck:" << (check ? "yes" : "no") << "\n";
+  std::cout << "[GAME] isInCheck: " << (check ? "yes" : "no") << "\n";
   return check;
 }
 

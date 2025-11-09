@@ -25,6 +25,8 @@ uint8_t lastMoveStartRow = -1;  // Last black move
 uint8_t lastMoveStartCol = -1;
 uint8_t lastMoveEndRow = -1;
 uint8_t lastMoveEndCol = -1;
+uint8_t lastCheckRow = -1;     // Last check position
+uint8_t lastCheckCol = -1;
 uint8_t cursorRow = 6;   // Cursor position for keyboard navigation
 uint8_t cursorCol = 4;   // Cursor position for keyboard navigation
 bool mouseUsed = false;  // Flag for deselect cursor if Mouse is used
@@ -149,6 +151,8 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
       lastMoveStartCol = -1;
       lastMoveEndRow = -1;
       lastMoveEndCol = -1;
+      lastCheckCol = -1;
+      lastCheckRow = -1;
       chessGame.pending_move.clear();
       engine.newGame();
       break;
@@ -247,6 +251,7 @@ void mainLoop(ChessGame chessGame, SDL_Renderer* renderer) {
       }
     }
 
+    // New FEN to load
     if (!pending_fen.empty()) {
       engine.newGame();
       chessGame.initializeBoard(pending_fen);
@@ -266,16 +271,20 @@ void mainLoop(ChessGame chessGame, SDL_Renderer* renderer) {
         // Highlight selected square
         if (pieceSelected && row == selectedRow && col == selectedCol) {
           SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);  // Green for selected
+          lastCheckCol = -1; // Clear last check highlight when selecting a piece
+          lastCheckRow = -1;
         }
         // Highlight cursor position
-        else if (row == cursorRow && col == cursorCol && !mouseUsed && !chessGame.pending_move.empty()) {
+        else if (row == cursorRow && col == cursorCol && !mouseUsed && !chessGame.pending_move.empty()) { 
           SDL_SetRenderDrawColor(renderer, 172, 83, 83, 255);  // Red light for cursor
         } else if (row == cursorRow && col == cursorCol && !mouseUsed && chessGame.pending_move.empty()) {
-          SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);  // Yellow for cursor
+          SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);  // Yellow for cursor 
         } else if (row == lastMoveStartRow && col == lastMoveStartCol) {
           SDL_SetRenderDrawColor(renderer, 153, 153, 153, 255);  // Last opponent move Start
         } else if (row == lastMoveEndRow && col == lastMoveEndCol) {
           SDL_SetRenderDrawColor(renderer, 102, 102, 102, 255);  // Last opponent move End
+        } else if (row == lastCheckRow && col == lastCheckCol) {
+          SDL_SetRenderDrawColor(renderer, 200, 0, 0, 255);  // Red for check
         }
         // Normal square colors
         else if ((row + col) % 2 == 0) {
@@ -308,7 +317,7 @@ void mainLoop(ChessGame chessGame, SDL_Renderer* renderer) {
     SDL_RenderPresent(renderer);
 
     // Send move to engine and update its move
-    if (!chessGame.pending_move.empty()) {
+    if (!chessGame.pending_move.empty()) {  
       std::cout << "[SDLG] sending move  : " << chessGame.pending_move << std::endl;
       std::string engine_move;
       if (chessGame.isFenMode())
@@ -324,6 +333,12 @@ void mainLoop(ChessGame chessGame, SDL_Renderer* renderer) {
       lastMoveStartCol = fromCol;
       lastMoveEndRow = toRow;
       lastMoveEndCol = toCol;
+      int checkRow, checkCol;
+      if (chessGame.isInCheck(checkRow, checkCol)) {
+        std::cout << "[SDLG] Check detected!" << std::endl;
+        lastCheckCol = checkCol; // Notify to user check position
+        lastCheckRow = checkRow;
+      }
       chessGame.pending_move.clear();
       std::cout << "[SDLG] FEN: \"" << chessGame.boardToFEN() << "\"" << std::endl;
       engine_move.clear();
