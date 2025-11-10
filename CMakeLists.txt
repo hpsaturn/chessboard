@@ -21,21 +21,26 @@ file(COPY res/ DESTINATION ${CMAKE_BINARY_DIR}/res)
 if(WIN32)
     add_definitions(-DWIN32_LEAN_AND_MEAN)
     add_definitions(-DNOMINMAX)
-    
-    # Find packages for Windows (MSYS2)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(SDL2 REQUIRED sdl2)
-    pkg_check_modules(SDL2_IMAGE REQUIRED SDL2_image)
-    pkg_check_modules(SDL2_TTF REQUIRED SDL2_ttf)
-    pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
-    pkg_check_modules(NCURSES REQUIRED ncurses)
-    
-    # Include directories
-    include_directories(${SDL2_INCLUDE_DIRS})
-    include_directories(${SDL2_IMAGE_INCLUDE_DIRS})
-    include_directories(${SDL2_TTF_INCLUDE_DIRS})
-    include_directories(${YAML_CPP_INCLUDE_DIRS})
-    include_directories(${NCURSES_INCLUDE_DIRS})
+
+    # Find packages (should work automatically in MSYS2 environment)
+    find_package(SDL2 REQUIRED)
+    find_package(SDL2_image REQUIRED)
+    find_package(SDL2_ttf REQUIRED)
+
+    # For yaml-cpp and ncurses, use simpler approach
+    find_path(YAML_CPP_INCLUDE_DIR yaml.h)
+    find_library(YAML_CPP_LIBRARY NAMES yaml-cpp)
+
+    find_path(NCURSES_INCLUDE_DIR ncurses.h)
+    find_library(NCURSES_LIBRARY NAMES ncurses)
+
+    if(NOT YAML_CPP_INCLUDE_DIR OR NOT YAML_CPP_LIBRARY)
+        message(FATAL_ERROR "yaml-cpp not found")
+    endif()
+
+    if(NOT NCURSES_INCLUDE_DIR OR NOT NCURSES_LIBRARY)
+        message(FATAL_ERROR "ncurses not found")
+    endif()
 else()
     # Linux: Use pkg-config
     find_package(PkgConfig REQUIRED)
@@ -92,7 +97,6 @@ file(GLOB SOURCES
 )
 
 add_executable(chess ${SOURCES})
-
     
 target_link_libraries(${PROJECT_NAME} 
     ${SDL2_LIBRARIES} 
