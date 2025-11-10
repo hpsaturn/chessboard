@@ -5,6 +5,41 @@ project(ChessProject)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Git version extraction at build time
+execute_process(
+    COMMAND git describe --tags --always --dirty
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_VERSION
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    RESULT_VARIABLE GIT_RESULT
+)
+
+if(GIT_RESULT EQUAL 0)
+    message(STATUS "Git version: ${GIT_VERSION}")
+else()
+    set(GIT_VERSION "v0.1.3-unknown")
+    message(WARNING "Could not determine git version, using default: ${GIT_VERSION}")
+endif()
+
+# Extract just the tag version (remove commit hash and dirty flag)
+execute_process(
+    COMMAND git describe --tags --abbrev=0
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE PROJECT_VERSION
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    RESULT_VARIABLE TAG_RESULT
+)
+
+if(TAG_RESULT EQUAL 0)
+    message(STATUS "Project version: ${PROJECT_VERSION}")
+else()
+    set(PROJECT_VERSION "v0.1.3")
+    message(WARNING "Could not determine project version, using default: ${PROJECT_VERSION}")
+endif()
+
+# Build info (full git description)
+set(BUILD_INFO "${GIT_VERSION}")
+
 # Find required packages
 find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
@@ -84,10 +119,13 @@ set(CHESS_SOURCES
 if(SDL2_FOUND)
     list(APPEND CHESS_SOURCES
         src/chessboard_sdl.cpp 
-src/settings_modal.cpp
-    src/settings_modal.h
+        src/settings_modal.cpp
+        src/settings_modal.h
         src/gameinfo_modal.h
         src/gameinfo_modal.cpp
+        src/about_modal.h
+        src/about_modal.cpp
+        src/version.cpp
         src/gamestates_modal.h
         src/gamestates_modal.cpp
         src/help_modal.h
@@ -105,8 +143,11 @@ endif()
 # Create main chess executable
 add_executable(chess ${CHESS_SOURCES})
 
-# Define resource path for development
+# Define version information at compile time
 target_compile_definitions(chess PRIVATE 
+    PROJECT_VERSION="${PROJECT_VERSION}"
+    GIT_VERSION="${GIT_VERSION}"
+    BUILD_INFO="${BUILD_INFO}"
     RESOURCE_PATH_DEVELOPMENT="${RESOURCE_PATH_DEVELOPMENT}"
     RESOURCE_PATH_INSTALLED="${RESOURCE_PATH_INSTALLED}"
 )

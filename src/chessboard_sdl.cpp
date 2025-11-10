@@ -1,5 +1,6 @@
 #include "gameinfo_modal.h"
 #include "gamestates_modal.h"
+#include "about_modal.h"
 #include <SDL2/SDL.h>
 #include "help_modal.h"
 
@@ -39,10 +40,27 @@ GameInfoModal* gameInfoModal = nullptr;
 GameStatesModal* gameStatesModal = nullptr;
 ConfigManager* configManager = nullptr;
 HelpModal* helpModal = nullptr;
+AboutModal* aboutModal = nullptr;
 GameStateManager* stateManager = nullptr;
 
 std::string pending_fen;
 
+void resetBoard(ChessGame& chessGame) {
+  chessGame.resetGame();
+  pieceSelected = false;
+  selectedRow = -1;
+  selectedCol = -1;
+  cursorRow = 6;
+  cursorCol = 4;
+  lastMoveStartRow = -1;
+  lastMoveStartCol = -1;
+  lastMoveEndRow = -1;
+  lastMoveEndCol = -1;
+  lastCheckCol = -1;
+  lastCheckRow = -1;
+  chessGame.pending_move.clear();
+  engine.newGame();
+}
 
 // Handle keyboard input for piece selection and movement
 void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
@@ -141,26 +159,12 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
       break;
     case SDLK_r:
       // Reset board
-      chessGame.resetGame();
-      pieceSelected = false;
-      selectedRow = -1;
-      selectedCol = -1;
-      cursorRow = 6;
-      cursorCol = 4;
-      lastMoveStartRow = -1;
-      lastMoveStartCol = -1;
-      lastMoveEndRow = -1;
-      lastMoveEndCol = -1;
-      lastCheckCol = -1;
-      lastCheckRow = -1;
-      chessGame.pending_move.clear();
-      engine.newGame();
+      resetBoard(chessGame); 
       break;
     case SDLK_F5:
-      // bitboard.test_king_with_two_rooks();
-      // bitboard.test_complex_position();
-      // bitboard.test_king_escape();
-      // bitboard.test_fen_load_queen_test();
+      // Show about modal
+      if (aboutModal) aboutModal->show();
+      break;
       break;
   }
 }
@@ -208,7 +212,7 @@ void handleMouseClick(int mouseX, int mouseY, ChessGame& chessGame) {
 }
 
 // Main game loop
-void mainLoop(ChessGame chessGame, SDL_Renderer* renderer) {
+void mainLoop(ChessGame& chessGame, SDL_Renderer* renderer) {
   bool quit = false;
   SDL_Event e;
 
@@ -230,14 +234,14 @@ void mainLoop(ChessGame chessGame, SDL_Renderer* renderer) {
       // Handle keyboard input
       else if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
         // Let modals handle the event first
-        if (!settingsModal->handleEvent(e) && !gameInfoModal->handleEvent(e) && !gameStatesModal->handleEvent(e) && !helpModal->handleEvent(e)) {
+        if (!settingsModal->handleEvent(e) && !gameInfoModal->handleEvent(e) && !gameStatesModal->handleEvent(e) && !helpModal->handleEvent(e) && !aboutModal->handleEvent(e)) {
           handleKeyboardInput(e.key.keysym.sym, chessGame);
         }
       }
       // Handle mouse click
       else if (e.type == SDL_MOUSEBUTTONDOWN) {
         // Let modals handle the event first
-        if (!settingsModal->handleEvent(e) && !gameInfoModal->handleEvent(e) && !helpModal->handleEvent(e) && !gameInfoModal->handleEvent(e)) {
+        if (!settingsModal->handleEvent(e) && !gameInfoModal->handleEvent(e) && !aboutModal->handleEvent(e) && !helpModal->handleEvent(e) && !gameInfoModal->handleEvent(e)) {
           int mouseX, mouseY;
           SDL_GetMouseState(&mouseX, &mouseY);
           handleMouseClick(mouseX, mouseY, chessGame);
@@ -248,12 +252,13 @@ void mainLoop(ChessGame chessGame, SDL_Renderer* renderer) {
         settingsModal->handleEvent(e);
         gameInfoModal->handleEvent(e);
         gameStatesModal->handleEvent(e);
+        aboutModal->handleEvent(e);
       }
     }
 
     // New FEN to load
     if (!pending_fen.empty()) {
-      engine.newGame();
+      resetBoard(chessGame);
       chessGame.initializeBoard(pending_fen);
       pending_fen.clear();
     }
@@ -307,12 +312,13 @@ void mainLoop(ChessGame chessGame, SDL_Renderer* renderer) {
       }
     }
 
-    // Render settings modal windows
+    // Render modal windows
     settingsModal->render();
     gameInfoModal->render();
     gameStatesModal->render();
-
     helpModal->render();
+    aboutModal->render();
+
     // Update screen
     SDL_RenderPresent(renderer);
 
@@ -401,6 +407,7 @@ void renderChessboardSDL(std::string fen) {
   gameInfoModal = new GameInfoModal(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
   gameStatesModal = new GameStatesModal(renderer, SCREEN_WIDTH, SCREEN_HEIGHT, stateManager);
   helpModal = new HelpModal(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
+  aboutModal = new AboutModal(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
 
   // Set settings change callback
   settingsModal->setOnSettingsChanged([&chessGame](const SettingsModal::Settings& settings) {
@@ -443,8 +450,9 @@ void renderChessboardSDL(std::string fen) {
   delete settingsModal;
   delete gameStatesModal;
   delete gameInfoModal;
-
   delete helpModal;
+  delete aboutModal;
+
   cleanupChessPieceTextures();
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);

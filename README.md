@@ -95,8 +95,9 @@ This version is optimized for Picocalc board using Luckfox Lyra. For that it has
 - [x] Castelling full validations
 - [x] Ilegal check moves validations (engine crashes)
 - [x] isInCheck() validations
+- [x] Help info modal window
+- [ ] FEN casteling support
 - [ ] Game info modal window (in porgress)
-- [ ] Help info modal window
 - [ ] Points from the user (positive/negative)
 - [ ] Chronometers
 - [ ] Sound support

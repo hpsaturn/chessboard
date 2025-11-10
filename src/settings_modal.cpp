@@ -307,12 +307,12 @@ void SettingsModal::render() {
     
     // Draw semi-transparent overlay
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 128); // Semi-transparent black
+    SDL_SetRenderDrawColor(renderer, 20, 20, 20, 128); // Semi-transparent black
     SDL_Rect overlay = {0, 0, screenWidth, screenHeight};
     SDL_RenderFillRect(renderer, &overlay);
     
     // Draw modal background
-    SDL_SetRenderDrawColor(renderer, 40, 40, 40, 255); // Dark gray
+    SDL_SetRenderDrawColor(renderer, 40, 40, 40, 200); // Dark gray
     SDL_Rect modalRect = {modalX, modalY, modalWidth, modalHeight};
     SDL_RenderFillRect(renderer, &modalRect);
     
