@@ -90,6 +90,7 @@ src/settings_modal.cpp
         src/gameinfo_modal.cpp
         src/about_modal.h
         src/about_modal.cpp
+    src/version.cpp
         src/gamestates_modal.h
         src/gamestates_modal.cpp
         src/help_modal.h

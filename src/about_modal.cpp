@@ -1,4 +1,5 @@
 #include "about_modal.h"
+#include "version.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_image.h>
@@ -78,10 +79,13 @@ void AboutModal::render() {
     SDL_Rect modalRect = {modalX, modalY, modalWidth, modalHeight};
     SDL_RenderDrawRect(renderer, &modalRect);
     
+    // Get dynamic version
+    std::string versionInfo = Version::getBuildInfo();
+    
     // Draw title
     SDL_Color titleColor = {255, 255, 255, 255};  // White
     drawText("About Chess Game", modalX + 10, modalY + 10, titleColor);
-    drawText("(Hpsaturn 2025 v0.1.3)", modalX + 10, modalY + 25, titleColor);
+    drawText("(Hpsaturn 2025 " + versionInfo + ")", modalX + 10, modalY + 25, titleColor);
     
     // Draw separator line
     SDL_SetRenderDrawColor(renderer, 150, 150, 150, 255);  // Medium gray
@@ -117,7 +121,7 @@ void AboutModal::render() {
     
     // Draw close instruction
     SDL_Color instructionColor = {150, 255, 150, 255};  // Light green
-    drawText("Press ESC close", modalX + 15, modalY + modalHeight - 25, instructionColor);
+    drawText("Press ESC to close", modalX + 15, modalY + modalHeight - 25, instructionColor);
 }
 
 void AboutModal::drawText(const std::string& text, int x, int y, SDL_Color color) {
