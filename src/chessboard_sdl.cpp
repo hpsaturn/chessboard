@@ -317,7 +317,7 @@ void mainLoop(ChessGame chessGame, SDL_Renderer* renderer) {
     SDL_RenderPresent(renderer);
 
     // Send move to engine and update its move
-    if (!chessGame.pending_move.empty()) {
+    if (!chessGame.pending_move.empty()) {  
       std::cout << "[SDLG] sending move  : " << chessGame.pending_move << std::endl;
       std::string engine_move;
       if (chessGame.isFenMode())

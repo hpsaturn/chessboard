@@ -11,7 +11,7 @@ C++ chessboard renderer with SDL2, ASCII, and NCurses on the top of GNUChess UCI
 - [x] **SDL2 Mode**: Graphical chessboard with smooth rendering (default)
 - [x] **GNUChess UCI**: protocol integration
 - [x] **Bitboard validations**: improvement using bit arrays of 64 bits
-- [x] **Picocalc Luckfox Lyra**: SDL and keyboard issues are fixed
+- [x] **Picocalc Luckfox Lyra**: Optimized for this mod and board
 - [x] **FEN notation support**: Basic game state loader via CLI argument
 - [x] **Fast game states**: Save and load bookmarks with small preview
 - [ ] **NCurses Mode**: Terminal UI with keyboard navigation (in progress)
@@ -99,6 +99,7 @@ This version is optimized for Picocalc board using Luckfox Lyra. For that it has
 - [ ] Help info modal window
 - [ ] Points from the user (positive/negative)
 - [ ] Chronometers
+- [ ] Sound support
 - [ ] Buildroot config files for Luckfox Lyra tests
 - [ ] Sprite pieces improvement
 
@@ -111,7 +112,7 @@ This version is optimized for Picocalc board using Luckfox Lyra. For that it has
 
 ## Credits
 
-- Special thanks a my son, M.V for its continuous critics and beta tests
+- Special thanks to my son, M.V for its continuous critics and beta tests
 - Thanks to [@lunokjod](https://github.com/lunokjod) for his MongoIA assistant
 - Thanks to [Chess SDL project](https://gitlab.com/fortysixandtwo/SDL-Chess) for its CC by SA image assets.
 
