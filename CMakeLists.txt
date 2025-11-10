@@ -19,26 +19,23 @@ file(COPY res/ DESTINATION ${CMAKE_BINARY_DIR}/res)
 
 # Find dependencies based on platform
 if(WIN32)
-    # Windows: Try vcpkg first, then fallback to manual paths
-    message(STATUS "Configuring for Windows build")
+    add_definitions(-DWIN32_LEAN_AND_MEAN)
+    add_definitions(-DNOMINMAX)
     
-    # Try to find packages through vcpkg (note: vcpkg uses lowercase)
-    find_package(sdl2 QUIET)
-    find_package(sdl2-image QUIET)
-    find_package(sdl2-ttf QUIET)
-    find_package(yaml-cpp QUIET)
+    # Find packages for Windows (MSYS2)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(SDL2 REQUIRED sdl2)
+    pkg_check_modules(SDL2_IMAGE REQUIRED SDL2_image)
+    pkg_check_modules(SDL2_TTF REQUIRED SDL2_ttf)
+    pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
+    pkg_check_modules(NCURSES REQUIRED ncurses)
     
-    # If packages not found, provide helpful error message
-    if(NOT sdl2_FOUND)
-        message(FATAL_ERROR "SDL2 not found on Windows. Please ensure vcpkg is properly set up with: vcpkg install sdl2 sdl2-image sdl2-ttf yaml-cpp")
-    endif()
-    
-    # Include directories for Windows
-    include_directories(${sdl2_INCLUDE_DIRS} ${sdl2-image_INCLUDE_DIRS} ${sdl2-ttf_INCLUDE_DIRS} ${yaml-cpp_INCLUDE_DIRS})
-    
-    # For ncurses on Windows, we'll skip it or use alternative
-    message(STATUS "Skipping ncurses on Windows - using alternative or SDL only")
-    
+    # Include directories
+    include_directories(${SDL2_INCLUDE_DIRS})
+    include_directories(${SDL2_IMAGE_INCLUDE_DIRS})
+    include_directories(${SDL2_TTF_INCLUDE_DIRS})
+    include_directories(${YAML_CPP_INCLUDE_DIRS})
+    include_directories(${NCURSES_INCLUDE_DIRS})
 else()
     # Linux: Use pkg-config
     find_package(PkgConfig REQUIRED)
@@ -96,27 +93,17 @@ file(GLOB SOURCES
 
 add_executable(chess ${SOURCES})
 
-# Link libraries
-if(WIN32)
-    target_link_libraries(chess 
-        ${sdl2_LIBRARIES} 
-        ${sdl2-image_LIBRARIES} 
-        ${sdl2-ttf_LIBRARIES} 
-        ${yaml-cpp_LIBRARIES}
-        Threads::Threads
-    )
-else()
-    target_link_libraries(chess 
-        ${SDL2_LIBRARIES} 
-        ${SDL2_IMAGE_LIBRARIES} 
-        ${SDL2_TTF_LIBRARIES} 
-        ${YAML_CPP_LIBRARIES}
-        Threads::Threads
-    )
     
-    if(CURSES_FOUND)
-        target_link_libraries(chess ${CURSES_LIBRARIES})
-    endif()
+target_link_libraries(${PROJECT_NAME} 
+    ${SDL2_LIBRARIES} 
+    ${SDL2_IMAGE_LIBRARIES} 
+    ${SDL2_TTF_LIBRARIES} 
+    ${YAML_CPP_LIBRARIES}
+    Threads::Threads
+)
+
+if(CURSES_FOUND)
+    target_link_libraries(chess ${CURSES_LIBRARIES})
 endif()
 
 # Install target

@@ -1,6 +1,6 @@
 #include "gameinfo_modal.h"
 #include "gamestates_modal.h"
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include "help_modal.h"
 
 #include <iostream>
