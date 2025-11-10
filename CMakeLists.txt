@@ -119,13 +119,13 @@ set(CHESS_SOURCES
 if(SDL2_FOUND)
     list(APPEND CHESS_SOURCES
         src/chessboard_sdl.cpp 
-src/settings_modal.cpp
-    src/settings_modal.h
+        src/settings_modal.cpp
+        src/settings_modal.h
         src/gameinfo_modal.h
         src/gameinfo_modal.cpp
         src/about_modal.h
         src/about_modal.cpp
-    src/version.cpp
+        src/version.cpp
         src/gamestates_modal.h
         src/gamestates_modal.cpp
         src/help_modal.h
