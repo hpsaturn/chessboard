@@ -68,53 +68,56 @@ void AboutModal::render() {
     if (!visible || !font) return;
     
     // Draw modal background (same colors as gameinfo_modal)
-    SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255);  // Dark gray background
-    SDL_Rect modalRect = {modalX, modalY, modalWidth, modalHeight};
-    SDL_RenderFillRect(renderer, &modalRect);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(renderer, 20, 20, 20, 220);  // Dark gray background
+    SDL_Rect overlay = {modalX, modalY, modalWidth, modalHeight};
+    SDL_RenderFillRect(renderer, &overlay);
     
     // Draw border (same colors as gameinfo_modal)
-    SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);  // Light gray border
+    SDL_SetRenderDrawColor(renderer, 40, 40, 40, 220);  // Light gray border
+    SDL_Rect modalRect = {modalX, modalY, modalWidth, modalHeight};
     SDL_RenderDrawRect(renderer, &modalRect);
     
     // Draw title
     SDL_Color titleColor = {255, 255, 255, 255};  // White
     drawText("About Chess Game", modalX + 10, modalY + 10, titleColor);
+    drawText("(Hpsaturn 2025 v0.1.3)", modalX + 10, modalY + 25, titleColor);
     
     // Draw separator line
     SDL_SetRenderDrawColor(renderer, 150, 150, 150, 255);  // Medium gray
-    SDL_RenderDrawLine(renderer, modalX + 10, modalY + 35, modalX + modalWidth - 10, modalY + 35);
+    SDL_RenderDrawLine(renderer, modalX + 10, modalY + 45, modalX + modalWidth - 10, modalY + 45);
     
     // Draw credits content
     SDL_Color textColor = {220, 220, 220, 255};  // Light gray
-    int currentY = modalY + 50;
+    int currentY = modalY + 55;
     
     drawText("Credits:", modalX + 15, currentY, textColor);
     currentY += 25;
     
     drawText("- Special thanks to my son, M.V", modalX + 20, currentY, textColor);
-    currentY += 20;
+    currentY += 15;
     drawText("  for continuous critics and beta tests", modalX + 20, currentY, textColor);
     currentY += 25;
     
     drawText("- Thanks to @lunokjod", modalX + 20, currentY, textColor);
-    currentY += 20;
+    currentY += 15;
     drawText("  for his MongoIA assistant", modalX + 20, currentY, textColor);
     currentY += 25;
     
     drawText("- Thanks to Chess SDL project", modalX + 20, currentY, textColor);
-    currentY += 20;
+    currentY += 15;
     drawText("  for CC BY-SA image assets", modalX + 20, currentY, textColor);
     currentY += 25;
     
     // Draw license info
     SDL_Color licenseColor = {180, 180, 255, 255};  // Light blue
-    drawText("License: GPLv3", modalX + 15, currentY, licenseColor);
+    drawText("  License: GPLv3", modalX + 15, currentY, licenseColor);
     currentY += 20;
-    drawText("Assets: CC BY-SA 3.0", modalX + 15, currentY, licenseColor);
+    drawText("  Assets: CC BY-SA 3.0", modalX + 15, currentY, licenseColor);
     
     // Draw close instruction
     SDL_Color instructionColor = {150, 255, 150, 255};  // Light green
-    drawText("Press ESC or click outside to close", modalX + 15, modalY + modalHeight - 25, instructionColor);
+    drawText("Press ESC close", modalX + 15, modalY + modalHeight - 25, instructionColor);
 }
 
 void AboutModal::drawText(const std::string& text, int x, int y, SDL_Color color) {

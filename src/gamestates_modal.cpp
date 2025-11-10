@@ -106,13 +106,14 @@ bool GameStatesModal::handleEvent(const SDL_Event& e) {
 void GameStatesModal::render() {
     if (!visible) return;
     
-    // Draw modal background
-    SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255);
+    // Draw modal background (same colors as gameinfo_modal)
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(renderer, 20, 20, 20, 230);
     SDL_Rect modalRect = {modalX, modalY, modalWidth, modalHeight};
     SDL_RenderFillRect(renderer, &modalRect);
     
     // Draw modal border
-    SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
+    SDL_SetRenderDrawColor(renderer, 40, 40, 40, 230);
     SDL_RenderDrawRect(renderer, &modalRect);
     
     // Draw title
@@ -173,7 +174,7 @@ void GameStatesModal::renderListView() {
         std::string scrollText = "[" + std::to_string(scrollOffset + 1) + "-" + 
                                std::to_string(std::min(scrollOffset + itemsPerPage, (int)states.size())) + 
                                "/" + std::to_string(states.size()) + "]";
-        drawText(scrollText, listX, listY + itemsPerPage * itemHeight + 5, white);
+        drawText(scrollText, listX + 60, listY + itemsPerPage * itemHeight + 15, white);
     }
 }
 

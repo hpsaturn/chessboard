@@ -80,7 +80,7 @@ void GameInfoModal::render() {
     SDL_RenderFillRect(renderer, &overlay);
     
     // Draw modal background
-    SDL_SetRenderDrawColor(renderer, 40, 40, 40, 255); // Dark gray
+    SDL_SetRenderDrawColor(renderer, 40, 40, 40, 200); // Dark gray
     SDL_Rect modalRect = {modalX, modalY, modalWidth, modalHeight};
     SDL_RenderFillRect(renderer, &modalRect);
     
