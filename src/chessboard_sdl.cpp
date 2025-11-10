@@ -1,6 +1,6 @@
 #include "gameinfo_modal.h"
 #include "gamestates_modal.h"
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include "help_modal.h"
 
 #include <iostream>
@@ -307,12 +307,12 @@ void mainLoop(ChessGame chessGame, SDL_Renderer* renderer) {
       }
     }
 
-    // Render settings modal windows
+    // Render modal windows
     settingsModal->render();
     gameInfoModal->render();
     gameStatesModal->render();
-
     helpModal->render();
+
     // Update screen
     SDL_RenderPresent(renderer);
 
@@ -443,8 +443,8 @@ void renderChessboardSDL(std::string fen) {
   delete settingsModal;
   delete gameStatesModal;
   delete gameInfoModal;
-
   delete helpModal;
+
   cleanupChessPieceTextures();
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
