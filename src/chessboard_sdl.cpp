@@ -45,6 +45,22 @@ GameStateManager* stateManager = nullptr;
 
 std::string pending_fen;
 
+void resetBoard(ChessGame& chessGame) {
+  chessGame.resetGame();
+  pieceSelected = false;
+  selectedRow = -1;
+  selectedCol = -1;
+  cursorRow = 6;
+  cursorCol = 4;
+  lastMoveStartRow = -1;
+  lastMoveStartCol = -1;
+  lastMoveEndRow = -1;
+  lastMoveEndCol = -1;
+  lastCheckCol = -1;
+  lastCheckRow = -1;
+  chessGame.pending_move.clear();
+  engine.newGame();
+}
 
 // Handle keyboard input for piece selection and movement
 void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
@@ -143,20 +159,7 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
       break;
     case SDLK_r:
       // Reset board
-      chessGame.resetGame();
-      pieceSelected = false;
-      selectedRow = -1;
-      selectedCol = -1;
-      cursorRow = 6;
-      cursorCol = 4;
-      lastMoveStartRow = -1;
-      lastMoveStartCol = -1;
-      lastMoveEndRow = -1;
-      lastMoveEndCol = -1;
-      lastCheckCol = -1;
-      lastCheckRow = -1;
-      chessGame.pending_move.clear();
-      engine.newGame();
+      resetBoard(chessGame); 
       break;
     case SDLK_F5:
       // Show about modal
@@ -209,7 +212,7 @@ void handleMouseClick(int mouseX, int mouseY, ChessGame& chessGame) {
 }
 
 // Main game loop
-void mainLoop(ChessGame chessGame, SDL_Renderer* renderer) {
+void mainLoop(ChessGame& chessGame, SDL_Renderer* renderer) {
   bool quit = false;
   SDL_Event e;
 
@@ -255,7 +258,7 @@ void mainLoop(ChessGame chessGame, SDL_Renderer* renderer) {
 
     // New FEN to load
     if (!pending_fen.empty()) {
-      engine.newGame();
+      resetBoard(chessGame);
       chessGame.initializeBoard(pending_fen);
       pending_fen.clear();
     }
