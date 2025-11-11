@@ -111,8 +111,10 @@ endif()
 include_directories(src)
 
 # Define resource paths
+# Development path: relative to executable in build directory
+# Installation path: /usr/local/share/chess (or custom prefix)
 set(RESOURCE_PATH_DEVELOPMENT "res")
-set(RESOURCE_PATH_INSTALLED "/usr/local/share/chess")
+set(RESOURCE_PATH_INSTALLED "${CMAKE_INSTALL_PREFIX}/share/chess")                                                                                                             
 
 file(GLOB SOURCES 
     "src/*.cpp"
