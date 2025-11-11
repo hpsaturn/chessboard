@@ -116,7 +116,11 @@ include_directories(src)
 set(RESOURCE_PATH_DEVELOPMENT "res")
 
 # Detect Buildroot environment and adjust installation path
-if(DEFINED ENV{BR2_VERSION})
+# Check multiple indicators of Buildroot environment
+if(DEFINED ENV{BR2_VERSION} OR 
+   DEFINED ENV{BUILDROOT_BUILD} OR
+   DEFINED ENV{BUILDROOT_CONFIG} OR
+   "${CMAKE_SYSTEM_NAME}" STREQUAL "Buildroot")
     set(RESOURCE_PATH_INSTALLED "/usr/share/chess")
     message(STATUS "Buildroot detected: using /usr/share/chess for resources")
 else()
@@ -162,3 +166,10 @@ add_custom_command(TARGET chess POST_BUILD
 # Installation
 install(TARGETS chess DESTINATION bin)
 install(DIRECTORY res/ DESTINATION share/chess)
+
+# Option to force Buildroot mode (useful when BR2_VERSION is not set)
+option(FORCE_BUILDROOT "Force Buildroot installation paths" OFF)
+if(FORCE_BUILDROOT)
+    set(RESOURCE_PATH_INSTALLED "/usr/share/chess")
+    message(STATUS "Buildroot forced: using /usr/share/chess for resources")
+endif()

@@ -31,6 +31,11 @@ std::string getExecutablePath() {
 std::string getResourcePath(const std::string& relativePath) {
     std::vector<std::string> searchPaths;
     
+    // 0. Try installed paths first (for Buildroot deployments)
+    searchPaths.push_back("/usr/share/chess/" + relativePath);
+    searchPaths.push_back("/usr/local/share/chess/" + relativePath);
+    searchPaths.push_back(RESOURCE_PATH_INSTALLED "/" + relativePath);
+    
     // 1. Try relative to executable (development build)
     std::string exeDir = getExecutablePath();
     if (!exeDir.empty()) {
@@ -42,10 +47,6 @@ std::string getResourcePath(const std::string& relativePath) {
     searchPaths.push_back("res/" + relativePath);
     searchPaths.push_back("../res/" + relativePath);
     
-    // 3. Try installed paths
-    searchPaths.push_back(RESOURCE_PATH_INSTALLED "/" + relativePath);
-    searchPaths.push_back("/usr/share/chess/" + relativePath);
-    searchPaths.push_back("/usr/local/share/chess/" + relativePath);
     
     // 4. Try absolute paths from CMake definitions
     searchPaths.push_back(RESOURCE_PATH_DEVELOPMENT "/" + relativePath);
