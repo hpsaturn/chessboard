@@ -8,6 +8,7 @@ public:
     static std::string getVersion();
     static std::string getGitVersion();
     static std::string getBuildInfo();
+    static bool isBuildrootEnvironment();
 };
 
-#endif
+#endif // VERSION_H
