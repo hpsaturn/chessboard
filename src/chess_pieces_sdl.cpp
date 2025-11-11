@@ -4,6 +4,9 @@
 #include <SDL2/SDL_ttf.h>
 #include <iostream>
 #include <filesystem>
+#include <unistd.h>
+#include <limits.h>
+#include <vector>
 #include "chess_pieces_sdl.h"
 #include <map>
 #include "chess_pieces.h"
@@ -13,22 +16,66 @@
 std::map<PieceType, PieceTextures> pieceTextures;
 TTF_Font* font = nullptr;
 
-// Function to get resource path
+// Function to get the directory where the executable is located
+std::string getExecutablePath() {
+    char result[PATH_MAX];
+    ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+    if (count != -1) {
+        std::string path(result, count);
+        return path.substr(0, path.find_last_of("/"));
+    }
+    return "";
+}
+
+// Function to get resource path with robust detection
 std::string getResourcePath(const std::string& relativePath) {
-
-    // First try installed path (relative to executable)
-    std::string installPath = RESOURCE_PATH_INSTALLED "/" + relativePath;
-    if (std::filesystem::exists(installPath)) {
-        return installPath;
+    std::vector<std::string> searchPaths;
+    
+    // 1. Try relative to executable (development build)
+    std::string exeDir = getExecutablePath();
+    if (!exeDir.empty()) {
+        searchPaths.push_back(exeDir + "/res/" + relativePath);
+        searchPaths.push_back(exeDir + "/../res/" + relativePath);
     }
-
-    std::string devPath = RESOURCE_PATH_DEVELOPMENT "/" + relativePath;
-    if (std::filesystem::exists(devPath)) {
-        return devPath;
+    
+    // 2. Try current directory (development)
+    searchPaths.push_back("res/" + relativePath);
+    searchPaths.push_back("../res/" + relativePath);
+    
+    // 3. Try installed paths
+    searchPaths.push_back(RESOURCE_PATH_INSTALLED "/" + relativePath);
+    searchPaths.push_back("/usr/share/chess/" + relativePath);
+    searchPaths.push_back("/usr/local/share/chess/" + relativePath);
+    
+    // 4. Try absolute paths from CMake definitions
+    searchPaths.push_back(RESOURCE_PATH_DEVELOPMENT "/" + relativePath);
+    
+    // Debug: print search paths if needed
+    #ifdef DEBUG_RESOURCE_PATHS
+    std::cout << "[RESOURCE] Searching for: " << relativePath << std::endl;
+    for (const auto& path : searchPaths) {
+        std::cout << "[RESOURCE] Checking: " << path << std::endl;
     }
-     
-    // If neither exists, return the development path (for error reporting)
-    return devPath;
+    #endif
+    
+    // Try each path in order
+    for (const auto& path : searchPaths) {
+        if (std::filesystem::exists(path)) {
+            #ifdef DEBUG_RESOURCE_PATHS
+            std::cout << "[RESOURCE] Found: " << path << std::endl;
+            #endif
+            return path;
+        }
+    }
+    
+    // If nothing found, return the most likely development path for error reporting
+    std::cerr << "[RESOURCE] ERROR: Could not find resource: " << relativePath << std::endl;
+    std::cerr << "[RESOURCE] Searched in:" << std::endl;
+    for (const auto& path : searchPaths) {
+        std::cerr << "  - " << path << std::endl;
+    }
+    
+    return searchPaths[0]; // Return first path for error context
 }
 
 // Function to load a texture from file
@@ -68,10 +115,23 @@ bool initChessPieceTextures(SDL_Renderer* renderer) {
         return false;
     }
     
-    // Load font
-    font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 10);
+    // Load font - try multiple locations
+    std::vector<std::string> fontPaths = {
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/TTF/DejaVuSans.ttf",
+        "/usr/share/fonts/dejavu/DejaVuSans.ttf"
+    };
+    
+    for (const auto& fontPath : fontPaths) {
+        font = TTF_OpenFont(fontPath.c_str(), 10);
+        if (font != nullptr) {
+            std::cout << "[SDLG] Loaded font from: " << fontPath << std::endl;
+            break;
+        }
+    }
+    
     if (font == nullptr) {
-        std::cerr << "[SDLG] Failed to load font! SDL_ttf Error: " << TTF_GetError() << std::endl;
+        std::cerr << "[SDLG] Failed to load font from any location! SDL_ttf Error: " << TTF_GetError() << std::endl;
         // Continue without font - text rendering will fall back to primitive method
     }
     
@@ -107,15 +167,21 @@ bool initChessPieceTextures(SDL_Renderer* renderer) {
     };
     
     // Check if all textures loaded successfully
+    bool allLoaded = true;
     for (const auto& pair : pieceTextures) {
         if (pair.second.white == nullptr || pair.second.black == nullptr) {
             std::cerr << "[SDLG] Failed to load textures for piece type: " << static_cast<int>(pair.first) << std::endl;
-            return false;
+            allLoaded = false;
         }
     }
     
-    std::cout << "[SDLG] Successfully loaded all chess piece textures" << std::endl;
-    return true;
+    if (allLoaded) {
+        std::cout << "[SDLG] Successfully loaded all chess piece textures" << std::endl;
+    } else {
+        std::cerr << "[SDLG] Some textures failed to load" << std::endl;
+    }
+    
+    return allLoaded;
 }
 
 // Function to cleanup loaded textures

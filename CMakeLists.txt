@@ -110,11 +110,19 @@ endif()
 # Include directories
 include_directories(src)
 
-# Define resource paths
+# Define resource paths with Buildroot support
 # Development path: relative to executable in build directory
-# Installation path: /usr/local/share/chess (or custom prefix)
+# Installation path: /usr/share/chess for Buildroot, /usr/local/share/chess for normal install
 set(RESOURCE_PATH_DEVELOPMENT "res")
-set(RESOURCE_PATH_INSTALLED "${CMAKE_INSTALL_PREFIX}/share/chess")                                                                                                             
+
+# Detect Buildroot environment and adjust installation path
+if(DEFINED ENV{BR2_VERSION})
+    set(RESOURCE_PATH_INSTALLED "/usr/share/chess")
+    message(STATUS "Buildroot detected: using /usr/share/chess for resources")
+else()
+    set(RESOURCE_PATH_INSTALLED "${CMAKE_INSTALL_PREFIX}/share/chess")
+    message(STATUS "Normal install: using ${RESOURCE_PATH_INSTALLED} for resources")
+endif()
 
 file(GLOB SOURCES 
     "src/*.cpp"
