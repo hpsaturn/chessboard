@@ -123,6 +123,7 @@ if(DEFINED ENV{BR2_VERSION} OR
    "${CMAKE_SYSTEM_NAME}" STREQUAL "Buildroot")
     set(RESOURCE_PATH_INSTALLED "/usr/share/chess")
     message(STATUS "Buildroot detected: using /usr/share/chess for resources")
+    set(RESOURCE_PATH_INSTALLED "/usr/share/chess")
 else()
     set(RESOURCE_PATH_INSTALLED "${CMAKE_INSTALL_PREFIX}/share/chess")
     message(STATUS "Normal install: using ${RESOURCE_PATH_INSTALLED} for resources")
