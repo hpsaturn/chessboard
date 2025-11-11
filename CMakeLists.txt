@@ -114,25 +114,9 @@ include_directories(src)
 set(RESOURCE_PATH_DEVELOPMENT "res")
 set(RESOURCE_PATH_INSTALLED "/usr/local/share/chess")
 
-# Source files
-set(SOURCES
-    src/main.cpp
-    src/chess_game_logic.cpp
-    src/chess_pieces_sdl.cpp
-    src/chessboard_sdl.cpp
-    src/chessboard_ncurses.cpp
-    src/chess_pieces_ncurses.cpp
-    src/chessboard_chars.cpp
-    src/config_manager.cpp
-    src/game_state_manager.cpp
-    src/gameinfo_modal.cpp
-    src/about_modal.cpp
-    src/version.cpp
-    src/engine/bitboard.cpp
-    src/engine/uci_engine.cpp
-    src/settings_modal.cpp
-    src/gamestates_modal.cpp
-    src/help_modal.cpp
+file(GLOB SOURCES 
+    "src/*.cpp"
+    "src/engine/*.cpp"
 )
 
 # Add executable

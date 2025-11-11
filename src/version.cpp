@@ -1,7 +1,7 @@
 #include "version.h"
 #include <string>
 
-// These are defined by CMake at build time
+// These will be replaced by CMake during build
 #ifndef PROJECT_VERSION
 #define PROJECT_VERSION "v0.1.3"
 #endif
@@ -24,12 +24,4 @@ std::string Version::getGitVersion() {
 
 std::string Version::getBuildInfo() {
     return BUILD_INFO;
-}
-
-bool Version::isBuildrootEnvironment() {
-    // Check if we're running in a Buildroot environment
-    // This can be detected by checking for Buildroot-specific environment variables
-    // or by checking if the version string contains "buildroot"
-    std::string version = getGitVersion();
-    return version.find("buildroot") != std::string::npos;
 }
