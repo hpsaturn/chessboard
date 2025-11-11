@@ -124,9 +124,7 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
       break;
     case SDLK_s:
       // Show settings modal
-      if (settingsModal) {
-        settingsModal->show();
-      }
+      if (settingsModal) settingsModal->show();
       break;
     case SDLK_i:
       // Show game info modal
@@ -144,10 +142,9 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
     case SDLK_F3:
       // Load last state slot
       std::cout << "[SDLG] loading state: " << stateManager->getLastGameState()->fen << std::endl;
-      engine.newGame();
+      resetBoard(chessGame);
       chessGame.initializeBoard(stateManager->getLastGameState()->fen);
       break;
-    
     case SDLK_F4:
       // Show game states modal
       if (gameStatesModal) gameStatesModal->show();
@@ -422,13 +419,12 @@ void renderChessboardSDL(std::string fen) {
   });
 
   // Initialize engine
-  if (engine.startEngine()) {
+  if (engine.startEngine(true)) {
     // Initialize UCI protocol
     engine.sendCommand("uci");
     if (engine.waitForResponse("uciok")) {
       std::cout << "[SDLG] Engine is UCI compatible!" << std::endl;
     }
-
     engine.sendCommand("isready");
     if (engine.waitForResponse("readyok")) {
       std::cout << "[SDLG] Engine is ready!" << std::endl;
