@@ -15,18 +15,18 @@ TTF_Font* font = nullptr;
 
 // Function to get resource path
 std::string getResourcePath(const std::string& relativePath) {
-    // First try development path (relative to executable)
-    std::string devPath = RESOURCE_PATH_DEVELOPMENT "/" + relativePath;
-    if (std::filesystem::exists(devPath)) {
-        return devPath;
-    }
-    
-    // Then try installed path
+
+    // First try installed path (relative to executable)
     std::string installPath = RESOURCE_PATH_INSTALLED "/" + relativePath;
     if (std::filesystem::exists(installPath)) {
         return installPath;
     }
-    
+
+    std::string devPath = RESOURCE_PATH_DEVELOPMENT "/" + relativePath;
+    if (std::filesystem::exists(devPath)) {
+        return devPath;
+    }
+     
     // If neither exists, return the development path (for error reporting)
     return devPath;
 }
