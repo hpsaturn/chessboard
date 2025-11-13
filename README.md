@@ -50,6 +50,23 @@ sudo apt install gnuchess cmake build-essential libsdl2-dev libsdl2-ttf-dev libs
 
 For more about FEN notation and details, please enter [here](https://www.redhotpawn.com/chess/chess-fen-viewer.php)
 
+### Picocalc (Luckfox Lyra Linux)
+
+```bash
+git clone --recursive https://github.com/hpsaturn/picocalc-luckfox-lyra.git
+cd picocalc-luckfox-lyra
+./setup.sh
+./build.sh all
+./build.sh buildroot-make:chessboard
+./flash.sh
+```
+
+For details please [here](https://github.com/hpsaturn/picocalc-luckfox-lyra?tab=readme-ov-file#picocalc-lyra-build-system)
+
+### Precompiled binaries (Linux)
+
+I precompiled some versions regulary in [releases](https://github.com/hpsaturn/chessboard/releases)
+
 ## Usage
 
 This version is optimized for Picocalc board using Luckfox Lyra. For that it has the next key bindings:
@@ -60,15 +77,17 @@ This version is optimized for Picocalc board using Luckfox Lyra. For that it has
 | **SPACE** | Select piece or setting |
 | **ENTER** | Move selected piece |
 | **ESC** | Deselect piece or window exit |
+| **F1**| Show keyboard bindings |
 | **F2**| Save game state |
 | **F3**| Load last game state saved |
 | **F4**| Enter to game states window |
 | **BACKSPACE** | Delete game state (states window) |
+| **F5**| About and credits |
 | **S**| Enter to settings section |
 | **I**| Toggle to show game info |
 | **Q**| Exit the game. (without state save for now) |
 | **R**| Restart the game. (without ask before for now) |
-| **H**| Help (in progress) |
+| **H**| Help - Keyboard bindings |
 
 ![screenshots](res/screenshots/screenshots.png)
 

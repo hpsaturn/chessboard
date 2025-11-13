@@ -109,7 +109,7 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
       break;
     case SDLK_q:
       // Quit the game
-      if (!(settingsModal->isVisible() || gameInfoModal->isVisible() || gameStatesModal->isVisible() || helpModal->isVisible())) {
+      if (!(settingsModal->isVisible() || gameInfoModal->isVisible() || gameStatesModal->isVisible() || helpModal->isVisible() || aboutModal->isVisible())) {
         SDL_Quit();
         exit(0);
       }
