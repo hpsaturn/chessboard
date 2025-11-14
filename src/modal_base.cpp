@@ -77,9 +77,9 @@ void ModalBase::renderModalBorder() {
     SDL_RenderDrawRect(renderer, &modalBorder);
 }
 
-void ModalBase::renderCloseInstruction() {
+void ModalBase::renderBottomLine(const std::string& instruction) {
     SDL_Color instructionColor = {150, 255, 150, 255};  // Light green
-    drawText("Press ESC to close", modalX + 15, modalY + modalHeight - 25, instructionColor);
+    drawText(instruction.c_str(), modalX + 15, modalY + modalHeight - 25, instructionColor);
 }
 
 void ModalBase::drawText(const std::string& text, int x, int y, SDL_Color color) {

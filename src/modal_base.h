@@ -47,7 +47,7 @@ protected:
     // Common modal rendering utilities
     void renderModalBackground();
     void renderModalBorder();
-    void renderCloseInstruction();
+    void renderBottomLine(const std::string& instruction = "Press ESC to close");
 
 };
 

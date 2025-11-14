@@ -59,5 +59,5 @@ void AboutModal::render() {
     drawText("  Assets: CC BY-SA 3.0", modalX + 15, currentY, licenseColor);
     
     // Draw close instruction using base class method
-    renderCloseInstruction();
+    renderBottomLine();
 }

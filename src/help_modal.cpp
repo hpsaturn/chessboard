@@ -88,7 +88,7 @@ void HelpModal::render() {
     // }
     
     // Add close instruction
-    renderCloseInstruction();
+    renderBottomLine();
 }
 
 void HelpModal::initializeHelpContent() {

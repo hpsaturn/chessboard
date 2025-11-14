@@ -7,82 +7,49 @@
 #include "chess_pieces_sdl.h"
 
 GameInfoModal::GameInfoModal(SDL_Renderer* renderer, int screenWidth, int screenHeight)
-    : renderer(renderer), screenWidth(screenWidth), screenHeight(screenHeight), visible(false), font(nullptr) {
-    
-    // Initialize SDL_ttf
-    if (TTF_Init() == -1) {
-        std::cerr << "TTF_Init failed: " << TTF_GetError() << std::endl;
-    } else {
-        // Load DejaVu Sans font (commonly available on Linux)
-        font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 11);
-        if (!font) {
-            std::cerr << "Failed to load font: " << TTF_GetError() << std::endl;
-        }
-    }
-    
-    // Calculate modal position and size
-    modalWidth = 300;
-    modalHeight = 300;
-    modalX = (screenWidth - modalWidth) / 2;
-    modalY = (screenHeight - modalHeight) / 2;
+    : ModalBase(renderer, screenWidth, screenHeight, 300, 300) {
     
     // Piece display settings
     pieceSize = SQUARE_SIZE / PIECE_SCALED;
-    pieceSpacing = 1;
+    pieceSpacing = 0;
     sectionPadding = 5;
 }
 
-GameInfoModal::~GameInfoModal() {
-    if (font) {
-        TTF_CloseFont(font);
-    }
-    TTF_Quit();
-}
-
-void GameInfoModal::show() {
-    visible = true;
-}
-
-void GameInfoModal::hide() {
-    visible = false;
-}
-
 bool GameInfoModal::handleEvent(const SDL_Event& e) {
-  if (!visible) return false;
-
-  if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
-    if (e.key.keysym.sym == SDLK_ESCAPE || e.key.keysym.sym == SDLK_i) {
-      hide();
-      return true;  // Modal consumed the ESC event
+    // First let base class handle ESC key
+    if (ModalBase::handleEvent(e)) {
+        return true;
     }
-  }
-  // Handle mouse click
-  else if (e.type == SDL_MOUSEBUTTONDOWN) {
-    int mouseX, mouseY;
-    SDL_GetMouseState(&mouseX, &mouseY);
 
-    // Check if click is within modal
-    if (mouseX >= modalX && mouseX <= modalX + modalWidth && mouseY >= modalY &&
-        mouseY <= modalY + modalHeight) {
-      return true;  // Modal consumed the event
+    if (!isVisible()) return false;
+
+    // Handle 'i' key to close modal
+    if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
+        if (e.key.keysym.sym == SDLK_i) {
+            hide();
+            return true;  // Modal consumed the 'i' event
+        }
     }
-  }
-  return false;
+    // Handle mouse click
+    else if (e.type == SDL_MOUSEBUTTONDOWN) {
+        int mouseX, mouseY;
+        SDL_GetMouseState(&mouseX, &mouseY);
+
+        // Check if click is within modal
+        if (mouseX >= modalX && mouseX <= modalX + modalWidth && mouseY >= modalY &&
+            mouseY <= modalY + modalHeight) {
+            return true;  // Modal consumed the event
+        }
+    }
+    return false;
 }
 
 void GameInfoModal::render() {
-    if (!visible) return;
+    if (!isVisible()) return;
     
-    // Draw modal background (same colors as gameinfo_modal)
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderDrawColor(renderer, 20, 20, 20, 220);  // Dark gray background
-    SDL_Rect overlay = {modalX, modalY, modalWidth, modalHeight};
-    SDL_RenderFillRect(renderer, &overlay);
-    
-    // Draw modal border
-    SDL_SetRenderDrawColor(renderer, 80, 80, 80, 255); // Light gray border
-    SDL_Rect modalBorder = {modalX - 1, modalY - 1, modalWidth + 2, modalHeight + 2};
-    SDL_RenderDrawRect(renderer, &modalBorder);
+    // Use base class to render modal background and border
+    renderModalBackground();
+    renderModalBorder();
     
     // Draw captured pieces sections
     int currentY = modalY + 10;
@@ -90,8 +57,8 @@ void GameInfoModal::render() {
     // White captured pieces
     renderCapturedPiecesSection(currentY, "Captured Pieces:", whiteCapturedPieces, blackCapturedPieces);
     
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
-    
+    // Render close instruction
+    renderBottomLine("Press I to toggle");
 }
 
 void GameInfoModal::updateCapturedPieces(const std::vector<ChessPiece>& whiteCaptured, 
@@ -146,36 +113,4 @@ void GameInfoModal::renderCapturedPiecesSection(int startY, const std::string& t
             }
         }
     }
-}
-
-void GameInfoModal::drawText(const std::string& text, int x, int y, SDL_Color color) {
-    if (!font) {
-        // Fallback: draw placeholder rectangle
-        SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-        SDL_Rect textRect = {x, y, static_cast<int>(text.length() * 6), 14};
-        SDL_RenderFillRect(renderer, &textRect);
-        return;
-    }
-    
-    SDL_Texture* texture = createTextTexture(text, color);
-    if (texture) {
-        int texW, texH;
-        SDL_QueryTexture(texture, nullptr, nullptr, &texW, &texH);
-        SDL_Rect dstRect = {x, y, texW, texH};
-        SDL_RenderCopy(renderer, texture, nullptr, &dstRect);
-        SDL_DestroyTexture(texture);
-    }
-}
-
-SDL_Texture* GameInfoModal::createTextTexture(const std::string& text, SDL_Color color) {
-    if (!font) return nullptr;
-    
-    SDL_Surface* surface = TTF_RenderText_Blended(font, text.c_str(), color);
-    if (!surface) {
-        return nullptr;
-    }
-    
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-    SDL_FreeSurface(surface);
-    return texture;
 }
