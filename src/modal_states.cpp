@@ -1,4 +1,4 @@
-#include "gamestates_modal.h"
+#include "modal_states.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_image.h>

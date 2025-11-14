@@ -1,4 +1,4 @@
-#include "help_modal.h"
+#include "modal_help.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <iostream>

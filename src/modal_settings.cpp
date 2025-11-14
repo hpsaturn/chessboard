@@ -1,4 +1,4 @@
-#include "settings_modal.h"
+#include "modal_settings.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <iostream>

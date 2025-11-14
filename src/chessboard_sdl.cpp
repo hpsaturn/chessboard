@@ -1,8 +1,12 @@
-#include "gameinfo_modal.h"
-#include "gamestates_modal.h"
-#include "about_modal.h"
 #include <SDL2/SDL.h>
-#include "help_modal.h"
+
+#include "definitions.h"
+
+#include "modal_settings.h"
+#include "modal_info.h"
+#include "modal_states.h"
+#include "modal_about.h"
+#include "modal_help.h"
 
 #include <iostream>
 #include <string>
@@ -11,9 +15,7 @@
 #include "chess_game_logic.h"
 #include "chess_pieces.h"
 #include "chess_pieces_sdl.h"
-#include "definitions.h"
 #include "engine/uci_engine.h"
-#include "settings_modal.h"
 #include "config_manager.h"
 #include "game_state_manager.h"
 #include "engine/bitboard.h"
