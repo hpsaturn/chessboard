@@ -6,40 +6,20 @@
 #include <SDL2/SDL_ttf.h>
 #include <string>
 #include <vector>
+#include "modal_base.h"
 
-class HelpModal {
+class HelpModal : public ModalBase {
 public:
     HelpModal(SDL_Renderer* renderer, int screenWidth, int screenHeight);
     ~HelpModal();
     
-    // Show the modal window
-    void show();
+    // Override handleEvent for scroll functionality
+    bool handleEvent(const SDL_Event& e) override;
     
-    // Hide the modal window
-    void hide();
-    
-    // Handle events for the modal
-    bool handleEvent(const SDL_Event& e);
-    
-    // Render the modal
-    void render();
-    
-    // Check if modal is visible
-    bool isVisible() const { return visible; }
+    // Override render for custom help content
+    void render() override;
 
 private:
-    SDL_Renderer* renderer;
-    TTF_Font* font;
-    int screenWidth;
-    int screenHeight;
-    bool visible;
-    
-    // Modal dimensions
-    int modalWidth;
-    int modalHeight;
-    int modalX;
-    int modalY;
-    
     // Text content
     std::vector<std::string> helpLines;
     
@@ -47,8 +27,6 @@ private:
     int scrollOffset;
     
     // Helper functions
-    void drawText(const std::string& text, int x, int y, SDL_Color color);
-    SDL_Texture* createTextTexture(const std::string& text, SDL_Color color);
     void initializeHelpContent();
 };
 

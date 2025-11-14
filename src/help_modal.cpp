@@ -2,56 +2,29 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <iostream>
+#include <algorithm>
 
 HelpModal::HelpModal(SDL_Renderer* renderer, int screenWidth, int screenHeight)
-    : renderer(renderer), screenWidth(screenWidth), screenHeight(screenHeight), 
-      visible(false), font(nullptr), scrollOffset(0) {
-    
-    // Initialize SDL_ttf
-    if (TTF_Init() == -1) {
-        std::cerr << "TTF_Init failed: " << TTF_GetError() << std::endl;
-    } else {
-        // Load DejaVu Sans font (commonly available on Linux)
-        font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 11);
-        if (!font) {
-            std::cerr << "Failed to load font: " << TTF_GetError() << std::endl;
-        }
-    }
-    
-    // Calculate modal position and size
-    modalWidth = 300;
-    modalHeight = 300;
-    modalX = (screenWidth - modalWidth) / 2;
-    modalY = (screenHeight - modalHeight) / 2;
+    : ModalBase(renderer, screenWidth, screenHeight, 300, 300), scrollOffset(0) {
     
     // Initialize help content
     initializeHelpContent();
 }
 
 HelpModal::~HelpModal() {
-    if (font) {
-        TTF_CloseFont(font);
-    }
-    TTF_Quit();
-}
-
-void HelpModal::show() {
-    visible = true;
-    scrollOffset = 0; // Reset scroll position when showing
-}
-
-void HelpModal::hide() {
-    visible = false;
+    // Font cleanup is handled by ModalBase destructor
 }
 
 bool HelpModal::handleEvent(const SDL_Event& e) {
     if (!visible) return false;
     
+    // First check for base modal events (ESC to close)
+    if (ModalBase::handleEvent(e)) {
+        return true;
+    }
+    
     if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
         switch (e.key.keysym.sym) {
-            case SDLK_ESCAPE:
-                hide();
-                return true;
             case SDLK_UP:
                 if (scrollOffset > 0) {
                     scrollOffset--;
@@ -83,17 +56,10 @@ bool HelpModal::handleEvent(const SDL_Event& e) {
 void HelpModal::render() {
     if (!visible || !font) return;
     
-    // Draw modal background (same colors as gameinfo_modal)
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderDrawColor(renderer, 20, 20, 20, 220);  // Dark gray background
-    SDL_Rect overlay = {modalX, modalY, modalWidth, modalHeight};
-    SDL_RenderFillRect(renderer, &overlay);
+    // Use base class methods for common modal rendering
+    renderModalBackground();
+    renderModalBorder();
     
-    // Draw modal border
-    SDL_SetRenderDrawColor(renderer, 80, 80, 80, 255); // Light gray border
-    SDL_Rect modalBorder = {modalX - 1, modalY - 1, modalWidth + 2, modalHeight + 2};
-    SDL_RenderDrawRect(renderer, &modalBorder);
-
     // Draw title
     SDL_Color titleColor = {255, 255, 255, 255};  // White
     SDL_Color textColor = {220, 220, 220, 255};  // Light gray
@@ -120,33 +86,9 @@ void HelpModal::render() {
     //     SDL_Rect scrollBar = {modalX + modalWidth - 10, scrollBarY, 5, scrollBarHeight};
     //     SDL_RenderFillRect(renderer, &scrollBar);
     // }
-}
-
-void HelpModal::drawText(const std::string& text, int x, int y, SDL_Color color) {
-    SDL_Texture* textTexture = createTextTexture(text, color);
-    if (!textTexture) return;
     
-    int textWidth, textHeight;
-    SDL_QueryTexture(textTexture, NULL, NULL, &textWidth, &textHeight);
-    
-    SDL_Rect renderQuad = {x, y, textWidth, textHeight};
-    SDL_RenderCopy(renderer, textTexture, NULL, &renderQuad);
-    SDL_DestroyTexture(textTexture);
-}
-
-SDL_Texture* HelpModal::createTextTexture(const std::string& text, SDL_Color color) {
-    if (!font) return nullptr;
-    
-    SDL_Surface* surface = TTF_RenderText_Blended(font, text.c_str(), color);
-    if (!surface) {
-        std::cerr << "Failed to create text surface: " << TTF_GetError() << std::endl;
-        return nullptr;
-    }
-    
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-    SDL_FreeSurface(surface);
-    
-    return texture;
+    // Add close instruction
+    renderCloseInstruction();
 }
 
 void HelpModal::initializeHelpContent() {
