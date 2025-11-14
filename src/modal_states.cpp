@@ -1,4 +1,4 @@
-#include "gamestates_modal.h"
+#include "modal_states.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_image.h>
@@ -9,26 +9,9 @@
 #include "chess_game_logic.h"
 
 GameStatesModal::GameStatesModal(SDL_Renderer* renderer, int screenWidth, int screenHeight, GameStateManager* stateManager)
-    : renderer(renderer), screenWidth(screenWidth), screenHeight(screenHeight), 
-      visible(false), stateManager(stateManager), font(nullptr), selectedIndex(-1), scrollOffset(0),
+    : ModalBase(renderer, screenWidth, screenHeight, 300, 300),
+      stateManager(stateManager), selectedIndex(-1), scrollOffset(0),
       onStateSelected(nullptr) {
-    
-    // Initialize SDL_ttf
-    if (TTF_Init() == -1) {
-        std::cerr << "TTF_Init failed: " << TTF_GetError() << std::endl;
-    } else {
-        // Load DejaVu Sans font (commonly available on Linux)
-        font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 11);
-        if (!font) {
-            std::cerr << "Failed to load font: " << TTF_GetError() << std::endl;
-        }
-    }
-    
-    // Calculate modal position and size (same as gameinfo_modal)
-    modalWidth = 300;
-    modalHeight = 300;
-    modalX = (screenWidth - modalWidth) / 2;
-    modalY = (screenHeight - modalHeight) / 2;
     
     // List view settings
     itemsPerPage = 8;
@@ -39,22 +22,11 @@ GameStatesModal::GameStatesModal(SDL_Renderer* renderer, int screenWidth, int sc
     previewBoardY = modalY + 40;
 }
 
-GameStatesModal::~GameStatesModal() {
-    if (font) {
-        TTF_CloseFont(font);
-    }
-    TTF_Quit();
-}
-
 void GameStatesModal::show() {
     visible = true;
     loadStates();
     selectedIndex = 0;
     scrollOffset = 0;
-}
-
-void GameStatesModal::hide() {
-    visible = false;
 }
 
 void GameStatesModal::loadStates() {
@@ -75,7 +47,7 @@ bool GameStatesModal::handleEvent(const SDL_Event& e) {
                 hide();
                 return true;
             }
-            
+
             // Handle keyboard navigation with ARM CPU fix
             if (e.key.repeat == 0) {
                 handleKeyPress(e.key.keysym.sym);
@@ -106,19 +78,13 @@ bool GameStatesModal::handleEvent(const SDL_Event& e) {
 void GameStatesModal::render() {
     if (!visible) return;
     
-    // Draw modal background (same colors as gameinfo_modal)
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderDrawColor(renderer, 20, 20, 20, 230);
-    SDL_Rect modalRect = {modalX, modalY, modalWidth, modalHeight};
-    SDL_RenderFillRect(renderer, &modalRect);
+    // Render common modal background and border
+    renderModalBackground();
+    renderModalBorder();
     
-    // Draw modal border
-    SDL_SetRenderDrawColor(renderer, 40, 40, 40, 230);
-    SDL_RenderDrawRect(renderer, &modalRect);
-    
-    // Draw title
-    SDL_Color white = {255, 255, 255, 255};
-    drawText("Saved Game States", modalX + 10, modalY + 10, white);
+    // Render title
+    SDL_Color titleColor = {255, 255, 255, 255};
+    drawText("Game States", modalX + 10, modalY + 10, titleColor);
     
     // Render list view and board preview
     renderListView();
@@ -304,31 +270,4 @@ void GameStatesModal::removeSelectedState() {
         stateManager->removeGameState(states[selectedIndex].date);
         loadStates();
     }
-}
-
-void GameStatesModal::drawText(const std::string& text, int x, int y, SDL_Color color) {
-    if (!font) return;
-    
-    SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), color);
-    if (surface) {
-        SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-        if (texture) {
-            SDL_Rect destRect = {x, y, surface->w, surface->h};
-            SDL_RenderCopy(renderer, texture, NULL, &destRect);
-            SDL_DestroyTexture(texture);
-        }
-        SDL_FreeSurface(surface);
-    }
-}
-
-SDL_Texture* GameStatesModal::createTextTexture(const std::string& text, SDL_Color color) {
-    if (!font) return nullptr;
-    
-    SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), color);
-    if (!surface) return nullptr;
-    
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-    SDL_FreeSurface(surface);
-    
-    return texture;
 }
