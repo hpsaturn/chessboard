@@ -73,16 +73,11 @@ bool GameInfoModal::handleEvent(const SDL_Event& e) {
 void GameInfoModal::render() {
     if (!visible) return;
     
-    // Draw semi-transparent overlay
+    // Draw modal background (same colors as gameinfo_modal)
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 128); // Semi-transparent black
-    SDL_Rect overlay = {0, 0, screenWidth, screenHeight};
+    SDL_SetRenderDrawColor(renderer, 20, 20, 20, 220);  // Dark gray background
+    SDL_Rect overlay = {modalX, modalY, modalWidth, modalHeight};
     SDL_RenderFillRect(renderer, &overlay);
-    
-    // Draw modal background
-    SDL_SetRenderDrawColor(renderer, 40, 40, 40, 200); // Dark gray
-    SDL_Rect modalRect = {modalX, modalY, modalWidth, modalHeight};
-    SDL_RenderFillRect(renderer, &modalRect);
     
     // Draw modal border
     SDL_SetRenderDrawColor(renderer, 80, 80, 80, 255); // Light gray border

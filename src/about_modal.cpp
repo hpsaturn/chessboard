@@ -74,10 +74,10 @@ void AboutModal::render() {
     SDL_Rect overlay = {modalX, modalY, modalWidth, modalHeight};
     SDL_RenderFillRect(renderer, &overlay);
     
-    // Draw border (same colors as gameinfo_modal)
-    SDL_SetRenderDrawColor(renderer, 40, 40, 40, 220);  // Light gray border
-    SDL_Rect modalRect = {modalX, modalY, modalWidth, modalHeight};
-    SDL_RenderDrawRect(renderer, &modalRect);
+    // Draw modal border
+    SDL_SetRenderDrawColor(renderer, 80, 80, 80, 255); // Light gray border
+    SDL_Rect modalBorder = {modalX - 1, modalY - 1, modalWidth + 2, modalHeight + 2};
+    SDL_RenderDrawRect(renderer, &modalBorder);
     
     // Get dynamic version
     std::string versionInfo = Version::getBuildInfo();

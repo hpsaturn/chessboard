@@ -81,26 +81,23 @@ bool HelpModal::handleEvent(const SDL_Event& e) {
 }
 
 void HelpModal::render() {
-    if (!visible) return;
+    if (!visible || !font) return;
     
-    // Draw semi-transparent overlay
+    // Draw modal background (same colors as gameinfo_modal)
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderDrawColor(renderer, 20, 20, 20, 220); // Semi-transparent black
-    SDL_Rect overlay = {0, 0, screenWidth, screenHeight};
+    SDL_SetRenderDrawColor(renderer, 20, 20, 20, 220);  // Dark gray background
+    SDL_Rect overlay = {modalX, modalY, modalWidth, modalHeight};
     SDL_RenderFillRect(renderer, &overlay);
-    
-    // Draw modal background
-    SDL_SetRenderDrawColor(renderer, 40, 40, 40, 200); // Dark gray
-    SDL_Rect modalRect = {modalX, modalY, modalWidth, modalHeight};
-    SDL_RenderFillRect(renderer, &modalRect);
     
     // Draw modal border
     SDL_SetRenderDrawColor(renderer, 80, 80, 80, 255); // Light gray border
     SDL_Rect modalBorder = {modalX - 1, modalY - 1, modalWidth + 2, modalHeight + 2};
     SDL_RenderDrawRect(renderer, &modalBorder);
-    
+
     // Draw title
-    drawText("Key Bindings", modalX + 10, modalY + 10, {255, 255, 255, 255});
+    SDL_Color titleColor = {255, 255, 255, 255};  // White
+    SDL_Color textColor = {220, 220, 220, 255};  // Light gray
+    drawText("Key Bindings", modalX + 10, modalY + 10, titleColor);
     
     // Draw help content with scroll
     int lineHeight = 15;
@@ -110,34 +107,31 @@ void HelpModal::render() {
     for (int i = 0; i < maxVisibleLines; i++) {
         int lineIndex = scrollOffset + i;
         if (lineIndex < (int)helpLines.size()) {
-            SDL_Color color = {200, 200, 200, 255}; // Light gray for regular text
-            drawText(helpLines[lineIndex], modalX + 10, startY + (i * lineHeight), color);
+            drawText(helpLines[lineIndex], modalX + 10, startY + (i * lineHeight), textColor);
         }
     }
     
     // Draw scroll indicator if needed
-    if (helpLines.size() > maxVisibleLines) {
-        int scrollBarHeight = (maxVisibleLines * modalHeight) / helpLines.size();
-        int scrollBarY = modalY + 35 + (scrollOffset * (modalHeight - 50)) / helpLines.size();
+    // if (helpLines.size() > maxVisibleLines) {
+    //     int scrollBarHeight = (maxVisibleLines * modalHeight) / helpLines.size();
+    //     int scrollBarY = modalY + 35 + (scrollOffset * (modalHeight - 50)) / helpLines.size();
         
-        SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255);
-        SDL_Rect scrollBar = {modalX + modalWidth - 10, scrollBarY, 5, scrollBarHeight};
-        SDL_RenderFillRect(renderer, &scrollBar);
-    }
-    
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+    //     SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255);
+    //     SDL_Rect scrollBar = {modalX + modalWidth - 10, scrollBarY, 5, scrollBarHeight};
+    //     SDL_RenderFillRect(renderer, &scrollBar);
+    // }
 }
 
 void HelpModal::drawText(const std::string& text, int x, int y, SDL_Color color) {
-    SDL_Texture* texture = createTextTexture(text, color);
-    if (texture) {
-        int texW, texH;
-        SDL_QueryTexture(texture, NULL, NULL, &texW, &texH);
-        SDL_Rect dstRect = {x, y, texW, texH};
-        TTF_SizeText(font, text.c_str(), &texW, &texH);
-        SDL_RenderCopy(renderer, texture, NULL, &dstRect);
-        SDL_DestroyTexture(texture);
-    }
+    SDL_Texture* textTexture = createTextTexture(text, color);
+    if (!textTexture) return;
+    
+    int textWidth, textHeight;
+    SDL_QueryTexture(textTexture, NULL, NULL, &textWidth, &textHeight);
+    
+    SDL_Rect renderQuad = {x, y, textWidth, textHeight};
+    SDL_RenderCopy(renderer, textTexture, NULL, &renderQuad);
+    SDL_DestroyTexture(textTexture);
 }
 
 SDL_Texture* HelpModal::createTextTexture(const std::string& text, SDL_Color color) {
