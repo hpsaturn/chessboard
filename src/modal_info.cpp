@@ -7,8 +7,8 @@
 #include "chess_pieces_sdl.h"
 
 GameInfoModal::GameInfoModal(SDL_Renderer* renderer, int screenWidth, int screenHeight)
-    : ModalBase(renderer, screenWidth, screenHeight, 300, 300) {
-    
+    : ModalBase(renderer, screenWidth, screenHeight, 300, 300){
+
     // Piece display settings
     pieceSize = SQUARE_SIZE / PIECE_SCALED;
     pieceSpacing = 0;
@@ -47,7 +47,7 @@ bool GameInfoModal::handleEvent(const SDL_Event& e) {
 void GameInfoModal::render() {
     if (!isVisible()) return;
     
-    // Use base class to render modal background and border
+    // Render modal background and border
     renderModalBackground();
     renderModalBorder();
     
@@ -57,6 +57,9 @@ void GameInfoModal::render() {
     // White captured pieces
     renderCapturedPiecesSection(currentY, "Captured Pieces:", whiteCapturedPieces, blackCapturedPieces);
     
+    // Render points and timers in horizontal alignment
+    renderPointsAndTimersSection(currentY + 100);
+    
     // Render close instruction
     renderBottomLine("Press I to toggle");
 }
@@ -65,6 +68,18 @@ void GameInfoModal::updateCapturedPieces(const std::vector<ChessPiece>& whiteCap
                                         const std::vector<ChessPiece>& blackCaptured) {
     whiteCapturedPieces = whiteCaptured;
     blackCapturedPieces = blackCaptured;
+}
+
+void GameInfoModal::setPoints(int points) {
+    currentPoints = points;
+}
+
+void GameInfoModal::setWhiteTimer(const std::string& time) {
+    whiteTimer = time;
+}
+
+void GameInfoModal::setBlackTimer(const std::string& time) {
+    blackTimer = time;
 }
 
 void GameInfoModal::renderCapturedPiecesSection(int startY, const std::string& title, 
@@ -84,11 +99,12 @@ void GameInfoModal::renderCapturedPiecesSection(int startY, const std::string& t
     // Render captured pieces
     int currentX = modalX + sectionPadding;
     int pieceY = startY + 20;
+   
 
-    
     if (wpieces.empty() && bpieces.empty()) {
         drawText("None", currentX, pieceY, {150, 150, 150, 255});
     } else {
+        // White captured pieces (top row)
         for (const auto& piece : wpieces) {
             renderChessPiece(renderer, currentX, pieceY, piece, PIECE_SCALED);
             currentX += pieceSize + pieceSpacing;
@@ -99,6 +115,7 @@ void GameInfoModal::renderCapturedPiecesSection(int startY, const std::string& t
                 pieceY += pieceSize + pieceSpacing;
             }
         }
+
         currentX = modalX + sectionPadding;
         pieceY = startY + box_height / 2 + 5;
 
@@ -113,4 +130,67 @@ void GameInfoModal::renderCapturedPiecesSection(int startY, const std::string& t
             }
         }
     }
+}
+
+void GameInfoModal::renderPointsAndTimersSection(int startY) {
+    int sectionHeight = 40;
+    int sectionWidth = (modalWidth - 4 * sectionPadding) / 3;
+    
+    // Calculate positions for horizontal alignment
+    int whiteTimerX = modalX + sectionPadding;
+    int pointsX = modalX + sectionPadding + sectionWidth + sectionPadding;
+    int blackTimerX = modalX + sectionPadding + 2 * sectionWidth + 2 * sectionPadding;
+    
+    // Render white timer (left)
+    SDL_SetRenderDrawColor(renderer, 80, 80, 80, 255);
+    SDL_Rect whiteRect = {whiteTimerX, startY, sectionWidth, sectionHeight};
+    SDL_RenderFillRect(renderer, &whiteRect);
+    
+    // Render points (center)
+    SDL_SetRenderDrawColor(renderer, 40, 40, 40, 255);
+    SDL_Rect pointsRect = {pointsX, startY, sectionWidth, sectionHeight};
+    SDL_RenderFillRect(renderer, &pointsRect);
+    
+    // Render black timer (right)
+    SDL_SetRenderDrawColor(renderer, 20, 20, 20, 255);
+    SDL_Rect blackRect = {blackTimerX, startY, sectionWidth, sectionHeight};
+    SDL_RenderFillRect(renderer, &blackRect);
+    
+    // Render white timer value (centered in its section)
+    int whiteTextX = whiteTimerX + sectionWidth / 2 - (whiteTimer.length() * 6) / 2;
+    drawText(whiteTimer, whiteTextX, startY + sectionHeight / 2 - 8, {255, 255, 255, 255});
+    
+    // Render points value (centered in its section)
+    std::string pointsStr = std::to_string(currentPoints);
+    if (currentPoints >= 0) {
+        pointsStr = "+" + pointsStr;
+    }
+    
+    // Use larger font for points display
+    TTF_Font* largeFont = TTF_OpenFont("fonts/DejaVuSans-Bold.ttf", 24);
+    if (largeFont) {
+        SDL_Color color = {255, 215, 0, 255}; // Gold color for points
+        SDL_Surface* surface = TTF_RenderText_Solid(largeFont, pointsStr.c_str(), color);
+        if (surface) {
+            SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+            if (texture) {
+                int textWidth, textHeight;
+                TTF_SizeText(largeFont, pointsStr.c_str(), &textWidth, &textHeight);
+                SDL_Rect textRect = {
+                    pointsX + sectionWidth / 2 - textWidth / 2,
+                    startY + sectionHeight / 2 - textHeight / 2,
+                    textWidth,
+                    textHeight
+                };
+                SDL_RenderCopy(renderer, texture, NULL, &textRect);
+                SDL_DestroyTexture(texture);
+            }
+            SDL_FreeSurface(surface);
+        }
+        TTF_CloseFont(largeFont);
+    }
+    
+    // Render black timer value (centered in its section)
+    int blackTextX = blackTimerX + sectionWidth / 2 - (blackTimer.length() * 6) / 2;
+    drawText(blackTimer, blackTextX, startY + sectionHeight / 2 - 8, {255, 255, 255, 255});
 }
