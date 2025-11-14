@@ -45,7 +45,7 @@ bool ModalBase::handleEvent(const SDL_Event& e) {
     if (!visible) return false;
     
     if (e.type == SDL_KEYDOWN) {
-        if (e.key.keysym.sym == SDLK_ESCAPE || e.key.keysym.sym == SDLK_RETURN || e.key.keysym.sym == SDLK_SPACE) {
+        if (e.key.keysym.sym == SDLK_ESCAPE || e.key.keysym.sym == SDLK_RETURN) {
             hide();
             return true;
         }

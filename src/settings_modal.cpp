@@ -5,18 +5,8 @@
 #include <algorithm>
 
 SettingsModal::SettingsModal(SDL_Renderer* renderer, int screenWidth, int screenHeight, ConfigManager* configManager)
-    : renderer(renderer), screenWidth(screenWidth), screenHeight(screenHeight), visible(false), font(nullptr), focusedElement(-1), configManager(configManager) {
-    
-    // Initialize SDL_ttf
-    if (TTF_Init() == -1) {
-        std::cerr << "[CONF] TTF_Init failed: " << TTF_GetError() << std::endl;
-    } else {
-        // Load DejaVu Sans font (commonly available on Linux)
-        font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 13);
-        if (!font) {
-            std::cerr << "[CONF] Failed to load font: " << TTF_GetError() << std::endl;
-        }
-    }
+    : ModalBase(renderer, screenWidth, screenHeight, 250, 220), 
+      focusedElement(-1), configManager(configManager) {
     
     // Load settings from config file if config manager is available
     if (configManager) {
@@ -32,22 +22,9 @@ SettingsModal::SettingsModal(SDL_Renderer* renderer, int screenWidth, int screen
             std::cout << "[CONF] Using default settings" << std::endl;
         }
     }
-    
-    // Calculate modal position and size
-    modalWidth = 250;
-    modalHeight = 220;
-    modalX = (screenWidth - modalWidth) / 2;
-    modalY = (screenHeight - modalHeight) / 2;
-    
+     
     // Initialize UI elements
     initializeUI();
-}
-
-SettingsModal::~SettingsModal() {
-    if (font) {
-        TTF_CloseFont(font);
-    }
-    TTF_Quit();
 }
 
 void SettingsModal::initializeUI() {
@@ -106,18 +83,7 @@ void SettingsModal::initializeUI() {
     checkboxes.push_back(soundCheckbox);
 }
 
-void SettingsModal::show() {
-    visible = true;
-    focusedElement = 0; // Focus first element when modal opens
-}
 
-void SettingsModal::hide() {
-    visible = false;
-    focusedElement = -1; // Reset focus when modal closes
-    
-    // Save settings when modal is closed
-    saveSettingsToFile();
-}
 
 void SettingsModal::saveSettingsToFile() {
     if (configManager) {
@@ -137,6 +103,13 @@ void SettingsModal::saveSettingsToFile() {
 }
 bool SettingsModal::handleEvent(const SDL_Event& e) {
     if (!visible) return false;
+    
+    // First, let the base class handle ESC key
+    if (ModalBase::handleEvent(e)) {
+        // Save settings when modal is closed via ESC
+        saveSettingsToFile();
+        return true;
+    }
     
     switch (e.type) {
         case SDL_MOUSEBUTTONDOWN: {
@@ -211,11 +184,6 @@ bool SettingsModal::handleEvent(const SDL_Event& e) {
         }
         
         case SDL_KEYDOWN: {
-            if (e.key.keysym.sym == SDLK_ESCAPE) {
-                hide();
-                return true; // Modal consumed the ESC event
-            }
-            
             // Keyboard navigation
             if (e.key.keysym.sym == SDLK_DOWN && e.key.repeat == 0) {
                 // Move focus to next element
@@ -305,21 +273,9 @@ bool SettingsModal::handleEvent(const SDL_Event& e) {
 void SettingsModal::render() {
     if (!visible) return;
     
-    // Draw semi-transparent overlay
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderDrawColor(renderer, 20, 20, 20, 128); // Semi-transparent black
-    SDL_Rect overlay = {0, 0, screenWidth, screenHeight};
-    SDL_RenderFillRect(renderer, &overlay);
-    
-    // Draw modal background
-    SDL_SetRenderDrawColor(renderer, 40, 40, 40, 200); // Dark gray
-    SDL_Rect modalRect = {modalX, modalY, modalWidth, modalHeight};
-    SDL_RenderFillRect(renderer, &modalRect);
-    
-    // Draw modal border
-    SDL_SetRenderDrawColor(renderer, 80, 80, 80, 255); // Light gray border
-    SDL_Rect modalBorder = {modalX - 1, modalY - 1, modalWidth + 2, modalHeight + 2};
-    SDL_RenderDrawRect(renderer, &modalBorder);
+    // Use base class methods for common modal rendering
+    renderModalBackground();
+    renderModalBorder();
     
     // Draw title
     drawText("Game Settings", modalX + 10, modalY + 5, {255, 255, 255, 255});
@@ -332,8 +288,6 @@ void SettingsModal::render() {
     for (size_t i = 0; i < checkboxes.size(); ++i) {
         drawCheckbox(checkboxes[i], (sliders.size() + i) == focusedElement);
     }
-    
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 }
 
 void SettingsModal::drawCheckbox(const Checkbox& checkbox, bool focused) {
@@ -422,34 +376,6 @@ void SettingsModal::updateSliderValue(Slider& slider, int mouseX) {
     }
 }
 
-void SettingsModal::drawText(const std::string& text, int x, int y, SDL_Color color) {
-    if (!font) {
-        // Fallback: draw placeholder rectangle
-        SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-        SDL_Rect textRect = {x, y, static_cast<int>(text.length() * 6), 14};
-        SDL_RenderFillRect(renderer, &textRect);
-        return;
-    }
-    
-    SDL_Texture* texture = createTextTexture(text, color);
-    if (texture) {
-        int texW, texH;
-        SDL_QueryTexture(texture, nullptr, nullptr, &texW, &texH);
-        SDL_Rect dstRect = {x, y, texW, texH};
-        SDL_RenderCopy(renderer, texture, nullptr, &dstRect);
-        SDL_DestroyTexture(texture);
-    }
-}
 
-SDL_Texture* SettingsModal::createTextTexture(const std::string& text, SDL_Color color) {
-    if (!font) return nullptr;
-    
-    SDL_Surface* surface = TTF_RenderText_Blended(font, text.c_str(), color);
-    if (!surface) {
-        return nullptr;
-    }
-    
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-    SDL_FreeSurface(surface);
-    return texture;
-}
+
+
