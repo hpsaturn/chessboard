@@ -22,7 +22,7 @@ public:
     void updateCapturedPieces(const std::vector<ChessPiece>& whiteCaptured, 
                              const std::vector<ChessPiece>& blackCaptured);
     
-    void setPoints(int points);
+    void setPoints(const std::string& points);
     void setWhiteTimer(const std::string& time);
     void setBlackTimer(const std::string& time);
 
@@ -30,7 +30,7 @@ private:
     std::vector<ChessPiece> whiteCapturedPieces;
     std::vector<ChessPiece> blackCapturedPieces;
     
-    int currentPoints;
+    std::string currentPoints;
     std::string whiteTimer;
     std::string blackTimer;
     

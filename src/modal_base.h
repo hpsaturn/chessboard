@@ -30,6 +30,7 @@ public:
 protected:
     SDL_Renderer* renderer;
     TTF_Font* font;
+    TTF_Font* font24;
     int screenWidth;
     int screenHeight;
     bool visible;
@@ -41,8 +42,8 @@ protected:
     int modalY;
     
     // Helper functions
-    void drawText(const std::string& text, int x, int y, SDL_Color color);
-    SDL_Texture* createTextTexture(const std::string& text, SDL_Color color);
+    void drawText(const std::string& text, int x, int y, SDL_Color color, int fontSize = 11);
+    SDL_Texture* createTextTexture(const std::string& text, SDL_Color color, int fontSize = 11);
     
     // Common modal rendering utilities
     void renderModalBackground();

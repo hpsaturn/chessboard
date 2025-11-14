@@ -58,7 +58,7 @@ void GameInfoModal::render() {
     renderCapturedPiecesSection(currentY, "Captured Pieces:", whiteCapturedPieces, blackCapturedPieces);
     
     // Render points and timers in horizontal alignment
-    renderPointsAndTimersSection(currentY + 100);
+    renderPointsAndTimersSection(currentY + 85);
     
     // Render close instruction
     renderBottomLine("Press I to toggle");
@@ -70,7 +70,7 @@ void GameInfoModal::updateCapturedPieces(const std::vector<ChessPiece>& whiteCap
     blackCapturedPieces = blackCaptured;
 }
 
-void GameInfoModal::setPoints(int points) {
+void GameInfoModal::setPoints(const std::string& points) {
     currentPoints = points;
 }
 
@@ -133,7 +133,7 @@ void GameInfoModal::renderCapturedPiecesSection(int startY, const std::string& t
 }
 
 void GameInfoModal::renderPointsAndTimersSection(int startY) {
-    int sectionHeight = 40;
+    int sectionHeight = 30;
     int sectionWidth = (modalWidth - 4 * sectionPadding) / 3;
     
     // Calculate positions for horizontal alignment
@@ -157,40 +157,14 @@ void GameInfoModal::renderPointsAndTimersSection(int startY) {
     SDL_RenderFillRect(renderer, &blackRect);
     
     // Render white timer value (centered in its section)
-    int whiteTextX = whiteTimerX + sectionWidth / 2 - (whiteTimer.length() * 6) / 2;
-    drawText(whiteTimer, whiteTextX, startY + sectionHeight / 2 - 8, {255, 255, 255, 255});
-    
-    // Render points value (centered in its section)
-    std::string pointsStr = std::to_string(currentPoints);
-    if (currentPoints >= 0) {
-        pointsStr = "+" + pointsStr;
-    }
-    
-    // Use larger font for points display
-    TTF_Font* largeFont = TTF_OpenFont("fonts/DejaVuSans-Bold.ttf", 24);
-    if (largeFont) {
-        SDL_Color color = {255, 215, 0, 255}; // Gold color for points
-        SDL_Surface* surface = TTF_RenderText_Solid(largeFont, pointsStr.c_str(), color);
-        if (surface) {
-            SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-            if (texture) {
-                int textWidth, textHeight;
-                TTF_SizeText(largeFont, pointsStr.c_str(), &textWidth, &textHeight);
-                SDL_Rect textRect = {
-                    pointsX + sectionWidth / 2 - textWidth / 2,
-                    startY + sectionHeight / 2 - textHeight / 2,
-                    textWidth,
-                    textHeight
-                };
-                SDL_RenderCopy(renderer, texture, NULL, &textRect);
-                SDL_DestroyTexture(texture);
-            }
-            SDL_FreeSurface(surface);
-        }
-        TTF_CloseFont(largeFont);
-    }
+    int whiteTextX = whiteTimerX + sectionWidth / 2 - (whiteTimer.length() * 14) / 2;
+    drawText(whiteTimer, whiteTextX, startY + sectionHeight / 2 - 15, {255, 255, 255, 255}, 24);
+
+    // Render current points value (centered in its section)
+    drawText(currentPoints, pointsX + sectionWidth / 2 - (currentPoints.length() * 14) / 2, 
+             startY + sectionHeight / 2 - 15, {255, 215, 0, 255}, 24);
     
     // Render black timer value (centered in its section)
-    int blackTextX = blackTimerX + sectionWidth / 2 - (blackTimer.length() * 6) / 2;
-    drawText(blackTimer, blackTextX, startY + sectionHeight / 2 - 8, {255, 255, 255, 255});
+    int blackTextX = blackTimerX + sectionWidth / 2 - (blackTimer.length() * 14) / 2;
+    drawText(blackTimer, blackTextX, startY + sectionHeight / 2 - 15, {255, 255, 255, 255}, 24);
 }

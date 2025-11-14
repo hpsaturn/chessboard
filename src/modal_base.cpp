@@ -16,7 +16,9 @@ ModalBase::ModalBase(SDL_Renderer* renderer, int screenWidth, int screenHeight,
     } else {
         // Load DejaVu Sans font (commonly available on Linux)
         font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 11);
-        if (!font) {
+        // Load DejaVu Sans font (commonly available on Linux)
+        font24 = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 24);
+        if (!font || !font24) {
             std::cerr << "Failed to load font: " << TTF_GetError() << std::endl;
         }
     }
@@ -29,6 +31,9 @@ ModalBase::ModalBase(SDL_Renderer* renderer, int screenWidth, int screenHeight,
 ModalBase::~ModalBase() {
     if (font) {
         TTF_CloseFont(font);
+    }
+    if (font24) {
+        TTF_CloseFont(font24);
     }
     TTF_Quit();
 }
@@ -82,8 +87,13 @@ void ModalBase::renderBottomLine(const std::string& instruction) {
     drawText(instruction.c_str(), modalX + 15, modalY + modalHeight - 25, instructionColor);
 }
 
-void ModalBase::drawText(const std::string& text, int x, int y, SDL_Color color) {
-    SDL_Texture* textTexture = createTextTexture(text, color);
+void ModalBase::drawText(const std::string& text, int x, int y, SDL_Color color, int fontSize) {
+    SDL_Texture* textTexture;
+    if (fontSize == 11)
+      textTexture = createTextTexture(text, color);
+    else
+      textTexture = createTextTexture(text, color, fontSize);
+
     if (!textTexture) return;
     
     int textWidth, textHeight;
@@ -94,10 +104,19 @@ void ModalBase::drawText(const std::string& text, int x, int y, SDL_Color color)
     SDL_DestroyTexture(textTexture);
 }
 
-SDL_Texture* ModalBase::createTextTexture(const std::string& text, SDL_Color color) {
-    if (!font) return nullptr;
+SDL_Texture* ModalBase::createTextTexture(const std::string& text, SDL_Color color, int fontSize) {
+    if (!font || !font24) return nullptr;
+
+    SDL_Surface* textSurface;
     
-    SDL_Surface* textSurface = TTF_RenderText_Blended(font, text.c_str(), color);
+    if (fontSize == 11) {
+        TTF_SetFontHinting(font, TTF_HINTING_NORMAL);
+        textSurface = TTF_RenderUTF8_Blended(font, text.c_str(), color);
+    } else {
+        TTF_SetFontHinting(font24, TTF_HINTING_NORMAL);
+        textSurface = TTF_RenderUTF8_Blended(font24, text.c_str(), color);
+    }
+    
     if (!textSurface) {
         std::cerr << "Unable to render text surface: " << TTF_GetError() << std::endl;
         return nullptr;
