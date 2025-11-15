@@ -21,6 +21,7 @@ private:
     // Timer variables
     time_t whiteTimerStart;
     time_t blackTimerStart;
+    int matchTime;
     int whiteTimeRemaining;
     int blackTimeRemaining;
     bool timersRunning;
@@ -52,6 +53,7 @@ public:
     int getPointsBlack() const { return pointsBlack; }
 
     // Timers methods
+    void setTimeMatch(int seconds);
     std::string getWhiteTimer() const;
     std::string getBlackTimer() const;
     void startTimers();

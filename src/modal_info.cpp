@@ -13,6 +13,8 @@ GameInfoModal::GameInfoModal(SDL_Renderer* renderer, int screenWidth, int screen
     pieceSize = SQUARE_SIZE / PIECE_SCALED;
     pieceSpacing = 0;
     sectionPadding = 5;
+    whiteTimer = "00:00";
+    blackTimer = "00:00";
 }
 
 bool GameInfoModal::handleEvent(const SDL_Event& e) {

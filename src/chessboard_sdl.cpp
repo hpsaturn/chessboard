@@ -351,9 +351,10 @@ void mainLoop(ChessGame& chessGame, SDL_Renderer* renderer) {
         }
       }
     }
-
-    gameInfoModal->setWhiteTimer(chessGame.getWhiteTimer());
-    gameInfoModal->setBlackTimer(chessGame.getBlackTimer());
+    if (chessGame.isWhiteTurn())
+      gameInfoModal->setWhiteTimer(chessGame.getWhiteTimer());
+    else
+      gameInfoModal->setBlackTimer(chessGame.getBlackTimer());
 
     // Render modal windows
     settingsModal->render();
@@ -454,7 +455,12 @@ void renderChessboardSDL(std::string fen) {
 
     engine.setDifficult(settingsModal->getSettings().depthDifficulty); 
     engine.setMoveTime(settingsModal->getSettings().maxTimePerMove);
+    chessGame.setTimeMatch(settingsModal->getSettings().matchTime * 60);
   });
+
+  chessGame.setTimeMatch(settingsModal->getSettings().matchTime * 60);
+  gameInfoModal->setBlackTimer(chessGame.getBlackTimer());
+  gameInfoModal->setWhiteTimer(chessGame.getWhiteTimer());
 
   // Initialize engine
   if (engine.startEngine(true)) {
@@ -478,9 +484,7 @@ void renderChessboardSDL(std::string fen) {
     std::cout << "[SDLG] Loading game state from FEN: " << sfen << std::endl;
     pending_fen = sfen;
   });
-
-  gameInfoModal->setBlackTimer("05:00"); // testing
-  gameInfoModal->setWhiteTimer("05:00");
+  
 
   mainLoop(chessGame, renderer);
 

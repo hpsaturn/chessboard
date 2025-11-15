@@ -26,21 +26,26 @@ const std::vector<std::string>& ChessGame::getMoveHistory() const {
     return moveHistory;
 }
 
+void ChessGame::setTimeMatch(int seconds) {
+  matchTime = seconds;
+  resetTimers();
+}
+
 std::string ChessGame::getWhiteTimer() const {
-    int currentTime = whiteTimeRemaining;
-    if (timersRunning && whiteTurn) {
-        time_t currentTimeValue = time(nullptr);
-        currentTime = whiteTimeRemaining - (currentTimeValue - whiteTimerStart);
-        if (currentTime < 0) currentTime = 0;
-    }
-    
-    int minutes = currentTime / 60;
-    int seconds = currentTime % 60;
-    
-    std::stringstream ss;
-    ss << std::setw(2) << std::setfill('0') << minutes << ":" 
-       << std::setw(2) << std::setfill('0') << seconds;
-    return ss.str();
+  int currentTime = whiteTimeRemaining;
+  if (timersRunning && whiteTurn) {
+    time_t currentTimeValue = time(nullptr);
+    currentTime = whiteTimeRemaining - (currentTimeValue - whiteTimerStart);
+    if (currentTime < 0) currentTime = 0;
+  }
+
+  int minutes = currentTime / 60;
+  int seconds = currentTime % 60;
+
+  std::stringstream ss;
+  ss << std::setw(2) << std::setfill('0') << minutes << ":" << std::setw(2) << std::setfill('0')
+     << seconds;
+  return ss.str();
 }
 
 std::string ChessGame::getBlackTimer() const {
@@ -280,8 +285,8 @@ void ChessGame::updateTimers() {
 
 void ChessGame::resetTimers() {
     stopTimers();
-    whiteTimeRemaining = 10 * 60; // 10 minutes in seconds
-    blackTimeRemaining = 10 * 60; // 10 minutes in seconds
+    whiteTimeRemaining = matchTime; // 10 minutes in seconds
+    blackTimeRemaining = matchTime; // 10 minutes in seconds
     timersRunning = false;
 }
 bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRow, int toCol) const {
@@ -596,5 +601,6 @@ void ChessGame::resetGame() {
     initializeBoard();
     moveHistory.clear();
     whiteTurn = true;
+    resetTimers();
     calculatePoints();
 }
