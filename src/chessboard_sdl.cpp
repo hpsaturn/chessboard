@@ -62,6 +62,24 @@ void resetBoard(ChessGame& chessGame) {
   lastCheckRow = -1;
   chessGame.pending_move.clear();
   engine.newGame();
+  engine.sendCommand("easy");
+  engine.sendCommand("random");
+}
+
+void showInfoModel(GameInfoModal* infoModal, ChessGame& chessGame) {
+// Show game info modal
+  if (gameInfoModal) {
+    gameInfoModal->updateCapturedPieces(
+      chessGame.getWhiteCapturedPieces(),
+      chessGame.getBlackCapturedPieces()
+    );
+
+    bool negative = chessGame.getPointsWhite() - chessGame.getPointsBlack() < 0;
+    int pointsDiff = abs(chessGame.getPointsWhite() - chessGame.getPointsBlack());
+                                        
+    gameInfoModal->setPoints((negative ? "-" : "+") + std::to_string(pointsDiff), negative); 
+    gameInfoModal->show();
+  }
 }
 
 // Handle keyboard input for piece selection and movement
@@ -129,12 +147,7 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
       if (settingsModal) settingsModal->show();
       break;
     case SDLK_i:
-      // Show game info modal
-      if (gameInfoModal) {
-        gameInfoModal->updateCapturedPieces(chessGame.getWhiteCapturedPieces(),
-                                            chessGame.getBlackCapturedPieces());
-        gameInfoModal->show();
-      }
+      showInfoModel(gameInfoModal, chessGame); 
       break;
     case SDLK_F2:
       // Save current state slot
@@ -434,6 +447,7 @@ void renderChessboardSDL(std::string fen) {
       engine.setMoveTime(settingsModal->getSettings().maxTimePerMove);
     }
     chessGame.initializeBoard(fen);
+    resetBoard(chessGame);
   }
 
   // Set game state selection callback
@@ -441,6 +455,9 @@ void renderChessboardSDL(std::string fen) {
     std::cout << "[SDLG] Loading game state from FEN: " << sfen << std::endl;
     pending_fen = sfen;
   });
+
+  gameInfoModal->setBlackTimer("05:00"); // testing
+  gameInfoModal->setWhiteTimer("05:00");
 
   mainLoop(chessGame, renderer);
 

@@ -12,6 +12,8 @@ private:
     ChessPiece board[8][8];
     std::vector<std::string> moveHistory;
     bool whiteTurn, fenMode;
+    int pointsWhite = 0;
+    int pointsBlack = 0;
     
     // Captured pieces tracking
     std::vector<ChessPiece> whiteCapturedPieces;
@@ -19,6 +21,7 @@ private:
  
     void clearBoard();
     void loadCapturedPieces();
+    void calculatePoints();
 
 public:
     ChessGame();
@@ -33,6 +36,8 @@ public:
     // Get captured pieces
     const std::vector<ChessPiece>& getWhiteCapturedPieces() const { return whiteCapturedPieces; }
     const std::vector<ChessPiece>& getBlackCapturedPieces() const { return blackCapturedPieces; }
+    int getPointsWhite() const { return pointsWhite; }
+    int getPointsBlack() const { return pointsBlack; }  
     
     // Coordinate conversion
     std::string toChessNotation(int row, int col) const;

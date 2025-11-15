@@ -1,36 +1,40 @@
-// Game Info Modal Window for Chess Game
-#ifndef GAMEINFO_MODAL_H
-#define GAMEINFO_MODAL_H
+#ifndef MODAL_INFO_H
+#define MODAL_INFO_H
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <string>
 #include <vector>
 #include <functional>
+#include "modal_base.h"
 #include "chess_pieces.h"
 #include "definitions.h"
-#include "modal_base.h"
-
 #define PIECE_SCALED 2
+
 
 class GameInfoModal : public ModalBase {
 public:
     GameInfoModal(SDL_Renderer* renderer, int screenWidth, int screenHeight);
     
-    // Handle events for the modal
     bool handleEvent(const SDL_Event& e) override;
-    
-    // Render the modal
     void render() override;
     
-    // Update captured pieces
     void updateCapturedPieces(const std::vector<ChessPiece>& whiteCaptured, 
                              const std::vector<ChessPiece>& blackCaptured);
+    
+    void setPoints(const std::string& points, bool isNegative = false);
+    void setWhiteTimer(const std::string& time);
+    void setBlackTimer(const std::string& time);
 
 private:
-    // Captured pieces
     std::vector<ChessPiece> whiteCapturedPieces;
     std::vector<ChessPiece> blackCapturedPieces;
+    
+    std::string currentPoints;
+    std::string whiteTimer;
+    std::string blackTimer;
+
+    bool isNegativePoints = false;
     
     // Piece display settings
     int pieceSize;
@@ -41,7 +45,7 @@ private:
     void renderCapturedPiecesSection(int startY, const std::string& title, 
                                     const std::vector<ChessPiece>& wpieces,
                                     const std::vector<ChessPiece>& bpieces);
-
+    void renderPointsAndTimersSection(int startY);
 };
 
-#endif // GAMEINFO_MODAL_H
+#endif

@@ -7,8 +7,8 @@
 #include "chess_pieces_sdl.h"
 
 GameInfoModal::GameInfoModal(SDL_Renderer* renderer, int screenWidth, int screenHeight)
-    : ModalBase(renderer, screenWidth, screenHeight, 300, 300) {
-    
+    : ModalBase(renderer, screenWidth, screenHeight, 300, 300){
+
     // Piece display settings
     pieceSize = SQUARE_SIZE / PIECE_SCALED;
     pieceSpacing = 0;
@@ -47,7 +47,7 @@ bool GameInfoModal::handleEvent(const SDL_Event& e) {
 void GameInfoModal::render() {
     if (!isVisible()) return;
     
-    // Use base class to render modal background and border
+    // Render modal background and border
     renderModalBackground();
     renderModalBorder();
     
@@ -57,6 +57,9 @@ void GameInfoModal::render() {
     // White captured pieces
     renderCapturedPiecesSection(currentY, "Captured Pieces:", whiteCapturedPieces, blackCapturedPieces);
     
+    // Render points and timers in horizontal alignment
+    renderPointsAndTimersSection(currentY + 85);
+    
     // Render close instruction
     renderBottomLine("Press I to toggle");
 }
@@ -65,6 +68,18 @@ void GameInfoModal::updateCapturedPieces(const std::vector<ChessPiece>& whiteCap
                                         const std::vector<ChessPiece>& blackCaptured) {
     whiteCapturedPieces = whiteCaptured;
     blackCapturedPieces = blackCaptured;
+}
+
+void GameInfoModal::setPoints(const std::string& points, bool isNegative) {
+    currentPoints = points;
+    isNegativePoints = isNegative;
+}
+
+
+void GameInfoModal::setWhiteTimer(const std::string& time) { whiteTimer = time; }
+
+void GameInfoModal::setBlackTimer(const std::string& time) {
+    blackTimer = time;
 }
 
 void GameInfoModal::renderCapturedPiecesSection(int startY, const std::string& title, 
@@ -84,11 +99,12 @@ void GameInfoModal::renderCapturedPiecesSection(int startY, const std::string& t
     // Render captured pieces
     int currentX = modalX + sectionPadding;
     int pieceY = startY + 20;
+   
 
-    
     if (wpieces.empty() && bpieces.empty()) {
         drawText("None", currentX, pieceY, {150, 150, 150, 255});
     } else {
+        // White captured pieces (top row)
         for (const auto& piece : wpieces) {
             renderChessPiece(renderer, currentX, pieceY, piece, PIECE_SCALED);
             currentX += pieceSize + pieceSpacing;
@@ -99,6 +115,7 @@ void GameInfoModal::renderCapturedPiecesSection(int startY, const std::string& t
                 pieceY += pieceSize + pieceSpacing;
             }
         }
+
         currentX = modalX + sectionPadding;
         pieceY = startY + box_height / 2 + 5;
 
@@ -113,4 +130,42 @@ void GameInfoModal::renderCapturedPiecesSection(int startY, const std::string& t
             }
         }
     }
+}
+
+void GameInfoModal::renderPointsAndTimersSection(int startY) {
+    int sectionHeight = 30;
+    int sectionWidth = (modalWidth - 4 * sectionPadding) / 3;
+    
+    // Calculate positions for horizontal alignment
+    int whiteTimerX = modalX + sectionPadding;
+    int pointsX = modalX + sectionPadding + sectionWidth + sectionPadding;
+    int blackTimerX = modalX + sectionPadding + 2 * sectionWidth + 2 * sectionPadding;
+    
+    // Render white timer (left)
+    SDL_SetRenderDrawColor(renderer, 80, 80, 80, 255);
+    SDL_Rect whiteRect = {whiteTimerX, startY, sectionWidth, sectionHeight};
+    SDL_RenderFillRect(renderer, &whiteRect);
+    
+    // Render points (center)
+    SDL_SetRenderDrawColor(renderer, 40, 40, 40, 255);
+    SDL_Rect pointsRect = {pointsX, startY, sectionWidth, sectionHeight};
+    SDL_RenderFillRect(renderer, &pointsRect);
+    
+    // Render black timer (right)
+    SDL_SetRenderDrawColor(renderer, 20, 20, 20, 255);
+    SDL_Rect blackRect = {blackTimerX, startY, sectionWidth, sectionHeight};
+    SDL_RenderFillRect(renderer, &blackRect);
+    
+    // Render white timer value (centered in its section)
+    int whiteTextX = whiteTimerX + sectionWidth / 2 - (whiteTimer.length() * 14) / 2;
+    drawText(whiteTimer, whiteTextX, startY + sectionHeight / 2 - 15, {255, 255, 255, 255}, 24);
+
+    // Render current points value (centered in its section)
+    SDL_Color color = isNegativePoints ? SDL_Color{255, 100, 100, 255} : SDL_Color{100, 255, 100, 255};
+    drawText(currentPoints, pointsX + sectionWidth / 2 - (currentPoints.length() * 14) / 2, 
+             startY + sectionHeight / 2 - 15, color, 24);
+    
+    // Render black timer value (centered in its section)
+    int blackTextX = blackTimerX + sectionWidth / 2 - (blackTimer.length() * 14) / 2;
+    drawText(blackTimer, blackTextX, startY + sectionHeight / 2 - 15, {255, 255, 255, 255}, 24);
 }
