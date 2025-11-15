@@ -22,7 +22,7 @@ public:
     void updateCapturedPieces(const std::vector<ChessPiece>& whiteCaptured, 
                              const std::vector<ChessPiece>& blackCaptured);
     
-    void setPoints(const std::string& points);
+    void setPoints(const std::string& points, bool isNegative = false);
     void setWhiteTimer(const std::string& time);
     void setBlackTimer(const std::string& time);
 
@@ -33,6 +33,8 @@ private:
     std::string currentPoints;
     std::string whiteTimer;
     std::string blackTimer;
+
+    bool isNegativePoints = false;
     
     // Piece display settings
     int pieceSize;

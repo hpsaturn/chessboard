@@ -183,6 +183,32 @@ void ChessGame::loadCapturedPieces() {
       blackCapturedPieces.push_back(ChessPiece(pieceType, PieceColor::WHITE));
     }
   }
+  // refresh points
+  calculatePoints();
+}
+
+void ChessGame::calculatePoints() {
+    pointsWhite = 0;
+    pointsBlack = 0;
+
+    auto pieceValue = [](PieceType type) {
+        switch (type) {
+            case PieceType::PAWN: return 1;
+            case PieceType::KNIGHT: return 3;
+            case PieceType::BISHOP: return 3;
+            case PieceType::ROOK: return 5;
+            case PieceType::QUEEN: return 9;
+            default: return 0;
+        }
+    };
+
+    for (const auto& piece : whiteCapturedPieces) {
+        pointsWhite += pieceValue(piece.type);
+    }
+
+    for (const auto& piece : blackCapturedPieces) {
+        pointsBlack += pieceValue(piece.type);
+    }
 }
 
 bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRow, int toCol) const {
@@ -467,6 +493,9 @@ bool ChessGame::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
     
     // Switch turns
     whiteTurn = !whiteTurn;
+
+    // calculate points after move
+    calculatePoints();
     
     return true;
 }

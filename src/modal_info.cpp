@@ -70,13 +70,13 @@ void GameInfoModal::updateCapturedPieces(const std::vector<ChessPiece>& whiteCap
     blackCapturedPieces = blackCaptured;
 }
 
-void GameInfoModal::setPoints(const std::string& points) {
+void GameInfoModal::setPoints(const std::string& points, bool isNegative) {
     currentPoints = points;
+    isNegativePoints = isNegative;
 }
 
-void GameInfoModal::setWhiteTimer(const std::string& time) {
-    whiteTimer = time;
-}
+
+void GameInfoModal::setWhiteTimer(const std::string& time) { whiteTimer = time; }
 
 void GameInfoModal::setBlackTimer(const std::string& time) {
     blackTimer = time;
@@ -161,8 +161,9 @@ void GameInfoModal::renderPointsAndTimersSection(int startY) {
     drawText(whiteTimer, whiteTextX, startY + sectionHeight / 2 - 15, {255, 255, 255, 255}, 24);
 
     // Render current points value (centered in its section)
+    SDL_Color color = isNegativePoints ? SDL_Color{255, 100, 100, 255} : SDL_Color{100, 255, 100, 255};
     drawText(currentPoints, pointsX + sectionWidth / 2 - (currentPoints.length() * 14) / 2, 
-             startY + sectionHeight / 2 - 15, {255, 215, 0, 255}, 24);
+             startY + sectionHeight / 2 - 15, color, 24);
     
     // Render black timer value (centered in its section)
     int blackTextX = blackTimerX + sectionWidth / 2 - (blackTimer.length() * 14) / 2;
