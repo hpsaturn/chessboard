@@ -84,20 +84,15 @@ void UCIEngine::sendMoveAsync(const std::string& move, MoveCallback callback) {
         moves_history = moves_history + " " + move;
         moves = "position startpos moves" + moves_history;
     }
-    
-    // Queue position command
-    command_queue.push({moves, nullptr, "", 0});
+  
+    sendCommand(moves, !debug);
     
     // Queue search command with callback
     command_queue.push({"go depth " + std::to_string(difficult), 
                        [this, callback](const std::string& response) {
                            if (response.find("bestmove") != std::string::npos) {
                                std::string bestmove = response.substr(9, 4);
-                               if (callback) {
-                                   callback(bestmove);
-                               } else {
-                                   notifyMove(bestmove);
-                               }
+                               if (callback) callback(bestmove);
                            }
                        }, 
                        "bestmove", move_time * 1000});
@@ -126,54 +121,39 @@ void UCIEngine::searchAsync(int depth, int max_time_ms, MoveCallback callback) {
 }
 
 void UCIEngine::commandProcessorLoop() {
-    while (command_thread_running) {
-        AsyncCommand cmd;
-        {
-            std::unique_lock<std::mutex> lock(queue_mutex);
-            queue_cv.wait(lock, [this] { 
-                return !command_queue.empty() || !command_thread_running; 
-            });
-            
-            if (!command_thread_running) break;
-            
-            cmd = command_queue.front();
-            command_queue.pop();
+  while (command_thread_running) {
+    AsyncCommand cmd;
+    std::unique_lock<std::mutex> lock(queue_mutex);
+    queue_cv.wait(lock, [this] { return !command_queue.empty() || !command_thread_running; });
+
+    if (!command_thread_running) break;
+
+    cmd = command_queue.front();
+    command_queue.pop();
+
+    // Send the command
+    sendCommand(cmd.command, !debug);
+
+    // If we're expecting a specific response, wait for it
+    if (!cmd.expected_response.empty()) {
+      auto start = std::chrono::steady_clock::now();
+
+      std::this_thread::sleep_for(std::chrono::milliseconds(cmd.timeout_ms));
+      sendCommand("stop");  // TODO: meanwhile only works for "go" commands
+
+      auto responses = getCommands();
+      for (const auto& response : responses) {
+        if (response.find(cmd.expected_response) != std::string::npos) {
+          commands.clear();
+          if (cmd.callback) {
+            cmd.callback(response);
+          }
+          break;
         }
-        
-        // Send the command
-        sendCommand(cmd.command, !debug);
-        
-        // If we're expecting a specific response, wait for it
-        if (!cmd.expected_response.empty()) {
-            auto start = std::chrono::steady_clock::now();
-            bool response_found = false;
-            
-            while (std::chrono::steady_clock::now() - start < 
-                   std::chrono::milliseconds(cmd.timeout_ms)) {
-                
-                auto responses = getCommands();
-                for (const auto& response : responses) {
-                    if (response.find(cmd.expected_response) != std::string::npos) {
-                        response_found = true;
-                        if (cmd.callback) {
-                            cmd.callback(response);
-                        }
-                        break;
-                    }
-                }
-                
-                if (response_found) break;
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            }
-            
-            if (!response_found && cmd.callback) {
-                cmd.callback(""); // Timeout
-            }
-        } else if (cmd.callback) {
-            // For commands without expected response, call callback immediately
-            cmd.callback(cmd.command);
-        }
-    }
+      }
+    } 
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
 }
 
 std::vector<std::string> UCIEngine::getCommands() {
@@ -234,6 +214,8 @@ void UCIEngine::observerLoop() {
         break;
       }
     }
+    // Small sleep to prevent CPU spinning
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
   is_running = false;

@@ -225,7 +225,7 @@ void handleMouseClick(int mouseX, int mouseY, ChessGame& chessGame) {
   }
 }
 
-void process_engine_move(ChessGame& chessGame, const std::string& engine_move) {
+void process_engine_move(ChessGame& chessGame, std::string& engine_move) {
   engine.addMoveToHistory(engine_move);
   int fromRow, fromCol, toRow, toCol;
   chessGame.fromChessMoveNotation(engine_move, fromRow, fromCol, toRow, toCol);
@@ -241,12 +241,13 @@ void process_engine_move(ChessGame& chessGame, const std::string& engine_move) {
     lastCheckRow = checkRow;
   }
   chessGame.pending_move.clear();
+  engine_move.clear();
   isEngineProcessing = false;
   std::cout << "[SDLG] FEN: \"" << chessGame.boardToFEN() << "\"" << std::endl;
 }
 
 UCIEngine::MoveCallback  cbOnEngineMove([](const std::string& move) {
-    std::cout << "[SDLG] engine move received: " << move << std::endl;
+    std::cout << "[SDLG] engine move callback received: " << move << std::endl;
     pending_engine_move = move;
 });
 
@@ -378,7 +379,6 @@ void mainLoop(ChessGame& chessGame, SDL_Renderer* renderer) {
 
     if (!pending_engine_move.empty()) {
       process_engine_move(chessGame, pending_engine_move);
-      pending_engine_move.clear();
     }
 
     // Frame rate limiting
