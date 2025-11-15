@@ -1,4 +1,7 @@
 #include "uci_engine.h"
+#include <sstream>
+#include <cstring>
+#include <cerrno>
 
 bool UCIEngine::startEngine(bool debug, const std::string& enginePath) {
   this->debug = debug;
@@ -44,6 +47,10 @@ bool UCIEngine::startEngine(bool debug, const std::string& enginePath) {
     is_running = true;
     observer_thread = std::make_unique<std::thread>(&UCIEngine::observerLoop, this);
 
+    // Start command processor thread
+    command_thread_running = true;
+    command_thread = std::make_unique<std::thread>(&UCIEngine::commandProcessorLoop, this);
+
     std::cout << "[GNUC] Engine started with PID: " << engine_pid << std::endl;
     return true;
   }
@@ -58,6 +65,115 @@ bool UCIEngine::sendCommand(const std::string& command, bool silent) {
 
   if (!silent) std::cout << "[GNUC] Sent: " << command << " (w:" << wbytes << ")" << std::endl;
   return true;
+}
+
+void UCIEngine::sendCommandAsync(const std::string& command, ResponseCallback callback) {
+    std::lock_guard<std::mutex> lock(queue_mutex);
+    command_queue.push({command, callback, "", 0});
+    queue_cv.notify_one();
+}
+
+void UCIEngine::sendMoveAsync(const std::string& move, MoveCallback callback) {
+    std::lock_guard<std::mutex> lock(queue_mutex);
+    
+    // Build the position command
+    std::string moves = "";
+    if (move.size() > 4) {
+        moves = "position fen " + move;
+    } else {
+        moves_history = moves_history + " " + move;
+        moves = "position startpos moves" + moves_history;
+    }
+    
+    // Queue position command
+    command_queue.push({moves, nullptr, "", 0});
+    
+    // Queue search command with callback
+    command_queue.push({"go depth " + std::to_string(difficult), 
+                       [this, callback](const std::string& response) {
+                           if (response.find("bestmove") != std::string::npos) {
+                               std::string bestmove = response.substr(9, 4);
+                               if (callback) {
+                                   callback(bestmove);
+                               } else {
+                                   notifyMove(bestmove);
+                               }
+                           }
+                       }, 
+                       "bestmove", move_time * 1000});
+    
+    queue_cv.notify_one();
+}
+
+void UCIEngine::searchAsync(int depth, int max_time_ms, MoveCallback callback) {
+    std::lock_guard<std::mutex> lock(queue_mutex);
+    
+    // Queue search command
+    command_queue.push({"go depth " + std::to_string(depth),
+                       [this, callback](const std::string& response) {
+                           if (response.find("bestmove") != std::string::npos) {
+                               std::string bestmove = response.substr(9, 4);
+                               if (callback) {
+                                   callback(bestmove);
+                               } else {
+                                   notifyMove(bestmove);
+                               }
+                           }
+                       },
+                       "bestmove", max_time_ms});
+    
+    queue_cv.notify_one();
+}
+
+void UCIEngine::commandProcessorLoop() {
+    while (command_thread_running) {
+        AsyncCommand cmd;
+        {
+            std::unique_lock<std::mutex> lock(queue_mutex);
+            queue_cv.wait(lock, [this] { 
+                return !command_queue.empty() || !command_thread_running; 
+            });
+            
+            if (!command_thread_running) break;
+            
+            cmd = command_queue.front();
+            command_queue.pop();
+        }
+        
+        // Send the command
+        sendCommand(cmd.command, !debug);
+        
+        // If we're expecting a specific response, wait for it
+        if (!cmd.expected_response.empty()) {
+            auto start = std::chrono::steady_clock::now();
+            bool response_found = false;
+            
+            while (std::chrono::steady_clock::now() - start < 
+                   std::chrono::milliseconds(cmd.timeout_ms)) {
+                
+                auto responses = getCommands();
+                for (const auto& response : responses) {
+                    if (response.find(cmd.expected_response) != std::string::npos) {
+                        response_found = true;
+                        if (cmd.callback) {
+                            cmd.callback(response);
+                        }
+                        break;
+                    }
+                }
+                
+                if (response_found) break;
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
+            
+            if (!response_found && cmd.callback) {
+                cmd.callback(""); // Timeout
+            }
+        } else if (cmd.callback) {
+            // For commands without expected response, call callback immediately
+            cmd.callback(cmd.command);
+        }
+    }
 }
 
 std::vector<std::string> UCIEngine::getCommands() {
@@ -98,84 +214,126 @@ void UCIEngine::observerLoop() {
         buffer[bytes_read] = '\0';
         processEngineOutput(buffer, partial_line);
       } else if (bytes_read == 0) {
-        // EOF - engine closed output
-        std::cout << "[GNUC] Engine output closed" << std::endl;
+        // Engine closed stdout
+        std::cout << "[GNUC] Engine closed output" << std::endl;
+        break;
+      } else {
+        // Read error
+        if (errno != EAGAIN && errno != EWOULDBLOCK) {
+          std::cerr << "[GNUC] Read error: " << strerror(errno) << std::endl;
+          break;
+        }
+      }
+    }
+
+    // Check if engine process is still alive
+    if (engine_pid > 0) {
+      int status;
+      if (waitpid(engine_pid, &status, WNOHANG) == engine_pid) {
+        std::cout << "[GNUC] Engine process terminated" << std::endl;
         break;
       }
     }
-    // Small sleep to prevent CPU spinning
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
+
+  is_running = false;
 }
 
 void UCIEngine::processEngineOutput(const char* data, std::string& partial_line) {
-  std::string output = partial_line + data;
-  partial_line.clear();
+  std::string input(data);
+  std::stringstream ss(partial_line + input);
+  std::string line;
 
-  std::vector<std::string> lines;
-  size_t start = 0;
-  size_t end = output.find('\n');
+  while (std::getline(ss, line)) {
+    if (line.empty()) continue;
 
-  while (end != std::string::npos) {
-    std::string line = output.substr(start, end - start);
     // Remove carriage return if present
     if (!line.empty() && line.back() == '\r') {
       line.pop_back();
     }
-    lines.push_back(line);
-    start = end + 1;
-    end = output.find('\n', start);
-  }
 
-  // Save incomplete line for next read
-  if (start < output.length()) {
-    partial_line = output.substr(start);
-  }
+    if (debug) std::cout << "[GNUC] Recv: " << line << std::endl;
 
-  // Process complete lines
-  for (const auto& line : lines) {
     if (isCommandResponse(line)) {
       storeCommandResponse(line);
+      notifyResponse(line);
     }
-    if (debug) std::cout << "[GNUC] " << line << std::endl;
+  }
+
+  // Store remaining partial line
+  partial_line = "";
+  if (ss.eof() && !ss.str().empty()) {
+    partial_line = ss.str();
   }
 }
 
 bool UCIEngine::isCommandResponse(const std::string& response) {
-  // Define what constitutes an "important" response
-  return (response.find("bestmove") != std::string::npos ||
-      response.find("uciok") != std::string::npos ||
-      response.find("readyok") != std::string::npos
-      // response.find("info depth") != std::string::npos ||
-      // response.find("score") != std::string::npos ||
-      // response.find("id name") != std::string::npos ||
-      // response.find("id author") != std::string::npos
-    );
+  return response.find("bestmove") != std::string::npos ||
+         response.find("info") != std::string::npos ||
+         response.find("readyok") != std::string::npos ||
+         response.find("uciok") != std::string::npos;
 }
 
 void UCIEngine::storeCommandResponse(const std::string& response) {
   std::lock_guard<std::mutex> lock(response_mutex);
   commands.push_back(response);
-
-  // Keep only the last MAX_RESPONSES
+  
+  // Keep only last MAX_RESPONSES
   if (commands.size() > MAX_RESPONSES) {
     commands.erase(commands.begin());
   }
 }
 
+void UCIEngine::notifyResponse(const std::string& response) {
+    if (default_response_callback) {
+        default_response_callback(response);
+    }
+}
+
+void UCIEngine::notifyMove(const std::string& move) {
+    if (move_callback) {
+        move_callback(move);
+    }
+}
+
+void UCIEngine::notifyError(const std::string& error) {
+    if (error_callback) {
+        error_callback(error);
+    }
+}
+
+void UCIEngine::setDefaultResponseCallback(ResponseCallback callback) {
+    default_response_callback = callback;
+}
+
+void UCIEngine::setMoveCallback(MoveCallback callback) {
+    move_callback = callback;
+}
+
+void UCIEngine::setErrorCallback(ErrorCallback callback) {
+    error_callback = callback;
+}
+
 void UCIEngine::shutdown() {
   is_running = false;
+  command_thread_running = false;
+  
+  // Notify command processor to wake up and exit
+  {
+    std::lock_guard<std::mutex> lock(queue_mutex);
+    queue_cv.notify_one();
+  }
 
-  // Stop observer thread
   if (observer_thread && observer_thread->joinable()) {
     observer_thread->join();
   }
 
-  // Send quit command and close pipes
-  if (engine_stdin[1] != -1) {
-    sendCommand("quit");
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  if (command_thread && command_thread->joinable()) {
+    command_thread->join();
+  }
 
+  // Close pipes
+  if (engine_stdin[1] != -1) {
     close(engine_stdin[1]);
     engine_stdin[1] = -1;
   }
@@ -283,5 +441,3 @@ std::string UCIEngine::sendMove(const std::string& move) {
   else
     return "";
 }
-
-
