@@ -254,8 +254,12 @@ void ChessGame::calculatePoints() {
 
 void ChessGame::startTimers() {
   if (!timersRunning) {
-    whiteTimerStart = time(nullptr);
-    blackTimerStart = time(nullptr);
+    // Only start the timer for the current player
+    if (whiteTurn) {
+      whiteTimerStart = time(nullptr);
+    } else {
+      blackTimerStart = time(nullptr);
+    }
     timersRunning = true;
   }
 }
@@ -289,6 +293,7 @@ void ChessGame::resetTimers() {
     blackTimeRemaining = matchTime; // 10 minutes in seconds
     timersRunning = false;
 }
+
 bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRow, int toCol) const {
     // Can't move to the same square
     if (fromRow == toRow && fromCol == toCol) return false;
@@ -569,10 +574,14 @@ bool ChessGame::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
       pending_move = move;
     }
     
+    // Stop timer for current player before switching turns
+    stopTimers();
+    
+    // Stop timer for current player before switching turns
+    stopTimers();
+
     // Switch turns
     whiteTurn = !whiteTurn;
-
-    // calculate points after move
     calculatePoints();
     
     return true;
