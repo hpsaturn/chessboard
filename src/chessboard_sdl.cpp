@@ -63,12 +63,14 @@ void resetBoard(ChessGame& chessGame) {
   lastCheckCol = -1;
   lastCheckRow = -1;
   chessGame.pending_move.clear();
+  gameInfoModal->setBlackTimer(chessGame.getBlackTimer());
+  gameInfoModal->setWhiteTimer(chessGame.getWhiteTimer());
   engine.newGame();
   engine.sendCommand("easy");
   engine.sendCommand("random");
 }
 
-void showInfoModel(GameInfoModal* infoModal, ChessGame& chessGame) {
+void updateInfoModal(ChessGame& chessGame) {
 // Show game info modal
   if (gameInfoModal) {
     gameInfoModal->updateCapturedPieces(
@@ -78,9 +80,7 @@ void showInfoModel(GameInfoModal* infoModal, ChessGame& chessGame) {
 
     bool negative = chessGame.getPointsWhite() - chessGame.getPointsBlack() < 0;
     int pointsDiff = abs(chessGame.getPointsWhite() - chessGame.getPointsBlack());
-                                        
     gameInfoModal->setPoints((negative ? "-" : "+") + std::to_string(pointsDiff), negative);  
-    gameInfoModal->show();
   }
 }
 
@@ -149,7 +149,8 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
       if (settingsModal) settingsModal->show();
       break;
     case SDLK_i:
-      showInfoModel(gameInfoModal, chessGame); 
+      updateInfoModal(chessGame); 
+      gameInfoModal->show();
       break;
     case SDLK_F2:
       // Save current state slot
@@ -356,6 +357,8 @@ void mainLoop(ChessGame& chessGame, SDL_Renderer* renderer) {
     else
       gameInfoModal->setBlackTimer(chessGame.getBlackTimer());
 
+    updateInfoModal(chessGame); 
+
     // Render modal windows
     settingsModal->render();
     gameInfoModal->render();
@@ -456,6 +459,8 @@ void renderChessboardSDL(std::string fen) {
     engine.setDifficult(settingsModal->getSettings().depthDifficulty); 
     engine.setMoveTime(settingsModal->getSettings().maxTimePerMove);
     chessGame.setTimeMatch(settingsModal->getSettings().matchTime * 60);
+    gameInfoModal->setBlackTimer(chessGame.getBlackTimer());
+    gameInfoModal->setWhiteTimer(chessGame.getWhiteTimer());
   });
 
   chessGame.setTimeMatch(settingsModal->getSettings().matchTime * 60);
