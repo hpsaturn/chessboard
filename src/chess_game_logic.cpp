@@ -24,11 +24,21 @@ const std::vector<std::string>& ChessGame::getMoveHistory() const {
     return moveHistory;
 }
 
+std::string ChessGame::getWhiteTimer() const {
+    // Placeholder implementation
+    return "10:00";
+}
+
+std::string ChessGame::getBlackTimer() const {
+    // Placeholder implementation
+    return "10:00";
+}
+
 std::string ChessGame::toChessNotation(int row, int col) const {
-    std::string notation;
-    notation += 'a' + col;
-    notation += '8' - row;
-    return notation;
+  std::string notation;
+  notation += 'a' + col;
+  notation += '8' - row;
+  return notation;
 }
 
 bool ChessGame::fromChessNotation(const std::string& notation, int& row, int& col) const {
@@ -209,6 +219,20 @@ void ChessGame::calculatePoints() {
     for (const auto& piece : blackCapturedPieces) {
         pointsBlack += pieceValue(piece.type);
     }
+}
+
+void ChessGame::startTimers() {
+  gameStartTime = time(nullptr);
+}
+
+void ChessGame::stopTimers() {
+
+}
+
+void ChessGame::updateTimers() {}
+
+void ChessGame::resetTimers() {
+  
 }
 
 bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRow, int toCol) const {
@@ -523,5 +547,6 @@ void ChessGame::resetGame() {
     initializeBoard();
     moveHistory.clear();
     whiteTurn = true;
+    calculatePoints();
 }
 
