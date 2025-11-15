@@ -59,7 +59,6 @@ private:
     std::atomic<bool> command_thread_running;
 
     // Callbacks
-    ResponseCallback default_response_callback;
     MoveCallback move_callback;
     ErrorCallback error_callback;
 
@@ -91,13 +90,10 @@ public:
     void setDifficult(int difficult);
     void setMoveTime(uint32_t move_time);
 
-    // Async methods with callbacks
-    void sendCommandAsync(const std::string& command, ResponseCallback callback = nullptr);
+    // Async method with callbacks
     void sendMoveAsync(const std::string& move, MoveCallback callback = nullptr);
-    void searchAsync(int depth, int max_time_ms, MoveCallback callback = nullptr);
     
     // Callback setters
-    void setDefaultResponseCallback(ResponseCallback callback);
     void setMoveCallback(MoveCallback callback);
     void setErrorCallback(ErrorCallback callback);
 

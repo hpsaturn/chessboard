@@ -67,12 +67,6 @@ bool UCIEngine::sendCommand(const std::string& command, bool silent) {
   return true;
 }
 
-void UCIEngine::sendCommandAsync(const std::string& command, ResponseCallback callback) {
-    std::lock_guard<std::mutex> lock(queue_mutex);
-    command_queue.push({command, callback, "", 0});
-    queue_cv.notify_one();
-}
-
 void UCIEngine::sendMoveAsync(const std::string& move, MoveCallback callback) {
     std::lock_guard<std::mutex> lock(queue_mutex);
     
@@ -96,26 +90,6 @@ void UCIEngine::sendMoveAsync(const std::string& move, MoveCallback callback) {
                            }
                        }, 
                        "bestmove", move_time * 1000});
-    
-    queue_cv.notify_one();
-}
-
-void UCIEngine::searchAsync(int depth, int max_time_ms, MoveCallback callback) {
-    std::lock_guard<std::mutex> lock(queue_mutex);
-    
-    // Queue search command
-    command_queue.push({"go depth " + std::to_string(depth),
-                       [this, callback](const std::string& response) {
-                           if (response.find("bestmove") != std::string::npos) {
-                               std::string bestmove = response.substr(9, 4);
-                               if (callback) {
-                                   callback(bestmove);
-                               } else {
-                                   notifyMove(bestmove);
-                               }
-                           }
-                       },
-                       "bestmove", max_time_ms});
     
     queue_cv.notify_one();
 }
@@ -276,12 +250,6 @@ void UCIEngine::storeCommandResponse(const std::string& response) {
   }
 }
 
-void UCIEngine::notifyResponse(const std::string& response) {
-    if (default_response_callback) {
-        default_response_callback(response);
-    }
-}
-
 void UCIEngine::notifyMove(const std::string& move) {
     if (move_callback) {
         move_callback(move);
@@ -292,10 +260,6 @@ void UCIEngine::notifyError(const std::string& error) {
     if (error_callback) {
         error_callback(error);
     }
-}
-
-void UCIEngine::setDefaultResponseCallback(ResponseCallback callback) {
-    default_response_callback = callback;
 }
 
 void UCIEngine::setMoveCallback(MoveCallback callback) {
