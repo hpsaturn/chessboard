@@ -16,8 +16,14 @@ private:
     int pointsWhite = 0;
     int pointsBlack = 0;
 
-    // Game timestamp init
     time_t gameStartTime;
+    
+    // Timer variables
+    time_t whiteTimerStart;
+    time_t blackTimerStart;
+    int whiteTimeRemaining;
+    int blackTimeRemaining;
+    bool timersRunning;
     
     // Captured pieces tracking
     std::vector<ChessPiece> whiteCapturedPieces;
@@ -25,9 +31,7 @@ private:
  
     void clearBoard();
     void loadCapturedPieces();
-    void calculatePoints();
-    void startTimers();
-    void stopTimers();
+    void calculatePoints(); 
     void updateTimers();
     void resetTimers();
 
@@ -50,6 +54,8 @@ public:
     // Timers methods
     std::string getWhiteTimer() const;
     std::string getBlackTimer() const;
+    void startTimers();
+    void stopTimers();
     
     // Coordinate conversion
     std::string toChessNotation(int row, int col) const;

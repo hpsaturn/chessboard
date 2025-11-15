@@ -4,9 +4,11 @@
 #include <sstream>  
 #include <cctype>   
 #include <string>   
+#include <iomanip>
 
 ChessGame::ChessGame() : whiteTurn(true) {
     initializeBoard();
+    resetTimers();
 }
 
 const ChessPiece& ChessGame::getPiece(int row, int col) const {
@@ -25,13 +27,37 @@ const std::vector<std::string>& ChessGame::getMoveHistory() const {
 }
 
 std::string ChessGame::getWhiteTimer() const {
-    // Placeholder implementation
-    return "10:00";
+    int currentTime = whiteTimeRemaining;
+    if (timersRunning && whiteTurn) {
+        time_t currentTimeValue = time(nullptr);
+        currentTime = whiteTimeRemaining - (currentTimeValue - whiteTimerStart);
+        if (currentTime < 0) currentTime = 0;
+    }
+    
+    int minutes = currentTime / 60;
+    int seconds = currentTime % 60;
+    
+    std::stringstream ss;
+    ss << std::setw(2) << std::setfill('0') << minutes << ":" 
+       << std::setw(2) << std::setfill('0') << seconds;
+    return ss.str();
 }
 
 std::string ChessGame::getBlackTimer() const {
-    // Placeholder implementation
-    return "10:00";
+    int currentTime = blackTimeRemaining;
+    if (timersRunning && !whiteTurn) {
+        time_t currentTimeValue = time(nullptr);
+        currentTime = blackTimeRemaining - (currentTimeValue - blackTimerStart);
+        if (currentTime < 0) currentTime = 0;
+    }
+    
+    int minutes = currentTime / 60;
+    int seconds = currentTime % 60;
+    
+    std::stringstream ss;
+    ss << std::setw(2) << std::setfill('0') << minutes << ":" 
+       << std::setw(2) << std::setfill('0') << seconds;
+    return ss.str();
 }
 
 std::string ChessGame::toChessNotation(int row, int col) const {
@@ -222,19 +248,42 @@ void ChessGame::calculatePoints() {
 }
 
 void ChessGame::startTimers() {
-  gameStartTime = time(nullptr);
+  if (!timersRunning) {
+    whiteTimerStart = time(nullptr);
+    blackTimerStart = time(nullptr);
+    timersRunning = true;
+  }
 }
 
 void ChessGame::stopTimers() {
-
+    if (timersRunning) {
+        // Update remaining time for the current player
+        time_t currentTime = time(nullptr);
+        if (whiteTurn) {
+            whiteTimeRemaining -= (currentTime - whiteTimerStart);
+            if (whiteTimeRemaining < 0) whiteTimeRemaining = 0;
+        } else {
+            blackTimeRemaining -= (currentTime - blackTimerStart);
+            if (blackTimeRemaining < 0) blackTimeRemaining = 0;
+        }
+        timersRunning = false;
+    }
 }
 
-void ChessGame::updateTimers() {}
+void ChessGame::updateTimers() {
+    if (timersRunning) {
+        // This method can be called periodically to update timer displays
+        // The actual time calculation is done in getWhiteTimer() and getBlackTimer()
+        // This method could be used for additional timer-related logic if needed
+    }
+}
 
 void ChessGame::resetTimers() {
-  
+    stopTimers();
+    whiteTimeRemaining = 10 * 60; // 10 minutes in seconds
+    blackTimeRemaining = 10 * 60; // 10 minutes in seconds
+    timersRunning = false;
 }
-
 bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRow, int toCol) const {
     // Can't move to the same square
     if (fromRow == toRow && fromCol == toCol) return false;
@@ -549,4 +598,3 @@ void ChessGame::resetGame() {
     whiteTurn = true;
     calculatePoints();
 }
-

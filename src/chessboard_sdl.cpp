@@ -77,7 +77,7 @@ void showInfoModel(GameInfoModal* infoModal, ChessGame& chessGame) {
     bool negative = chessGame.getPointsWhite() - chessGame.getPointsBlack() < 0;
     int pointsDiff = abs(chessGame.getPointsWhite() - chessGame.getPointsBlack());
                                         
-    gameInfoModal->setPoints((negative ? "-" : "+") + std::to_string(pointsDiff), negative); 
+    gameInfoModal->setPoints((negative ? "-" : "+") + std::to_string(pointsDiff), negative);  
     gameInfoModal->show();
   }
 }
@@ -324,6 +324,9 @@ void mainLoop(ChessGame& chessGame, SDL_Renderer* renderer) {
       }
     }
 
+    gameInfoModal->setWhiteTimer(chessGame.getWhiteTimer());
+    gameInfoModal->setBlackTimer(chessGame.getBlackTimer());
+
     // Render modal windows
     settingsModal->render();
     gameInfoModal->render();
@@ -336,6 +339,7 @@ void mainLoop(ChessGame& chessGame, SDL_Renderer* renderer) {
 
     // Send move to engine and update its move
     if (!chessGame.pending_move.empty()) {  
+      chessGame.startTimers();
       std::cout << "[SDLG] sending move  : " << chessGame.pending_move << std::endl;
       std::string engine_move;
       if (chessGame.isFenMode())

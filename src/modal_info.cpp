@@ -78,9 +78,7 @@ void GameInfoModal::setPoints(const std::string& points, bool isNegative) {
 
 void GameInfoModal::setWhiteTimer(const std::string& time) { whiteTimer = time; }
 
-void GameInfoModal::setBlackTimer(const std::string& time) {
-    blackTimer = time;
-}
+void GameInfoModal::setBlackTimer(const std::string& time) { blackTimer = time; }
 
 void GameInfoModal::renderCapturedPiecesSection(int startY, const std::string& title, 
                                                const std::vector<ChessPiece>& wpieces, const std::vector<ChessPiece>& bpieces) {
