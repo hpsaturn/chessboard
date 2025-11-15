@@ -6,6 +6,7 @@
 #include "chess_pieces.h"
 #include <string>
 #include <vector>
+#include <ctime>
 
 class ChessGame {
 private:
@@ -14,6 +15,16 @@ private:
     bool whiteTurn, fenMode;
     int pointsWhite = 0;
     int pointsBlack = 0;
+
+    time_t gameStartTime;
+    
+    // Timer variables
+    time_t whiteTimerStart;
+    time_t blackTimerStart;
+    int matchTime;
+    int whiteTimeRemaining;
+    int blackTimeRemaining;
+    bool timersRunning;
     
     // Captured pieces tracking
     std::vector<ChessPiece> whiteCapturedPieces;
@@ -21,7 +32,9 @@ private:
  
     void clearBoard();
     void loadCapturedPieces();
-    void calculatePoints();
+    void calculatePoints(); 
+    void updateTimers();
+    void resetTimers();
 
 public:
     ChessGame();
@@ -37,7 +50,14 @@ public:
     const std::vector<ChessPiece>& getWhiteCapturedPieces() const { return whiteCapturedPieces; }
     const std::vector<ChessPiece>& getBlackCapturedPieces() const { return blackCapturedPieces; }
     int getPointsWhite() const { return pointsWhite; }
-    int getPointsBlack() const { return pointsBlack; }  
+    int getPointsBlack() const { return pointsBlack; }
+
+    // Timers methods
+    void setTimeMatch(int seconds);
+    std::string getWhiteTimer() const;
+    std::string getBlackTimer() const;
+    void startTimers();
+    void stopTimers();
     
     // Coordinate conversion
     std::string toChessNotation(int row, int col) const;

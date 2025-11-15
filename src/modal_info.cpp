@@ -13,6 +13,8 @@ GameInfoModal::GameInfoModal(SDL_Renderer* renderer, int screenWidth, int screen
     pieceSize = SQUARE_SIZE / PIECE_SCALED;
     pieceSpacing = 0;
     sectionPadding = 5;
+    whiteTimer = "00:00";
+    blackTimer = "00:00";
 }
 
 bool GameInfoModal::handleEvent(const SDL_Event& e) {
@@ -78,9 +80,7 @@ void GameInfoModal::setPoints(const std::string& points, bool isNegative) {
 
 void GameInfoModal::setWhiteTimer(const std::string& time) { whiteTimer = time; }
 
-void GameInfoModal::setBlackTimer(const std::string& time) {
-    blackTimer = time;
-}
+void GameInfoModal::setBlackTimer(const std::string& time) { blackTimer = time; }
 
 void GameInfoModal::renderCapturedPiecesSection(int startY, const std::string& title, 
                                                const std::vector<ChessPiece>& wpieces, const std::vector<ChessPiece>& bpieces) {
