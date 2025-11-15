@@ -46,6 +46,8 @@ AboutModal* aboutModal = nullptr;
 GameStateManager* stateManager = nullptr;
 
 std::string pending_fen;
+std::string pending_engine_move = "";
+bool isEngineProcessing = false;
 
 void resetBoard(ChessGame& chessGame) {
   chessGame.resetGame();
@@ -223,6 +225,31 @@ void handleMouseClick(int mouseX, int mouseY, ChessGame& chessGame) {
   }
 }
 
+void process_engine_move(ChessGame& chessGame, const std::string& engine_move) {
+  engine.addMoveToHistory(engine_move);
+  int fromRow, fromCol, toRow, toCol;
+  chessGame.fromChessMoveNotation(engine_move, fromRow, fromCol, toRow, toCol);
+  chessGame.movePiece(fromRow, fromCol, toRow, toCol);
+  lastMoveStartRow = fromRow;
+  lastMoveStartCol = fromCol;
+  lastMoveEndRow = toRow;
+  lastMoveEndCol = toCol;
+  int checkRow, checkCol;
+  if (chessGame.isInCheck(checkRow, checkCol)) {
+    std::cout << "[SDLG] Check detected!" << std::endl;
+    lastCheckCol = checkCol;  // Notify to user check position
+    lastCheckRow = checkRow;
+  }
+  chessGame.pending_move.clear();
+  isEngineProcessing = false;
+  std::cout << "[SDLG] FEN: \"" << chessGame.boardToFEN() << "\"" << std::endl;
+}
+
+UCIEngine::MoveCallback  cbOnEngineMove([](const std::string& move) {
+    std::cout << "[SDLG] engine move received: " << move << std::endl;
+    pending_engine_move = move;
+});
+
 // Main game loop
 void mainLoop(ChessGame& chessGame, SDL_Renderer* renderer) {
   bool quit = false;
@@ -335,31 +362,23 @@ void mainLoop(ChessGame& chessGame, SDL_Renderer* renderer) {
     SDL_RenderPresent(renderer);
 
     // Send move to engine and update its move
-    if (!chessGame.pending_move.empty()) {  
+    if (!chessGame.pending_move.empty() && !isEngineProcessing) {  
       std::cout << "[SDLG] sending move  : " << chessGame.pending_move << std::endl;
-      std::string engine_move;
-      if (chessGame.isFenMode())
-        engine_move = engine.sendMove(chessGame.boardToFEN());
-      else 
-        engine_move = engine.sendMove(chessGame.pending_move);
-      std::cout << "[SDLG] receiving move: " << engine_move << std::endl;
-      engine.addMoveToHistory(engine_move);
-      int fromRow, fromCol, toRow, toCol;
-      chessGame.fromChessMoveNotation(engine_move, fromRow, fromCol, toRow, toCol);
-      chessGame.movePiece(fromRow, fromCol, toRow, toCol);
-      lastMoveStartRow = fromRow;
-      lastMoveStartCol = fromCol;
-      lastMoveEndRow = toRow;
-      lastMoveEndCol = toCol;
-      int checkRow, checkCol;
-      if (chessGame.isInCheck(checkRow, checkCol)) {
-        std::cout << "[SDLG] Check detected!" << std::endl;
-        lastCheckCol = checkCol; // Notify to user check position
-        lastCheckRow = checkRow;
+      isEngineProcessing = true; 
+      if (chessGame.isFenMode()) {
+        // engine_move = engine.sendMove(chessGame.boardToFEN());
+        engine.sendMoveAsync(chessGame.boardToFEN(),cbOnEngineMove);
       }
-      chessGame.pending_move.clear();
-      std::cout << "[SDLG] FEN: \"" << chessGame.boardToFEN() << "\"" << std::endl;
-      engine_move.clear();
+        
+      else {
+        // engine_move = engine.sendMove(chessGame.pending_move);
+        engine.sendMoveAsync(chessGame.pending_move,cbOnEngineMove); 
+      }
+    }
+
+    if (!pending_engine_move.empty()) {
+      process_engine_move(chessGame, pending_engine_move);
+      pending_engine_move.clear();
     }
 
     // Frame rate limiting

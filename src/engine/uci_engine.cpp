@@ -240,38 +240,48 @@ void UCIEngine::observerLoop() {
 }
 
 void UCIEngine::processEngineOutput(const char* data, std::string& partial_line) {
-  std::string input(data);
-  std::stringstream ss(partial_line + input);
-  std::string line;
+  std::string output = partial_line + data;
+  partial_line.clear();
 
-  while (std::getline(ss, line)) {
-    if (line.empty()) continue;
+  std::vector<std::string> lines;
+  size_t start = 0;
+  size_t end = output.find('\n');
 
+  while (end != std::string::npos) {
+    std::string line = output.substr(start, end - start);
     // Remove carriage return if present
     if (!line.empty() && line.back() == '\r') {
       line.pop_back();
     }
-
-    if (debug) std::cout << "[GNUC] Recv: " << line << std::endl;
-
-    if (isCommandResponse(line)) {
-      storeCommandResponse(line);
-      notifyResponse(line);
-    }
+    lines.push_back(line);
+    start = end + 1;
+    end = output.find('\n', start);
   }
 
-  // Store remaining partial line
-  partial_line = "";
-  if (ss.eof() && !ss.str().empty()) {
-    partial_line = ss.str();
+  // Save incomplete line for next read
+  if (start < output.length()) {
+    partial_line = output.substr(start);
+  }
+
+  // Process complete lines
+  for (const auto& line : lines) {
+    if (isCommandResponse(line)) {
+      storeCommandResponse(line);
+    }
+    if (debug) std::cout << "[GNUC] " << line << std::endl;
   }
 }
 
 bool UCIEngine::isCommandResponse(const std::string& response) {
-  return response.find("bestmove") != std::string::npos ||
-         response.find("info") != std::string::npos ||
-         response.find("readyok") != std::string::npos ||
-         response.find("uciok") != std::string::npos;
+  // Define what constitutes an "important" response
+  return (response.find("bestmove") != std::string::npos ||
+      response.find("uciok") != std::string::npos ||
+      response.find("readyok") != std::string::npos
+      // response.find("info depth") != std::string::npos ||
+      // response.find("score") != std::string::npos ||
+      // response.find("id name") != std::string::npos ||
+      // response.find("id author") != std::string::npos
+    );
 }
 
 void UCIEngine::storeCommandResponse(const std::string& response) {
@@ -334,6 +344,9 @@ void UCIEngine::shutdown() {
 
   // Close pipes
   if (engine_stdin[1] != -1) {
+    sendCommand("quit");
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
     close(engine_stdin[1]);
     engine_stdin[1] = -1;
   }
@@ -441,3 +454,5 @@ std::string UCIEngine::sendMove(const std::string& move) {
   else
     return "";
 }
+
+
