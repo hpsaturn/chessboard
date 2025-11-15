@@ -1,7 +1,7 @@
 #include "uci_engine.h"
 
 bool UCIEngine::startEngine(bool debug, const std::string& enginePath) {
-  debug = debug;
+  this->debug = debug;
   if (pipe(engine_stdin) != 0 || pipe(engine_stdout) != 0) {
     std::cerr << "[GNUC] Failed to create pipes" << std::endl;
     return false;
@@ -145,11 +145,12 @@ bool UCIEngine::isCommandResponse(const std::string& response) {
   // Define what constitutes an "important" response
   return (response.find("bestmove") != std::string::npos ||
       response.find("uciok") != std::string::npos ||
-      response.find("readyok") != std::string::npos ||
-      response.find("info depth") != std::string::npos ||
-      response.find("score") != std::string::npos ||
-      response.find("id name") != std::string::npos ||
-      response.find("id author") != std::string::npos);
+      response.find("readyok") != std::string::npos
+      // response.find("info depth") != std::string::npos ||
+      // response.find("score") != std::string::npos ||
+      // response.find("id name") != std::string::npos ||
+      // response.find("id author") != std::string::npos
+    );
 }
 
 void UCIEngine::storeCommandResponse(const std::string& response) {
