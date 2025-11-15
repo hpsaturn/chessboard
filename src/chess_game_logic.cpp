@@ -523,5 +523,6 @@ void ChessGame::resetGame() {
     initializeBoard();
     moveHistory.clear();
     whiteTurn = true;
+    calculatePoints();
 }
 

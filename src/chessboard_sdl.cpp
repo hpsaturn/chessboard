@@ -456,9 +456,8 @@ void renderChessboardSDL(std::string fen) {
     pending_fen = sfen;
   });
 
-  gameInfoModal->setBlackTimer("07:35");
-  gameInfoModal->setWhiteTimer("09:40");
-  // gameInfoModal->setPoints("+15");
+  gameInfoModal->setBlackTimer("05:00"); // testing
+  gameInfoModal->setWhiteTimer("05:00");
 
   mainLoop(chessGame, renderer);
 
