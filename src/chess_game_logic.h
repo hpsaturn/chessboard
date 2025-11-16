@@ -16,6 +16,9 @@ private:
     bool whiteTurn, fenMode;
     int pointsWhite = 0;
     int pointsBlack = 0;
+
+    // player timers
+    bool game_actived = false;
     ChessTimer timer;
 
     // Captured pieces tracking
@@ -45,7 +48,7 @@ public:
     // Timers
     std::string getWhiteTimer() { return timer.getWhiteTimer(); }
     std::string getBlackTimer() { return timer.getBlackTimer(); }
-    void setTimeMatch(int sencods);
+    void setTimeMatch(int minutes);
 
     // Coordinate conversion
     std::string toChessNotation(int row, int col) const;

@@ -1,4 +1,4 @@
-#include "ChessTimer.h"
+#include "chess_timer.h"
 #include <iomanip>
 #include <sstream>
 
@@ -8,7 +8,8 @@ ChessTimer::ChessTimer(int minutesPerPlayer)
       blackTimeRemaining(minutesPerPlayer * 60 * 1000),
       isWhiteTurn(true),
       gameActive(false)
-{
+{   
+    this->minutesPerPlayer = minutesPerPlayer;
     gameStartTime = Clock::now();
     lastUpdateTime = gameStartTime;
 }
@@ -35,7 +36,7 @@ void ChessTimer::startGame() {
 }
 
 // Reset the game with optional new time limit
-void ChessTimer::resetGame(int minutesPerPlayer) {
+void ChessTimer::resetGame() {
     whiteTimeRemaining = minutesPerPlayer * 60 * 1000;
     blackTimeRemaining = minutesPerPlayer * 60 * 1000;
     isWhiteTurn = true;

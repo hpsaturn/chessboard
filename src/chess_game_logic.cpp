@@ -27,6 +27,8 @@ const std::vector<std::string>& ChessGame::getMoveHistory() const {
 
 void ChessGame::setTimeMatch(int minutes) {
     timer = ChessTimer(minutes);
+    timer.startGame();
+    timer.resetGame();
 }
 
 std::string ChessGame::toChessNotation(int row, int col) const {
@@ -495,6 +497,9 @@ bool ChessGame::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
     if (whiteTurn) {
       pending_move = move;
     }
+
+    if (!game_actived) timer.startGame();
+    timer.switchTurn();
     
     // Switch turns
     whiteTurn = !whiteTurn;
@@ -523,6 +528,8 @@ void ChessGame::handleCastling(int fromRow, int fromCol, int toRow, int toCol) {
 }
 
 void ChessGame::resetGame() {
+    timer.resetGame();
+    game_actived = false;
     whiteCapturedPieces.clear();
     blackCapturedPieces.clear();
     initializeBoard();

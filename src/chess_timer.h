@@ -14,6 +14,8 @@ private:
     // Player time remaining in milliseconds
     int64_t whiteTimeRemaining;
     int64_t blackTimeRemaining;
+    // Game user time
+    int minutesPerPlayer;
     
     // Game state
     TimePoint gameStartTime;
@@ -33,7 +35,7 @@ public:
     std::string getWhiteTimer();
     std::string getBlackTimer();
     void startGame();
-    void resetGame(int minutesPerPlayer = 10);
+    void resetGame();
     void switchTurn();
     bool isTimeUp();
     std::string getCurrentPlayer();
