@@ -4,7 +4,7 @@
 
 C++ chessboard renderer with SDL2, ASCII, and NCurses on the top of GNUChess UCI server protocol.
 
-![Picocalc Preview](res/screenshots/preview.jpg)
+![Picocalc Preview](screenshots/preview.jpg)
 
 ## Features
 
@@ -89,7 +89,7 @@ This version is optimized for Picocalc board using Luckfox Lyra. For that it has
 | **R**| Restart the game. (without ask before for now) |
 | **H**| Help - Keyboard bindings |
 
-![screenshots](res/screenshots/screenshots.png)
+![screenshots](screenshots/screenshots.png)
 
 ### Ncurses/Chars Board Piece Notation
 
@@ -115,12 +115,14 @@ This version is optimized for Picocalc board using Luckfox Lyra. For that it has
 - [x] Ilegal check moves validations (engine crashes)
 - [x] isInCheck() validations
 - [x] Help info modal window
+- [x] Game info modal window (in porgress)
+- [x] Points from the user (positive/negative)
+- [x] Basic Timers
+- [x] Buildroot config files for Luckfox Lyra tests
+- [ ] Improve easy mode (seems that is not working)
 - [ ] FEN casteling support
-- [ ] Game info modal window (in porgress)
-- [ ] Points from the user (positive/negative)
-- [ ] Chronometers
+- [ ] Flip board
 - [ ] Sound support
-- [ ] Buildroot config files for Luckfox Lyra tests
 - [ ] Sprite pieces improvement
 
 ## Contributing
