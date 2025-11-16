@@ -4,6 +4,7 @@
 
 #include "engine/bitboard.h"
 #include "chess_pieces.h"
+#include "chess_timer.h"
 #include <string>
 #include <vector>
 #include <ctime>
@@ -15,17 +16,8 @@ private:
     bool whiteTurn, fenMode;
     int pointsWhite = 0;
     int pointsBlack = 0;
+    ChessTimer timer;
 
-    time_t gameStartTime;
-    
-    // Timer variables
-    time_t whiteTimerStart;
-    time_t blackTimerStart;
-    int matchTime;
-    int whiteTimeRemaining;
-    int blackTimeRemaining;
-    bool timersRunning;
-    
     // Captured pieces tracking
     std::vector<ChessPiece> whiteCapturedPieces;
     std::vector<ChessPiece> blackCapturedPieces;
@@ -33,8 +25,6 @@ private:
     void clearBoard();
     void loadCapturedPieces();
     void calculatePoints(); 
-    void updateTimers();
-    void resetTimers();
 
 public:
     ChessGame();
@@ -52,13 +42,11 @@ public:
     int getPointsWhite() const { return pointsWhite; }
     int getPointsBlack() const { return pointsBlack; }
 
-    // Timers methods
-    void setTimeMatch(int seconds);
-    std::string getWhiteTimer() const;
-    std::string getBlackTimer() const;
-    void startTimers();
-    void stopTimers();
-    
+    // Timers
+    std::string getWhiteTimer() { return timer.getWhiteTimer(); }
+    std::string getBlackTimer() { return timer.getBlackTimer(); }
+    void setTimeMatch(int sencods);
+
     // Coordinate conversion
     std::string toChessNotation(int row, int col) const;
     bool fromChessNotation(const std::string& notation, int& row, int& col) const;

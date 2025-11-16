@@ -352,6 +352,7 @@ void mainLoop(ChessGame& chessGame, SDL_Renderer* renderer) {
         }
       }
     }
+    
     if (chessGame.isWhiteTurn())
       gameInfoModal->setWhiteTimer(chessGame.getWhiteTimer());
     else
@@ -372,8 +373,9 @@ void mainLoop(ChessGame& chessGame, SDL_Renderer* renderer) {
     // Send move to engine and update its move
     if (!chessGame.pending_move.empty() && !isEngineProcessing) {  
       std::cout << "[SDLG] sending move  : " << chessGame.pending_move << std::endl;
+      
       isEngineProcessing = true; 
-      chessGame.startTimers();
+     
       if (chessGame.isFenMode()) {
         // engine_move = engine.sendMove(chessGame.boardToFEN());
         engine.sendMoveAsync(chessGame.boardToFEN(),cbOnEngineMove);
@@ -458,17 +460,17 @@ void renderChessboardSDL(std::string fen) {
 
     engine.setDifficult(settingsModal->getSettings().depthDifficulty); 
     engine.setMoveTime(settingsModal->getSettings().maxTimePerMove);
-    chessGame.setTimeMatch(settingsModal->getSettings().matchTime * 60);
+    chessGame.setTimeMatch(settingsModal->getSettings().matchTime);
     gameInfoModal->setBlackTimer(chessGame.getBlackTimer());
     gameInfoModal->setWhiteTimer(chessGame.getWhiteTimer());
   });
 
-  chessGame.setTimeMatch(settingsModal->getSettings().matchTime * 60);
+  chessGame.setTimeMatch(settingsModal->getSettings().matchTime);
   gameInfoModal->setBlackTimer(chessGame.getBlackTimer());
   gameInfoModal->setWhiteTimer(chessGame.getWhiteTimer());
 
   // Initialize engine
-  if (engine.startEngine(true)) {
+  if (engine.startEngine()) {
     // Initialize UCI protocol
     engine.sendCommand("uci");
     if (engine.waitForResponse("uciok")) {
