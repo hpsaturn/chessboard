@@ -41,11 +41,14 @@ sudo apt install gnuchess cmake build-essential libsdl2-dev libsdl2-ttf-dev libs
 # Build the project
 ./build.sh
 
-# Run SLD2 mode:
+# Test execution:
 ./chess
 
 # Load previous state (FEN standard):
 ./chess --fen "r3kb1r/ppp1pppp/5n2/8/1q4P1/3b1P2/PP1N3P/R1BQK2R b - - 0 1"
+
+# Install
+cd build && sudo make install
 ```
 
 For more about FEN notation and details, please enter [here](https://www.redhotpawn.com/chess/chess-fen-viewer.php)
@@ -57,6 +60,7 @@ git clone --recursive https://github.com/hpsaturn/picocalc-luckfox-lyra.git
 cd picocalc-luckfox-lyra
 ./setup.sh
 ./build.sh all
+./build.sh buildroot-make:gnuchess
 ./build.sh buildroot-make:chessboard
 ./flash.sh
 ```
@@ -124,6 +128,8 @@ This version is optimized for Picocalc board using Luckfox Lyra. For that it has
 - [ ] Flip board
 - [ ] Sound support
 - [ ] Sprite pieces improvement
+
+<a href="https://youtu.be/ltv3fyuKk2g?si=Ese5JhjE1rsCQBCR" target="_blank"><img src="https://raw.githubusercontent.com/hpsaturn/chessboard/refs/heads/master/screenshots/youtube_preview.jpg" align="center" style="margin: 2px" ></a>
 
 ## Contributing
 
