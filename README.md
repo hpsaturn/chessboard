@@ -48,8 +48,6 @@ sudo apt install gnuchess cmake build-essential libsdl2-dev libsdl2-ttf-dev libs
 cd build && sudo make install
 ```
 
-For more about FEN notation and details, please enter [here](https://www.redhotpawn.com/chess/chess-fen-viewer.php)
-
 ### Picocalc (Luckfox Lyra Linux)
 
 You need first change your original Picocalc RP2040 board, with a [LuckFox Lyra board](https://www.luckfox.com/Luckfox-Lyra), put a clean SD and follow the next steps:
@@ -97,11 +95,15 @@ This version is optimized for Picocalc board using Luckfox Lyra. For that it has
 
 ![screenshots](screenshots/screenshots.png)
 
-Also via command line is possible load a FEN state like this: 
+### CLI
+
+Also via command line is possible load a FEN state like this:
 
 ```bash
 ./chess --fen "r3kb1r/ppp1pppp/5n2/8/1q4P1/3b1P2/PP1N3P/R1BQK2R b - - 0 1"
 ```
+
+For more about FEN notation and details, please enter [here](https://www.redhotpawn.com/chess/chess-fen-viewer.php)
 
 ### Ncurses/Chars Board Piece Notation
 
