@@ -100,7 +100,7 @@ This version is optimized for Picocalc board using Luckfox Lyra. For that it has
 Also via command line is possible load a FEN state like this:
 
 ```bash
-./chess --fen "r3kb1r/ppp1pppp/5n2/8/1q4P1/3b1P2/PP1N3P/R1BQK2R b - - 0 1"
+chess --fen "r3kb1r/ppp1pppp/5n2/8/1q4P1/3b1P2/PP1N3P/R1BQK2R b - - 0 1"
 ```
 
 For more about FEN notation and details, please enter [here](https://www.redhotpawn.com/chess/chess-fen-viewer.php)

@@ -18,7 +18,6 @@
 #include "engine/uci_engine.h"
 #include "config_manager.h"
 #include "game_state_manager.h"
-#include "engine/bitboard.h"
 
 // UI state variables
 bool pieceSelected = false;
@@ -34,7 +33,6 @@ uint8_t cursorRow = 6;   // Cursor position for keyboard navigation
 uint8_t cursorCol = 4;   // Cursor position for keyboard navigation
 bool mouseUsed = false;  // Flag for deselect cursor if Mouse is used
 UCIEngine engine;
-ChessBoard bitboard;
  
 // Settings modal
 SettingsModal* settingsModal = nullptr;
@@ -66,8 +64,10 @@ void resetBoard(ChessGame& chessGame) {
   gameInfoModal->setBlackTimer(chessGame.getBlackTimer());
   gameInfoModal->setWhiteTimer(chessGame.getWhiteTimer());
   engine.newGame();
-  engine.sendCommand("easy");
-  engine.sendCommand("random");
+  if (settingsModal->getSettings().depthDifficulty <= 2) {
+    engine.sendCommand("easy");
+    engine.sendCommand("random");
+  }
 }
 
 void updateInfoModal(ChessGame& chessGame) {
@@ -470,7 +470,7 @@ void renderChessboardSDL(std::string fen) {
   gameInfoModal->setWhiteTimer(chessGame.getWhiteTimer());
 
   // Initialize engine
-  if (engine.startEngine()) {
+  if (engine.startEngine(true)) {
     // Initialize UCI protocol
     engine.sendCommand("uci");
     if (engine.waitForResponse("uciok")) {
@@ -482,8 +482,8 @@ void renderChessboardSDL(std::string fen) {
       engine.setDifficult(settingsModal->getSettings().depthDifficulty);
       engine.setMoveTime(settingsModal->getSettings().maxTimePerMove);
     }
-    chessGame.initializeBoard(fen);
     resetBoard(chessGame);
+    chessGame.initializeBoard(fen);
   }
 
   // Set game state selection callback
