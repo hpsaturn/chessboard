@@ -107,45 +107,18 @@ void UCIEngine::commandProcessorLoop() {
 
     if (!cmd.expected_response.empty()) {
       if (waitForResponse(cmd.expected_response, cmd.timeout_ms)) {
-        std::string lastMove = getLastCommand();
-        commands.clear();
-        std::string response = lastMove.substr(9, 4);
-        std::cout << "[GNUC] Async command response: " << response << std::endl;
-        if (cmd.callback) {
-          cmd.callback(response);
-        } else
-          std::cout << "[GNUC] Async command no callback provided." << std::endl;
+        if (cmd.callback) cmd.callback(extractMove(getLastCommand()));
       } else {
-        std::cerr << "[GNUC] Async command force stop.." << std::endl;
+        if(debug) std::cerr << "[GNUC] Async force stop:" << std::endl;
         sendCommand("stop", !debug);
         if (waitForResponse(cmd.expected_response, 1000)) {
-          std::string lastMove = getLastCommand();
-          commands.clear();
-          std::string response = lastMove.substr(9, 4);
-          std::cout << "[GNUC] Async command response: " << response << std::endl;
-          if (cmd.callback) {
-            cmd.callback(response);
-          } else
-            std::cout << "[GNUC] Async command no callback provided." << std::endl;
+          std::string response = extractMove(getLastCommand());
+          if(debug) std::cout << "[GNUC] Async response: " << response << std::endl;
+          if (cmd.callback) cmd.callback(response);
         }
       }
+      commands.clear();
     }
-
-    // If we're expecting a specific response, wait for it
-    // if (!cmd.expected_response.empty()) {
-    //   auto start = std::chrono::steady_clock::now();
-
-    //   auto responses = getCommands();
-    //   for (const auto& response : responses) {
-    //     if (response.find(cmd.expected_response) != std::string::npos) {
-    //       commands.clear();
-    //       if (cmd.callback) {
-    //         cmd.callback(response);
-    //       }
-    //       break;
-    //     }
-    //   }
-    // } 
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 }
@@ -159,6 +132,11 @@ std::string UCIEngine::getLastCommand() {
   std::lock_guard<std::mutex> lock(response_mutex);
   if (commands.empty()) return "";
   return commands.back();
+}
+
+std::string UCIEngine::extractMove(std::string response) { 
+  std::string move = response.substr(9, 4);
+  return move;
 }
 
 void UCIEngine::clearCommands() {
@@ -413,10 +391,7 @@ std::string UCIEngine::sendMove(const std::string& move) {
   searchWithDepthAndTimeout(difficult, move_time * 1000);
   // Wait for bestmove asynchronously
   if (waitForResponse("bestmove", move_time * 1000 * 10)) {
-    std::string lastMove = getLastCommand();
-    commands.clear();
-    std::string response = lastMove.substr(9, 4);
-    return response;
+    return extractMove(getLastCommand());
   }
   else
     return "";

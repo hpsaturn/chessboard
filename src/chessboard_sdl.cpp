@@ -469,8 +469,8 @@ void renderChessboardSDL(std::string fen) {
   gameInfoModal->setBlackTimer(chessGame.getBlackTimer());
   gameInfoModal->setWhiteTimer(chessGame.getWhiteTimer());
 
-  // Initialize engine
-  if (engine.startEngine(true)) {
+  // Initialize engine - debug disabled
+  if (engine.startEngine(false)) {
     // Initialize UCI protocol
     engine.sendCommand("uci");
     if (engine.waitForResponse("uciok")) {
@@ -491,7 +491,6 @@ void renderChessboardSDL(std::string fen) {
     std::cout << "[SDLG] Loading game state from FEN: " << sfen << std::endl;
     pending_fen = sfen;
   });
-  
 
   mainLoop(chessGame, renderer);
 
