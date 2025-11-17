@@ -84,10 +84,7 @@ void UCIEngine::sendMoveAsync(const std::string& move, MoveCallback callback) {
     // Queue search command with callback
     command_queue.push({"go depth " + std::to_string(difficult), 
                        [this, callback](const std::string& response) {
-                           if (response.find("bestmove") != std::string::npos) {
-                               std::string bestmove = response.substr(9, 4);
-                               if (callback) callback(bestmove);
-                           }
+                          if (callback) callback(response);
                        }, 
                        "bestmove", move_time * 1000});
     
@@ -108,24 +105,20 @@ void UCIEngine::commandProcessorLoop() {
     // Send the command
     sendCommand(cmd.command, !debug);
 
-    // If we're expecting a specific response, wait for it
     if (!cmd.expected_response.empty()) {
-      auto start = std::chrono::steady_clock::now();
-
-      std::this_thread::sleep_for(std::chrono::milliseconds(cmd.timeout_ms));
-      sendCommand("stop");  // TODO: meanwhile only works for "go" commands
-
-      auto responses = getCommands();
-      for (const auto& response : responses) {
-        if (response.find(cmd.expected_response) != std::string::npos) {
-          commands.clear();
-          if (cmd.callback) {
-            cmd.callback(response);
-          }
-          break;
+      if (waitForResponse(cmd.expected_response, cmd.timeout_ms)) {
+        if (cmd.callback) cmd.callback(extractMove(getLastCommand()));
+      } else {
+        if(debug) std::cerr << "[GNUC] Async force stop:" << std::endl;
+        sendCommand("stop", !debug);
+        if (waitForResponse(cmd.expected_response, 1000)) {
+          std::string response = extractMove(getLastCommand());
+          if(debug) std::cout << "[GNUC] Async response: " << response << std::endl;
+          if (cmd.callback) cmd.callback(response);
         }
       }
-    } 
+      commands.clear();
+    }
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 }
@@ -139,6 +132,11 @@ std::string UCIEngine::getLastCommand() {
   std::lock_guard<std::mutex> lock(response_mutex);
   if (commands.empty()) return "";
   return commands.back();
+}
+
+std::string UCIEngine::extractMove(std::string response) { 
+  std::string move = response.substr(9, 4);
+  return move;
 }
 
 void UCIEngine::clearCommands() {
@@ -331,6 +329,7 @@ bool UCIEngine::waitForResponse(const std::string& target, int timeout_ms) {
     auto responses = getCommands();
     for (const auto& response : responses) {
       if (response.find(target) != std::string::npos) {
+        if (debug) std::cout << "[GNUC] waitForResponse found: " << target << std::endl;
         return true;
       }
     }
@@ -392,10 +391,7 @@ std::string UCIEngine::sendMove(const std::string& move) {
   searchWithDepthAndTimeout(difficult, move_time * 1000);
   // Wait for bestmove asynchronously
   if (waitForResponse("bestmove", move_time * 1000 * 10)) {
-    std::string lastMove = getLastCommand();
-    commands.clear();
-    std::string response = lastMove.substr(9, 4);
-    return response;
+    return extractMove(getLastCommand());
   }
   else
     return "";

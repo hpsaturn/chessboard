@@ -60,6 +60,8 @@ int main(int argc, char* argv[]) {
     } else if (mode == "chars") {
         renderChessboardChars();
     } else {
+        std::cout << "[MAIN] Starting SDL2 graphical mode" << std::endl;
+        std::cout << "[MAIN] Loding FEN: " << (fen.empty() ? "default" : fen) << "\n";
         renderChessboardSDL(fen);
     }
     

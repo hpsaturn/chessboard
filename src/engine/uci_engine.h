@@ -78,6 +78,7 @@ public:
     bool sendCommand(const std::string& command, bool silent = true);
     std::vector<std::string> getCommands();
     std::string getLastCommand();
+    std::string extractMove(std::string response);
     void clearCommands();
     bool waitForResponse(const std::string& target, int timeout_ms = 5000);
     void searchWithDepthAndTimeout(int depth, int max_time_ms);
@@ -103,7 +104,6 @@ private:
     void processEngineOutput(const char* data, std::string& partial_line);
     bool isCommandResponse(const std::string& response);
     void storeCommandResponse(const std::string& response);
-    void notifyResponse(const std::string& response);
     void notifyMove(const std::string& move);
     void notifyError(const std::string& error);
 };
