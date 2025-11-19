@@ -93,8 +93,19 @@ std::string ChessGame::boardToFEN() const {
     }
   }
 
-  // Add other FEN components (you'll need to track these in your game state)
-  fen << " b KQkq - 0 1";  // Default values for new game
+  // 2. Active color
+  fen << ' ' << (isWhiteTurn() ? 'w' : 'b');
+
+  // 3. Castling availability
+  std::string castling;
+  if (whiteKingsideCastle) castling += 'K';
+  if (whiteQueensideCastle) castling += 'Q';
+  if (blackKingsideCastle) castling += 'k';
+  if (blackQueensideCastle) castling += 'q';
+  fen << ' ' << (castling.empty() ? "-" : castling) << " ";
+
+  fen << "- ";   // No en passant
+  fen << "0 1";  // Reset counters
 
   return fen.str();
 }
@@ -293,10 +304,7 @@ bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRo
             }
             std::cout << "[GAME] Castelling line is free.." << std::endl;
             std::cout << "[GAME] Castelling Approved" << std::endl;
-            std::cout << "[GAME] King valid move" << std::endl;
-
-            // return -1 on invalid input
-            
+            std::cout << "[GAME] King valid move" << std::endl; 
             isCastling = true;
             return true;
         }
@@ -461,7 +469,7 @@ bool ChessGame::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
         std::cout << "[GAME] Move would leave king in check. Move invalid!" << std::endl;
         return false;
     }
- 
+
     ChessPiece& fromPiece = board[fromRow][fromCol];
     ChessPiece toPiece   = board[toRow][toCol];
     
@@ -517,13 +525,17 @@ void ChessGame::handleCastling(int fromRow, int fromCol, int toRow, int toCol) {
   int rookCol = isKingside ? 7 : 0;
   int direction = isKingside ? 1 : -1;
 
-  // Move the rook
+  // Move the rook and update FEN castling rights
   if (isKingside) {
     board[toRow][toCol - 1] = board[fromRow][toCol+1];  // move rook king side
     board[fromRow][toCol + 1] = ChessPiece();
+    if (whiteTurn) whiteKingsideCastle = true;
+    if (!whiteTurn) blackKingsideCastle = true;
   } else {
     board[toRow][toCol + 1] = board[fromRow][toCol - 2];  // move rook queen side
     board[fromRow][toCol - 2] = ChessPiece();
+    if (whiteTurn) whiteQueensideCastle = true;
+    if (!whiteTurn) blackQueensideCastle = true;
   }
 }
 

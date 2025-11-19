@@ -74,22 +74,19 @@ public:
 
     bool startEngine(bool debug = false, const std::string& enginePath = "/usr/games/gnuchess");
     
-    // Synchronous methods
     bool sendCommand(const std::string& command, bool silent = true);
-    std::vector<std::string> getCommands();
-    std::string getLastCommand();
-    std::string extractMove(std::string response);
-    void clearCommands();
     bool waitForResponse(const std::string& target, int timeout_ms = 5000);
-    void searchWithDepthAndTimeout(int depth, int max_time_ms);
-    std::string sendMove(const std::string& move);
-    std::string getMovesHistory();
-    void addMoveToHistory(const std::string& move);
     void newGame();
     void setFenInitBoard(const std::string& fen);
     void shutdown();
     void setDifficult(int difficult);
     void setMoveTime(uint32_t move_time);
+    
+    std::string getMovesHistory();
+    void addMoveToHistory(const std::string& move);
+    
+    // Synchronous methods (deprecated)
+    std::string sendMove(const std::string& move); 
 
     // Async method with callbacks
     void sendMoveAsync(const std::string& move, MoveCallback callback = nullptr);
@@ -99,6 +96,14 @@ public:
     void setErrorCallback(ErrorCallback callback);
 
 private:
+
+    // Synchronous methods
+    std::vector<std::string> getCommands();
+    std::string getLastCommand();
+    std::string extractMove(std::string response);
+    void clearCommands();
+    void searchWithDepthAndTimeout(int depth, int max_time_ms);
+
     void observerLoop();
     void commandProcessorLoop();
     void processEngineOutput(const char* data, std::string& partial_line);
