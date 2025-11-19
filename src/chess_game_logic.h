@@ -17,6 +17,11 @@ private:
     int pointsWhite = 0;
     int pointsBlack = 0;
 
+    bool whiteKingsideCastle;
+    bool whiteQueensideCastle;
+    bool blackKingsideCastle;
+    bool blackQueensideCastle;
+
     // player timers
     bool game_actived = false;
     ChessTimer timer;
