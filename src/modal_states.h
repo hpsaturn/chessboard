@@ -10,26 +10,19 @@
 #include "chess_pieces.h"
 #include "definitions.h"
 #include "game_state_manager.h"
+#include "modal_base.h"
 
-class GameStatesModal {
+class GameStatesModal : public ModalBase {
 public:
     GameStatesModal(SDL_Renderer* renderer, int screenWidth, int screenHeight, GameStateManager* stateManager);
-    ~GameStatesModal();
-    
-    // Show the modal window
-    void show();
-    
-    // Hide the modal window
-    void hide();
     
     // Handle events for the modal
-    bool handleEvent(const SDL_Event& e);
+    bool handleEvent(const SDL_Event& e) override;
     
     // Render the modal
-    void render();
-    
-    // Check if modal is visible
-    bool isVisible() const { return visible; }
+    void render() override;
+
+    void show();
     
     // Load states from manager
     void loadStates();
@@ -40,19 +33,7 @@ public:
     }
 
 private:
-    SDL_Renderer* renderer;
-    TTF_Font* font;
-    int screenWidth;
-    int screenHeight;
-    bool visible;
-
     GameStateManager* stateManager;
-    
-    // Modal dimensions
-    int modalWidth;
-    int modalHeight;
-    int modalX;
-    int modalY;
     
     // List view state
     std::vector<GameStateManager::GameState> states;
@@ -70,8 +51,6 @@ private:
     std::function<void(const std::string& fen)> onStateSelected;
     
     // Helper functions
-    void drawText(const std::string& text, int x, int y, SDL_Color color);
-    SDL_Texture* createTextTexture(const std::string& text, SDL_Color color);
     void renderListView();
     void renderBoardPreview();
     void renderBoardFromFEN(const std::string& fen);

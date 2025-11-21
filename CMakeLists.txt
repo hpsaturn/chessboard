@@ -5,110 +5,140 @@ project(chess VERSION 1.0.0 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Find Threads package (required for both platforms)
-find_package(Threads REQUIRED)
-
-# Define resource paths for development and installation
-add_compile_definitions(
-    RESOURCE_PATH_DEVELOPMENT="res"
-    RESOURCE_PATH_INSTALLED="/usr/local/share/chess"
+# Normal git repository - extract version from git
+execute_process(
+    COMMAND git describe --tags --always --dirty
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_VERSION
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    RESULT_VARIABLE GIT_RESULT
 )
 
-# Copy resource files to build directory
-file(COPY res/ DESTINATION ${CMAKE_BINARY_DIR}/res)
+if(GIT_RESULT EQUAL 0)
+    message(STATUS "Git version: ${GIT_VERSION}")
+    # Extract just the tag version (remove commit hash and dirty flag)
+    execute_process(
+        COMMAND git describe --tags --abbrev=0
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE PROJECT_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        RESULT_VARIABLE TAG_RESULT
+    )
+    message(STATUS "Project version: ${PROJECT_VERSION}")
+else()
+    # Check if we're in a Buildroot environment
+    if(DEFINED ENV{BR2_VERSION})
+        message(STATUS "Buildroot environment detected")
+        set(GIT_VERSION "v0.1.5-buildroot")
+        message(STATUS "Using Buildroot version: ${GIT_VERSION}")
+    else()
+        set(GIT_VERSION "v0.1.5-unknown")
+        message(WARNING "Could not determine git version, using default: ${GIT_VERSION}")
+    endif()
+endif()
+
+# Build info (full git description)
+set(BUILD_INFO "${GIT_VERSION}")
+
+# Find required packages
+find_package(PkgConfig REQUIRED)
+find_package(Threads REQUIRED)
+
+pkg_check_modules(SDL2 QUIET sdl2)
+if(SDL2_FOUND)
+    message(STATUS "SDL2 found: ${SDL2_VERSION}")
+else()
+    message(FATAL_ERROR "SDL2 not found. Please install SDL2 development libraries")
+endif()
+
+pkg_check_modules(SDL2_IMAGE QUIET SDL2_image)
+if(SDL2_IMAGE_FOUND)
+    message(STATUS "SDL2_image found: ${SDL2_IMAGE_VERSION}")
+else()
+    message(FATAL_ERROR "SDL2_image not found. Please install SDL2_image development libraries")
+endif()
+
+pkg_check_modules(SDL2_TTF QUIET SDL2_ttf)
+if(SDL2_TTF_FOUND)
+    message(STATUS "SDL2_ttf found: ${SDL2_TTF_VERSION}")
+else()
+    message(FATAL_ERROR "SDL2_ttf not found. Please install SDL2_ttf development libraries")
+endif()
+
+pkg_check_modules(YAML_CPP QUIET yaml-cpp)
+if(YAML_CPP_FOUND)
+    message(STATUS "yaml-cpp found: ${YAML_CPP_VERSION}")
+else()
+    message(FATAL_ERROR "yaml-cpp not found. Please install yaml-cpp development libraries")
+endif()
 
 # Find dependencies based on platform
 if(WIN32)
     add_definitions(-DWIN32_LEAN_AND_MEAN)
     add_definitions(-DNOMINMAX)
-
-    # Find packages (should work automatically in MSYS2 environment)
-    find_package(SDL2 REQUIRED)
-    find_package(SDL2_image REQUIRED)
-    find_package(SDL2_ttf REQUIRED)
-
-    # For yaml-cpp and ncurses, use simpler approach
-    find_path(YAML_CPP_INCLUDE_DIR yaml.h)
-    find_library(YAML_CPP_LIBRARY NAMES yaml-cpp)
-
-    find_path(NCURSES_INCLUDE_DIR ncurses.h)
-    find_library(NCURSES_LIBRARY NAMES ncurses)
-
-    if(NOT YAML_CPP_INCLUDE_DIR OR NOT YAML_CPP_LIBRARY)
-        message(FATAL_ERROR "yaml-cpp not found")
-    endif()
-
-    if(NOT NCURSES_INCLUDE_DIR OR NOT NCURSES_LIBRARY)
-        message(FATAL_ERROR "ncurses not found")
-    endif()
-else()
-    # Linux: Use pkg-config
-    find_package(PkgConfig REQUIRED)
-    
-    # Check for SDL2
-    pkg_check_modules(SDL2 QUIET sdl2)
-    if(SDL2_FOUND)
-        message(STATUS "SDL2 found: ${SDL2_VERSION}")
-        include_directories(${SDL2_INCLUDE_DIRS})
-    else()
-        message(ERROR "SDL2 not found! Please install libsdl2-dev")
-    endif()
-
-    # Check for SDL2_image
-    pkg_check_modules(SDL2_IMAGE QUIET SDL2_image)
-    if(SDL2_IMAGE_FOUND)
-        message(STATUS "SDL2_image found: ${SDL2_IMAGE_VERSION}")
-        include_directories(${SDL2_IMAGE_INCLUDE_DIRS})
-    else()
-        message(ERROR "SDL2_image not found Please install libsdl2-image-dev")
-    endif()
-
-    # Check for SDL2_ttf
-    pkg_check_modules(SDL2_TTF QUIET SDL2_ttf)
-    if(SDL2_TTF_FOUND)
-        message(STATUS "SDL2_ttf found: ${SDL2_TTF_VERSION}")
-        include_directories(${SDL2_TTF_INCLUDE_DIRS})
-    else()
-        message(ERROR "SDL2_ttf not found - Please install libsdl2-ttf-dev")
-    endif()
-
-    # Check for yaml-cpp
-    pkg_check_modules(YAML_CPP QUIET yaml-cpp)
-    if(YAML_CPP_FOUND)
-        message(STATUS "yaml-cpp found: ${YAML_CPP_VERSION}")
-        include_directories(${YAML_CPP_INCLUDE_DIRS})
-    else()
-        message(ERROR "yaml-cpp not found! Please install libyaml-cpp-dev")
-    endif()
-
-    # Check for ncurses
-    find_package(Curses QUIET)
-    if(CURSES_FOUND)
-        message(STATUS "ncurses found")
-    else()
-        message(WARNING "ncurses not found - some features may be limited")
-    endif()
+    pkg_check_modules(NCURSES QUIET ncurses)
 endif()
 
-# Add source files
+if(NCURSES_FOUND)
+    message(STATUS "ncurses found: ${NCURSES_VERSION}")
+else()
+    message(FATAL_ERROR "ncurses not found. Please install ncurses development libraries")
+endif()
+
+# Include directories
+include_directories(src)
+
+# Define resource paths with Buildroot support
+# Development path: relative to executable in build directory
+# Installation path: /usr/share/chess for Buildroot, /usr/local/share/chess for normal install
+set(RESOURCE_PATH_DEVELOPMENT "res")
+
+# Detect Buildroot environment and adjust installation path
+# Check multiple indicators of Buildroot environment
+if(DEFINED ENV{BR2_VERSION} OR 
+   DEFINED ENV{BUILDROOT_BUILD} OR
+   DEFINED ENV{BUILDROOT_CONFIG} OR
+   "${CMAKE_SYSTEM_NAME}" STREQUAL "Buildroot")
+    set(RESOURCE_PATH_INSTALLED "/usr/share/chess")
+    message(STATUS "Buildroot detected: using /usr/share/chess for resources")
+    set(RESOURCE_PATH_INSTALLED "/usr/share/chess")
+else()
+    set(RESOURCE_PATH_INSTALLED "${CMAKE_INSTALL_PREFIX}/share/chess")
+    message(STATUS "Normal install: using ${RESOURCE_PATH_INSTALLED} for resources")
+endif()
+
 file(GLOB SOURCES 
     "src/*.cpp"
     "src/engine/*.cpp"
 )
 
 add_executable(chess ${SOURCES})
-    
-target_link_libraries(${PROJECT_NAME} 
-    ${SDL2_LIBRARIES} 
-    ${SDL2_IMAGE_LIBRARIES} 
-    ${SDL2_TTF_LIBRARIES} 
+
+target_compile_definitions(chess PRIVATE
+    PROJECT_VERSION="${PROJECT_VERSION}"
+    GIT_VERSION="${GIT_VERSION}"
+    BUILD_INFO="${BUILD_INFO}"
+    RESOURCE_PATH_DEVELOPMENT="${RESOURCE_PATH_DEVELOPMENT}"
+    RESOURCE_PATH_INSTALLED="${RESOURCE_PATH_INSTALLED}"
+)
+
+target_link_libraries(chess
+    ${SDL2_LIBRARIES}
+    ${SDL2_IMAGE_LIBRARIES}
+    ${SDL2_TTF_LIBRARIES}
     ${YAML_CPP_LIBRARIES}
+    ${NCURSES_LIBRARIES}
     Threads::Threads
 )
 
-if(CURSES_FOUND)
-    target_link_libraries(chess ${CURSES_LIBRARIES})
-endif()
+# Copy resource files to build directory
+add_custom_command(TARGET chess POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/res
+        $<TARGET_FILE_DIR:chess>/res
+    COMMENT "Copying resource files to build directory"
+)
 
-# Install target
 install(TARGETS chess DESTINATION bin)
+install(DIRECTORY res/ DESTINATION share/chess)
+

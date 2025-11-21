@@ -4,6 +4,7 @@
 #include <sstream>  
 #include <cctype>   
 #include <string>   
+#include <iomanip>
 
 ChessGame::ChessGame() : whiteTurn(true) {
     initializeBoard();
@@ -24,11 +25,17 @@ const std::vector<std::string>& ChessGame::getMoveHistory() const {
     return moveHistory;
 }
 
+void ChessGame::setTimeMatch(int minutes) {
+    timer = ChessTimer(minutes);
+    timer.startGame();
+    timer.resetGame();
+}
+
 std::string ChessGame::toChessNotation(int row, int col) const {
-    std::string notation;
-    notation += 'a' + col;
-    notation += '8' - row;
-    return notation;
+  std::string notation;
+  notation += 'a' + col;
+  notation += '8' - row;
+  return notation;
 }
 
 bool ChessGame::fromChessNotation(const std::string& notation, int& row, int& col) const {
@@ -183,6 +190,32 @@ void ChessGame::loadCapturedPieces() {
       blackCapturedPieces.push_back(ChessPiece(pieceType, PieceColor::WHITE));
     }
   }
+  // refresh points
+  calculatePoints();
+}
+
+void ChessGame::calculatePoints() {
+    pointsWhite = 0;
+    pointsBlack = 0;
+
+    auto pieceValue = [](PieceType type) {
+        switch (type) {
+            case PieceType::PAWN: return 1;
+            case PieceType::KNIGHT: return 3;
+            case PieceType::BISHOP: return 3;
+            case PieceType::ROOK: return 5;
+            case PieceType::QUEEN: return 9;
+            default: return 0;
+        }
+    };
+
+    for (const auto& piece : whiteCapturedPieces) {
+        pointsWhite += pieceValue(piece.type);
+    }
+
+    for (const auto& piece : blackCapturedPieces) {
+        pointsBlack += pieceValue(piece.type);
+    }
 }
 
 bool ChessGame::isValidMove(bool& isCastling, int fromRow, int fromCol, int toRow, int toCol) const {
@@ -464,10 +497,16 @@ bool ChessGame::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
     if (whiteTurn) {
       pending_move = move;
     }
+
+    if (!game_actived) timer.startGame();
+    timer.switchTurn();
     
     // Switch turns
     whiteTurn = !whiteTurn;
-    
+ 
+    // calculate points after move
+    calculatePoints();
+
     return true;
 }
 
@@ -489,10 +528,13 @@ void ChessGame::handleCastling(int fromRow, int fromCol, int toRow, int toCol) {
 }
 
 void ChessGame::resetGame() {
+    timer.resetGame();
+    game_actived = false;
     whiteCapturedPieces.clear();
     blackCapturedPieces.clear();
     initializeBoard();
     moveHistory.clear();
     whiteTurn = true;
+    calculatePoints();
 }
 

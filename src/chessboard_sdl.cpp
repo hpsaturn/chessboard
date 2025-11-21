@@ -1,7 +1,12 @@
-#include "gameinfo_modal.h"
-#include "gamestates_modal.h"
-#include <SDL.h>
-#include "help_modal.h"
+#include <SDL2/SDL.h>
+
+#include "definitions.h"
+
+#include "modal_settings.h"
+#include "modal_info.h"
+#include "modal_states.h"
+#include "modal_about.h"
+#include "modal_help.h"
 
 #include <iostream>
 #include <string>
@@ -10,12 +15,9 @@
 #include "chess_game_logic.h"
 #include "chess_pieces.h"
 #include "chess_pieces_sdl.h"
-#include "definitions.h"
 #include "engine/uci_engine.h"
-#include "settings_modal.h"
 #include "config_manager.h"
 #include "game_state_manager.h"
-#include "engine/bitboard.h"
 
 // UI state variables
 bool pieceSelected = false;
@@ -31,7 +33,6 @@ uint8_t cursorRow = 6;   // Cursor position for keyboard navigation
 uint8_t cursorCol = 4;   // Cursor position for keyboard navigation
 bool mouseUsed = false;  // Flag for deselect cursor if Mouse is used
 UCIEngine engine;
-ChessBoard bitboard;
  
 // Settings modal
 SettingsModal* settingsModal = nullptr;
@@ -39,10 +40,49 @@ GameInfoModal* gameInfoModal = nullptr;
 GameStatesModal* gameStatesModal = nullptr;
 ConfigManager* configManager = nullptr;
 HelpModal* helpModal = nullptr;
+AboutModal* aboutModal = nullptr;
 GameStateManager* stateManager = nullptr;
 
 std::string pending_fen;
+std::string pending_engine_move = "";
+bool isEngineProcessing = false;
 
+void resetBoard(ChessGame& chessGame) {
+  chessGame.resetGame();
+  pieceSelected = false;
+  selectedRow = -1;
+  selectedCol = -1;
+  cursorRow = 6;
+  cursorCol = 4;
+  lastMoveStartRow = -1;
+  lastMoveStartCol = -1;
+  lastMoveEndRow = -1;
+  lastMoveEndCol = -1;
+  lastCheckCol = -1;
+  lastCheckRow = -1;
+  chessGame.pending_move.clear();
+  gameInfoModal->setBlackTimer(chessGame.getBlackTimer());
+  gameInfoModal->setWhiteTimer(chessGame.getWhiteTimer());
+  engine.newGame();
+  if (settingsModal->getSettings().depthDifficulty <= 2) {
+    engine.sendCommand("easy");
+    engine.sendCommand("random");
+  }
+}
+
+void updateInfoModal(ChessGame& chessGame) {
+// Show game info modal
+  if (gameInfoModal) {
+    gameInfoModal->updateCapturedPieces(
+      chessGame.getWhiteCapturedPieces(),
+      chessGame.getBlackCapturedPieces()
+    );
+
+    bool negative = chessGame.getPointsWhite() - chessGame.getPointsBlack() < 0;
+    int pointsDiff = abs(chessGame.getPointsWhite() - chessGame.getPointsBlack());
+    gameInfoModal->setPoints((negative ? "-" : "+") + std::to_string(pointsDiff), negative);  
+  }
+}
 
 // Handle keyboard input for piece selection and movement
 void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
@@ -91,7 +131,7 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
       break;
     case SDLK_q:
       // Quit the game
-      if (!(settingsModal->isVisible() || gameInfoModal->isVisible() || gameStatesModal->isVisible() || helpModal->isVisible())) {
+      if (!(settingsModal->isVisible() || gameInfoModal->isVisible() || gameStatesModal->isVisible() || helpModal->isVisible() || aboutModal->isVisible())) {
         SDL_Quit();
         exit(0);
       }
@@ -106,17 +146,11 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
       break;
     case SDLK_s:
       // Show settings modal
-      if (settingsModal) {
-        settingsModal->show();
-      }
+      if (settingsModal) settingsModal->show();
       break;
     case SDLK_i:
-      // Show game info modal
-      if (gameInfoModal) {
-        gameInfoModal->updateCapturedPieces(chessGame.getWhiteCapturedPieces(),
-                                            chessGame.getBlackCapturedPieces());
-        gameInfoModal->show();
-      }
+      updateInfoModal(chessGame); 
+      gameInfoModal->show();
       break;
     case SDLK_F2:
       // Save current state slot
@@ -126,10 +160,9 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
     case SDLK_F3:
       // Load last state slot
       std::cout << "[SDLG] loading state: " << stateManager->getLastGameState()->fen << std::endl;
-      engine.newGame();
+      resetBoard(chessGame);
       chessGame.initializeBoard(stateManager->getLastGameState()->fen);
       break;
-    
     case SDLK_F4:
       // Show game states modal
       if (gameStatesModal) gameStatesModal->show();
@@ -141,26 +174,12 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
       break;
     case SDLK_r:
       // Reset board
-      chessGame.resetGame();
-      pieceSelected = false;
-      selectedRow = -1;
-      selectedCol = -1;
-      cursorRow = 6;
-      cursorCol = 4;
-      lastMoveStartRow = -1;
-      lastMoveStartCol = -1;
-      lastMoveEndRow = -1;
-      lastMoveEndCol = -1;
-      lastCheckCol = -1;
-      lastCheckRow = -1;
-      chessGame.pending_move.clear();
-      engine.newGame();
+      resetBoard(chessGame); 
       break;
     case SDLK_F5:
-      // bitboard.test_king_with_two_rooks();
-      // bitboard.test_complex_position();
-      // bitboard.test_king_escape();
-      // bitboard.test_fen_load_queen_test();
+      // Show about modal
+      if (aboutModal) aboutModal->show();
+      break;
       break;
   }
 }
@@ -207,8 +226,34 @@ void handleMouseClick(int mouseX, int mouseY, ChessGame& chessGame) {
   }
 }
 
+void process_engine_move(ChessGame& chessGame, std::string& engine_move) {
+  engine.addMoveToHistory(engine_move);
+  int fromRow, fromCol, toRow, toCol;
+  chessGame.fromChessMoveNotation(engine_move, fromRow, fromCol, toRow, toCol);
+  chessGame.movePiece(fromRow, fromCol, toRow, toCol);
+  lastMoveStartRow = fromRow;
+  lastMoveStartCol = fromCol;
+  lastMoveEndRow = toRow;
+  lastMoveEndCol = toCol;
+  int checkRow, checkCol;
+  if (chessGame.isInCheck(checkRow, checkCol)) {
+    std::cout << "[SDLG] Check detected!" << std::endl;
+    lastCheckCol = checkCol;  // Notify to user check position
+    lastCheckRow = checkRow;
+  }
+  chessGame.pending_move.clear();
+  engine_move.clear();
+  isEngineProcessing = false;
+  std::cout << "[SDLG] FEN: \"" << chessGame.boardToFEN() << "\"" << std::endl;
+}
+
+UCIEngine::MoveCallback  cbOnEngineMove([](const std::string& move) {
+    std::cout << "[SDLG] engine move callback received: " << move << std::endl;
+    pending_engine_move = move;
+});
+
 // Main game loop
-void mainLoop(ChessGame chessGame, SDL_Renderer* renderer) {
+void mainLoop(ChessGame& chessGame, SDL_Renderer* renderer) {
   bool quit = false;
   SDL_Event e;
 
@@ -230,14 +275,14 @@ void mainLoop(ChessGame chessGame, SDL_Renderer* renderer) {
       // Handle keyboard input
       else if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
         // Let modals handle the event first
-        if (!settingsModal->handleEvent(e) && !gameInfoModal->handleEvent(e) && !gameStatesModal->handleEvent(e) && !helpModal->handleEvent(e)) {
+        if (!settingsModal->handleEvent(e) && !gameInfoModal->handleEvent(e) && !gameStatesModal->handleEvent(e) && !helpModal->handleEvent(e) && !aboutModal->handleEvent(e)) {
           handleKeyboardInput(e.key.keysym.sym, chessGame);
         }
       }
       // Handle mouse click
       else if (e.type == SDL_MOUSEBUTTONDOWN) {
         // Let modals handle the event first
-        if (!settingsModal->handleEvent(e) && !gameInfoModal->handleEvent(e) && !helpModal->handleEvent(e) && !gameInfoModal->handleEvent(e)) {
+        if (!settingsModal->handleEvent(e) && !gameInfoModal->handleEvent(e) && !aboutModal->handleEvent(e) && !helpModal->handleEvent(e) && !gameInfoModal->handleEvent(e)) {
           int mouseX, mouseY;
           SDL_GetMouseState(&mouseX, &mouseY);
           handleMouseClick(mouseX, mouseY, chessGame);
@@ -248,12 +293,13 @@ void mainLoop(ChessGame chessGame, SDL_Renderer* renderer) {
         settingsModal->handleEvent(e);
         gameInfoModal->handleEvent(e);
         gameStatesModal->handleEvent(e);
+        aboutModal->handleEvent(e);
       }
     }
 
     // New FEN to load
     if (!pending_fen.empty()) {
-      engine.newGame();
+      resetBoard(chessGame);
       chessGame.initializeBoard(pending_fen);
       pending_fen.clear();
     }
@@ -306,42 +352,43 @@ void mainLoop(ChessGame chessGame, SDL_Renderer* renderer) {
         }
       }
     }
+    
+    if (chessGame.isWhiteTurn())
+      gameInfoModal->setWhiteTimer(chessGame.getWhiteTimer());
+    else
+      gameInfoModal->setBlackTimer(chessGame.getBlackTimer());
+
+    updateInfoModal(chessGame); 
 
     // Render modal windows
     settingsModal->render();
     gameInfoModal->render();
     gameStatesModal->render();
     helpModal->render();
+    aboutModal->render();
 
     // Update screen
     SDL_RenderPresent(renderer);
 
     // Send move to engine and update its move
-    if (!chessGame.pending_move.empty()) {  
+    if (!chessGame.pending_move.empty() && !isEngineProcessing) {  
       std::cout << "[SDLG] sending move  : " << chessGame.pending_move << std::endl;
-      std::string engine_move;
-      if (chessGame.isFenMode())
-        engine_move = engine.sendMove(chessGame.boardToFEN());
-      else 
-        engine_move = engine.sendMove(chessGame.pending_move);
-      std::cout << "[SDLG] receiving move: " << engine_move << std::endl;
-      engine.addMoveToHistory(engine_move);
-      int fromRow, fromCol, toRow, toCol;
-      chessGame.fromChessMoveNotation(engine_move, fromRow, fromCol, toRow, toCol);
-      chessGame.movePiece(fromRow, fromCol, toRow, toCol);
-      lastMoveStartRow = fromRow;
-      lastMoveStartCol = fromCol;
-      lastMoveEndRow = toRow;
-      lastMoveEndCol = toCol;
-      int checkRow, checkCol;
-      if (chessGame.isInCheck(checkRow, checkCol)) {
-        std::cout << "[SDLG] Check detected!" << std::endl;
-        lastCheckCol = checkCol; // Notify to user check position
-        lastCheckRow = checkRow;
+      
+      isEngineProcessing = true; 
+     
+      if (chessGame.isFenMode()) {
+        // engine_move = engine.sendMove(chessGame.boardToFEN());
+        engine.sendMoveAsync(chessGame.boardToFEN(),cbOnEngineMove);
       }
-      chessGame.pending_move.clear();
-      std::cout << "[SDLG] FEN: \"" << chessGame.boardToFEN() << "\"" << std::endl;
-      engine_move.clear();
+        
+      else {
+        // engine_move = engine.sendMove(chessGame.pending_move);
+        engine.sendMoveAsync(chessGame.pending_move,cbOnEngineMove); 
+      }
+    }
+
+    if (!pending_engine_move.empty()) {
+      process_engine_move(chessGame, pending_engine_move);
     }
 
     // Frame rate limiting
@@ -401,6 +448,7 @@ void renderChessboardSDL(std::string fen) {
   gameInfoModal = new GameInfoModal(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
   gameStatesModal = new GameStatesModal(renderer, SCREEN_WIDTH, SCREEN_HEIGHT, stateManager);
   helpModal = new HelpModal(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
+  aboutModal = new AboutModal(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
 
   // Set settings change callback
   settingsModal->setOnSettingsChanged([&chessGame](const SettingsModal::Settings& settings) {
@@ -412,22 +460,29 @@ void renderChessboardSDL(std::string fen) {
 
     engine.setDifficult(settingsModal->getSettings().depthDifficulty); 
     engine.setMoveTime(settingsModal->getSettings().maxTimePerMove);
+    chessGame.setTimeMatch(settingsModal->getSettings().matchTime);
+    gameInfoModal->setBlackTimer(chessGame.getBlackTimer());
+    gameInfoModal->setWhiteTimer(chessGame.getWhiteTimer());
   });
 
-  // Initialize engine
-  if (engine.startEngine()) {
+  chessGame.setTimeMatch(settingsModal->getSettings().matchTime);
+  gameInfoModal->setBlackTimer(chessGame.getBlackTimer());
+  gameInfoModal->setWhiteTimer(chessGame.getWhiteTimer());
+
+  // Initialize engine - debug disabled
+  if (engine.startEngine(false)) {
     // Initialize UCI protocol
     engine.sendCommand("uci");
     if (engine.waitForResponse("uciok")) {
       std::cout << "[SDLG] Engine is UCI compatible!" << std::endl;
     }
-
     engine.sendCommand("isready");
     if (engine.waitForResponse("readyok")) {
       std::cout << "[SDLG] Engine is ready!" << std::endl;
       engine.setDifficult(settingsModal->getSettings().depthDifficulty);
       engine.setMoveTime(settingsModal->getSettings().maxTimePerMove);
     }
+    resetBoard(chessGame);
     chessGame.initializeBoard(fen);
   }
 
@@ -444,6 +499,7 @@ void renderChessboardSDL(std::string fen) {
   delete gameStatesModal;
   delete gameInfoModal;
   delete helpModal;
+  delete aboutModal;
 
   cleanupChessPieceTextures();
   SDL_DestroyRenderer(renderer);

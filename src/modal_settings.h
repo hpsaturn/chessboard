@@ -8,26 +8,17 @@
 #include <vector>
 #include <functional>
 #include "config_manager.h"
+#include "modal_base.h"
 
-class SettingsModal {
+class SettingsModal : public ModalBase {
 public:
     SettingsModal(SDL_Renderer* renderer, int screenWidth, int screenHeight, ConfigManager* configManager = nullptr);
-    ~SettingsModal();
-    
-    // Show the modal window
-    void show();
-    
-    // Hide the modal window
-    void hide();
     
     // Handle events for the modal
-    bool handleEvent(const SDL_Event& e);
+    bool handleEvent(const SDL_Event& e) override;
     
     // Render the modal
-    void render();
-    
-    // Check if modal is visible
-    bool isVisible() const { return visible; }
+    void render() override;
     
     // Settings structure
     struct Settings {
@@ -46,19 +37,8 @@ public:
     }
 
 private:
-    SDL_Renderer* renderer;
-    TTF_Font* font;
-    int screenWidth;
-    int screenHeight;
-    bool visible;
     int focusedElement; // Index of currently focused element (-1 for none)
     ConfigManager* configManager;
-    
-    // Modal dimensions
-    int modalWidth;
-    int modalHeight;
-    int modalX;
-    int modalY;
     
     // UI elements
     struct Checkbox {
@@ -94,8 +74,6 @@ private:
     void drawCheckbox(const Checkbox& checkbox, bool focused);
     void drawSlider(Slider& slider, bool focused);
     void updateSliderValue(Slider& slider, int mouseX);
-    void drawText(const std::string& text, int x, int y, SDL_Color color);
-    SDL_Texture* createTextTexture(const std::string& text, SDL_Color color);
     
     // Save settings to config file
     void saveSettingsToFile();
