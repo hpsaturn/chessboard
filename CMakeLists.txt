@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.10)
-project(ChessProject)
+cmake_minimum_required(VERSION 3.16)
+project(chess VERSION 1.0.0 LANGUAGES C CXX)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -72,7 +72,13 @@ else()
     message(FATAL_ERROR "yaml-cpp not found. Please install yaml-cpp development libraries")
 endif()
 
-pkg_check_modules(NCURSES QUIET ncurses)
+# Find dependencies based on platform
+if(WIN32)
+    add_definitions(-DWIN32_LEAN_AND_MEAN)
+    add_definitions(-DNOMINMAX)
+    pkg_check_modules(NCURSES QUIET ncurses)
+endif()
+
 if(NCURSES_FOUND)
     message(STATUS "ncurses found: ${NCURSES_VERSION}")
 else()
