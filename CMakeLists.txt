@@ -72,17 +72,17 @@ else()
     message(FATAL_ERROR "yaml-cpp not found. Please install yaml-cpp development libraries")
 endif()
 
-# Find dependencies based on platform
-if(WIN32)
-    add_definitions(-DWIN32_LEAN_AND_MEAN)
-    add_definitions(-DNOMINMAX)
-    pkg_check_modules(NCURSES QUIET ncurses)
-endif()
-
+pkg_check_modules(NCURSES QUIET ncurses)
 if(NCURSES_FOUND)
     message(STATUS "ncurses found: ${NCURSES_VERSION}")
 else()
     message(FATAL_ERROR "ncurses not found. Please install ncurses development libraries")
+endif()
+
+# Find dependencies based on platform
+if(WIN32)
+    add_definitions(-DWIN32_LEAN_AND_MEAN)
+    add_definitions(-DNOMINMAX)
 endif()
 
 # Include directories
