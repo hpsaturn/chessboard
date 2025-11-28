@@ -1,5 +1,4 @@
-# This starter workflow is for a CMake project running on multiple platforms. There is a different starter workflow if you just want a single platform.
-# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-single-platform.yml
+# This workflow is for a CMake project running on multiple platforms including Windows
 name: Build
 
 on:
@@ -9,7 +8,7 @@ on:
     branches: [ "master" ]
 
 jobs:
-  build:
+  build-linux:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
@@ -30,3 +29,31 @@ jobs:
         run: |
           cmake -S . -B build
           cmake --build build --verbose
+  
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup MSYS2 and build
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          install: >
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-SDL2
+            mingw-w64-x86_64-SDL2_image
+            mingw-w64-x86_64-SDL2_ttf
+            mingw-w64-x86_64-yaml-cpp
+            mingw-w64-x86_64-ncurses
+            mingw-w64-x86_64-pkg-config
+            make
+          
+      - name: Configure and build
+        run: |
+          # Set up environment for MSYS2
+          export PATH="/mingw64/bin:$PATH"
+          cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --verbose
+        shell: bash

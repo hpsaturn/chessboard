@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.10)
-project(ChessProject)
+cmake_minimum_required(VERSION 3.16)
+project(chess VERSION 1.0.0 LANGUAGES C CXX)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -77,6 +77,12 @@ if(NCURSES_FOUND)
     message(STATUS "ncurses found: ${NCURSES_VERSION}")
 else()
     message(FATAL_ERROR "ncurses not found. Please install ncurses development libraries")
+endif()
+
+# Find dependencies based on platform
+if(WIN32)
+    add_definitions(-DWIN32_LEAN_AND_MEAN)
+    add_definitions(-DNOMINMAX)
 endif()
 
 # Include directories
