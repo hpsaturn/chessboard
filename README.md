@@ -91,6 +91,7 @@ This version is optimized for Picocalc board using Luckfox Lyra. For that it has
 | **I**| Toggle to show game info |
 | **Q**| Exit the game. (without state save for now) |
 | **R**| Restart the game. (without ask before for now) |
+| **U**| Undo last move |
 | **H**| Help - Keyboard bindings |
 
 ![screenshots](screenshots/screenshots.png)

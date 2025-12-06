@@ -13,6 +13,7 @@ class ChessGame {
 private:
     ChessPiece board[8][8];
     std::vector<std::string> moveHistory;
+    std::vector<std::string> stateHistory;
     bool whiteTurn, fenMode;
     int pointsWhite = 0;
     int pointsBlack = 0;
@@ -57,6 +58,8 @@ public:
     
     // Game logic
     void initializeBoard(const std::string& fen = "");
+    void addState(const std::string& fen = "");
+    std::string getPreviousState();
     bool isValidMove(bool& isCastling, int fromRow, int fromCol, int toRow, int toCol) const;
     bool isInCheck(int& kingRow, int& kingCol) const;
     bool would_move_leave_king_in_check(int fromRow, int fromCol, int toRow, int toCol) const;

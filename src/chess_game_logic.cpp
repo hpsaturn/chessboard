@@ -141,6 +141,20 @@ void ChessGame::initializeBoard(const std::string& fen) {
   }
 }
 
+void ChessGame::addState(const std::string &fen) {
+  stateHistory.push_back(fen);
+}
+
+std::string ChessGame::getPreviousState() {
+  if (stateHistory.size() >= 2) {
+    std::string previous_state = stateHistory[stateHistory.size()-2];
+    stateHistory.pop_back();
+    return previous_state;
+  }
+  else if (stateHistory.size() == 1) return stateHistory[0];
+  else return "";
+}
+
 void ChessGame::clearBoard() {
     for (int row = 0; row < 8; row++) {
         for (int col = 0; col < 8; col++) {
