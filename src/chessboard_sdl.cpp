@@ -174,7 +174,12 @@ void handleKeyboardInput(SDL_Keycode key, ChessGame& chessGame) {
       break;
     case SDLK_r:
       // Reset board
-      resetBoard(chessGame); 
+      resetBoard(chessGame);
+      chessGame.addState(chessGame.boardToFEN()); // only for undo action
+      break;
+    case SDLK_u:
+      // undo last move to previous state (in memory)
+      pending_fen = chessGame.getPreviousState();
       break;
     case SDLK_F5:
       // Show about modal
@@ -244,7 +249,9 @@ void process_engine_move(ChessGame& chessGame, std::string& engine_move) {
   chessGame.pending_move.clear();
   engine_move.clear();
   isEngineProcessing = false;
-  std::cout << "[SDLG] FEN: \"" << chessGame.boardToFEN() << "\"" << std::endl;
+  std::string current_fen = chessGame.boardToFEN();
+  std::cout << "[SDLG] FEN: \"" << current_fen << "\"" << std::endl;
+  chessGame.addState(current_fen);
 }
 
 UCIEngine::MoveCallback  cbOnEngineMove([](const std::string& move) {
