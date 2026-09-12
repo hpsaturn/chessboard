@@ -108,6 +108,7 @@ void HelpModal::initializeHelpContent() {
     helpLines.push_back("I                  Toggle to show game info");
     helpLines.push_back("Q                 Exit the game");
     helpLines.push_back("R                 Restart the game");
+    helpLines.push_back("U                 Undo last move");
     helpLines.push_back("H                 Show this help window");
     helpLines.push_back("ESC             Close current window");
 }
