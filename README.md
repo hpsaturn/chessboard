@@ -133,8 +133,8 @@ For more about FEN notation and details, please enter [here](https://www.redhotp
 - [x] Points from the user (positive/negative)
 - [x] Basic Timers
 - [x] Buildroot config files for Luckfox Lyra tests
+- [x] FEN casteling support
 - [ ] Improve easy mode (seems that is not working)
-- [ ] FEN casteling support
 - [ ] Flip board
 - [ ] Sound support
 - [ ] Sprite pieces improvement
